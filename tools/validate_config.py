@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Validate the robot hardware JSON without requiring third-party packages."""
 
+import argparse
 import json
 import pathlib
 import sys
@@ -19,11 +20,12 @@ def fail(message: str) -> None:
     raise SystemExit(1)
 
 
-def main() -> None:
+def main(config_path: pathlib.Path = CONFIG) -> None:
+    """Validate a supplied configuration file (defaults to the checked-in safe config)."""
     try:
-        data = json.loads(CONFIG.read_text(encoding="utf-8"))
+        data = json.loads(config_path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError) as exc:
-        fail(f"cannot read valid JSON from {CONFIG}: {exc}")
+        fail(f"cannot read valid JSON from {config_path}: {exc}")
 
     if data.get("schema_version") != 1:
         fail("schema_version must be 1")
@@ -132,4 +134,8 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--config", type=pathlib.Path, default=CONFIG,
+                        help="JSON file to validate (default: config/default.json)")
+    args = parser.parse_args()
+    main(args.config)
