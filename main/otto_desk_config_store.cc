@@ -77,6 +77,14 @@ bool IsBoundedNumber(const cJSON* object, const char* key,
            value->valuedouble <= maximum;
 }
 
+bool IsBoundedInteger(const cJSON* object, const char* key,
+                      int minimum, int maximum) {
+    const cJSON* value = Get(object, key);
+    return cJSON_IsNumber(value) &&
+           value->valuedouble == static_cast<double>(value->valueint) &&
+           value->valueint >= minimum && value->valueint <= maximum;
+}
+
 bool HasNoDuplicateKeys(const cJSON* object) {
     if (!cJSON_IsObject(object) && !cJSON_IsArray(object)) return true;
     for (const cJSON* item = object->child; item != nullptr; item = item->next) {
@@ -95,9 +103,9 @@ bool IsSafeServo(const cJSON* servo) {
     return HasExactKeys(servo, {"gpio", "min_deg", "center_deg", "max_deg",
                                 "speed_deg_per_sec", "enabled"}) &&
            IsNull(servo, "gpio") && IsFalse(servo, "enabled") &&
-           IsBoundedNumber(servo, "min_deg", 0, 180) &&
-           IsBoundedNumber(servo, "center_deg", 0, 180) &&
-           IsBoundedNumber(servo, "max_deg", 0, 180) &&
+           IsBoundedInteger(servo, "min_deg", 0, 180) &&
+           IsBoundedInteger(servo, "center_deg", 0, 180) &&
+           IsBoundedInteger(servo, "max_deg", 0, 180) &&
            IsBoundedNumber(servo, "speed_deg_per_sec", 0, 360, false) &&
            Get(servo, "min_deg")->valuedouble < Get(servo, "center_deg")->valuedouble &&
            Get(servo, "center_deg")->valuedouble < Get(servo, "max_deg")->valuedouble;
