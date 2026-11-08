@@ -15,30 +15,34 @@ Build a desk-only assistant with an animated face display and a pan/tilt head. T
 - Two 180-degree servos for pan and tilt
 - HC-SR501 PIR motion sensor
 
-GPIO assignments are intentionally left unconfigured until the exact board pinout and wiring are verified. Do not connect hardware based on guessed pin numbers.
+GPIO assignments remain unconfigured until the exact board pinout and wiring are verified. Do not connect hardware based on guessed pin numbers.
 
 ## Architecture
 
-- **ESP32 firmware:** Wi-Fi, XiaoZhi audio/voice endpoint, display, GPIO and servo control.
-- **Configuration UI:** device-local web page for hardware settings, GPIO mapping, calibration and JSON import/export.
-- **Backend:** separate service for AI providers, web chat and music features.
+- **ESP32 firmware:** XiaoZhi voice endpoint, Wi-Fi, display and peripheral control.
+- **Device configuration UI:** Custom GPIO table, JSON import/export and servo calibration.
+- **Separate backend:** AI provider adapters, web chat, device dashboard and music orchestration.
 
-## Safety and implementation notes
+See [architecture](docs/ARCHITECTURE.md) and [safe default configuration](config/default.json).
 
-- The camera is disabled and must remain unused.
-- Servo power must use a suitable external 5V supply; share ground with the ESP32. Never power servos from the 3.3V pin.
-- Verify the amplifier's supported speaker impedance before connecting the speaker.
-- Keep unverified GPIO values null in configuration until checked against the exact board schematic.
+## Safety
+
+- Camera disabled.
+- Servo power requires a suitable external regulated supply and common ground with ESP32; never power servos from 3.3V.
+- Verify the MAX98357A breakout's supported speaker impedance.
+- Unverified GPIO values remain null.
 
 ## Upstream
 
-The firmware is intended to be based on [78/xiaozhi-esp32](https://github.com/78/xiaozhi-esp32), initially targeting tag [v2.5.0](https://github.com/78/xiaozhi-esp32/tree/v2.5.0). Preserve upstream license and copyright notices when importing or modifying source.
+Base: [78/xiaozhi-esp32](https://github.com/78/xiaozhi-esp32), pinned to [v2.5.0](https://github.com/78/xiaozhi-esp32/tree/v2.5.0). Preserve upstream license and copyright notices.
+
+The repository includes a GitHub Actions workflow to import this pinned source. ESP-IDF 6.0.1 or later is required; upstream recommends the `release/v6.1` SDK branch.
 
 ## Roadmap
 
-1. Import and pin the upstream XiaoZhi source.
-2. Confirm board definition and build environment (ESP-IDF 6.1).
-3. Add the custom desk-robot board profile and validated GPIO configuration.
-4. Add display animation and safe pan/tilt control.
-5. Add the configuration UI and JSON import/export.
-6. Build and verify firmware artifacts through CI.
+1. Import upstream source and verify its build pipeline.
+2. Inspect board definitions and add a dedicated ESP32-S3 CAM profile.
+3. Validate GPIOs against the exact board schematic.
+4. Add Otto face UI and safe pan/tilt/PIR behavior.
+5. Add configuration UI and JSON schema validation.
+6. Produce and verify BIN artifacts in CI.
