@@ -20,8 +20,10 @@ def fail(message: str) -> None:
     raise SystemExit(1)
 
 
-def main(config_path: pathlib.Path = CONFIG) -> None:
+def main(config_path: pathlib.Path | None = None) -> None:
     """Validate a supplied configuration file (defaults to the checked-in safe config)."""
+    if config_path is None:
+        config_path = CONFIG
     try:
         data = json.loads(config_path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError) as exc:
