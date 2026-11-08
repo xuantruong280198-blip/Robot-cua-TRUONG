@@ -45,13 +45,12 @@ class HardwareConfigValidationTests(unittest.TestCase):
         self.assertNotEqual(code, 0)
         self.assertIn("min_deg <= center_deg <= max_deg", output)
 
-    def test_servo_requires_gpio_when_enabled(self):
+    def test_safe_default_rejects_enabling_unverified_servo(self):
         config = copy.deepcopy(DEFAULT)
         config["servos"]["pan"]["enabled"] = True
         code, output = self.run_config(config)
         self.assertNotEqual(code, 0)
-        self.assertIn("gpio is required", output)
-
+        self.assertIn("must remain disabled until wiring is verified", output)
     def test_enabled_display_requires_all_pins(self):
         config = copy.deepcopy(DEFAULT)
         config["display"]["enabled"] = True
