@@ -2,7 +2,7 @@
 
 ## Status: identification required before board code or wiring
 
-The project description currently identifies the module only as "ESP32-S3 CAM N16R8". That identifies the MCU family and memory configuration, but does not uniquely identify the carrier-board schematic, connector pinout, power circuit, or exposed GPIOs.
+The project hardware is identified as a Waveshare ESP32-S3-CAM N16R8. The exact board revision and its matching schematic/pinout still need to be confirmed before assigning GPIOs. The N16R8 memory label alone does not identify connector routing, power circuitry, or which GPIOs are exposed.
 
 Do not select a XiaoZhi board profile solely because another board also uses ESP32-S3 and has a camera connector.
 
