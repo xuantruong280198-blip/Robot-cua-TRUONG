@@ -8,6 +8,7 @@
 #include <freertos/task.h>
 
 #include "application.h"
+#include "otto_desk_config_store.h"
 
 #define TAG "main"
 
@@ -21,6 +22,21 @@ extern "C" void app_main(void)
         ret = nvs_flash_init();
     }
     ESP_ERROR_CHECK(ret);
+
+    // Load and revalidate any saved Otto Desk configuration before board startup.
+    // No saved config is a normal first-boot condition; peripherals remain disabled
+    // until a verified board profile and runtime GPIO layer are available.
+    std::string otto_desk_config;
+    const esp_err_t config_ret = OttoDeskConfigStore::Load(otto_desk_config);
+    if (config_ret == ESP_OK) {
+        ESP_LOGI(TAG, "Loaded validated Otto Desk configuration (%u bytes)",
+                 static_cast<unsigned>(otto_desk_config.size()));
+    } else if (config_ret == ESP_ERR_NVS_NOT_FOUND) {
+        ESP_LOGI(TAG, "No saved Otto Desk configuration; using safe compiled defaults");
+    } else {
+        ESP_LOGW(TAG, "Saved Otto Desk configuration rejected or unavailable: %s",
+                 esp_err_to_name(config_ret));
+    }
 
     // Initialize and run the application
     auto& app = Application::GetInstance();
