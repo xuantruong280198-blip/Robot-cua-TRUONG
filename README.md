@@ -46,3 +46,6 @@ The repository includes a GitHub Actions workflow to import this pinned source. 
 4. Add Otto face UI and safe pan/tilt/PIR behavior.
 5. Add configuration UI and JSON schema validation.
 6. Produce and verify BIN artifacts in CI.
+
+
+<!-- Trigger upstream import after workflow permission adjustment. -->
