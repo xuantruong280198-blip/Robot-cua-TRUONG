@@ -26,5 +26,9 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.x"
+      - name: Install schema validator
+        run: python -m pip install jsonschema
       - name: Validate safe hardware defaults
-        run: python tools/validate_config.py
+        run: |
+          python tools/validate_config.py
+          python tools/validate_schema.py
