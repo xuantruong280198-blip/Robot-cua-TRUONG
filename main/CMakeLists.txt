@@ -38,6 +38,7 @@ set(SOURCES "audio/audio_codec.cc"
             "application.cc"
             "ota.cc"
             "settings.cc"
+            "otto_desk_config_store.cc"
             "device_state_machine.cc"
             "assets.cc"
             "main.cc"
@@ -1097,6 +1098,8 @@ idf_component_register(SRCS ${SOURCES}
                         app_update
                         spi_flash
                         mbedtls
+                        nvs_flash
+                        json
                         console
                         efuse
                         bt
