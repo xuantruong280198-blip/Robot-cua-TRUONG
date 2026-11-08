@@ -1,6 +1,6 @@
 # Hardware configuration schema v1
 
-The canonical starter configuration is `default.json`.
+The canonical starter configuration is `default.json`. Its machine-readable Draft 2020-12 contract is `schema-v1.schema.json`; CI validates the configuration against both the safety validator and this JSON Schema.
 
 ## Safety defaults
 
