@@ -44,7 +44,7 @@ def main() -> None:
         if isinstance(value, dict):
             for key, child in value.items():
                 child_path = f"{path}.{key}"
-                if key in PIN_KEYS:
+                if key in PIN_KEYS and not isinstance(child, (dict, list)):
                     if child is not None and (
                         isinstance(child, bool) or not isinstance(child, int)
                     ):
