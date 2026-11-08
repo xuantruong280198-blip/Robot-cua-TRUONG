@@ -29,10 +29,10 @@ extern "C" void app_main(void)
     std::string otto_desk_config;
     const esp_err_t config_ret = OttoDeskConfigStore::Load(otto_desk_config);
     if (config_ret == ESP_OK) {
-        ESP_LOGI(TAG, "Loaded validated Otto Desk configuration (%u bytes)",
+        ESP_LOGI(TAG, "Validated saved Otto Desk configuration (%u bytes); runtime application is not wired yet",
                  static_cast<unsigned>(otto_desk_config.size()));
     } else if (config_ret == ESP_ERR_NVS_NOT_FOUND) {
-        ESP_LOGI(TAG, "No saved Otto Desk configuration; using safe compiled defaults");
+        ESP_LOGI(TAG, "No saved Otto Desk configuration; retaining current board defaults");
     } else {
         ESP_LOGW(TAG, "Saved Otto Desk configuration rejected or unavailable: %s",
                  esp_err_to_name(config_ret));
