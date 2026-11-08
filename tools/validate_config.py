@@ -44,10 +44,12 @@ def main() -> None:
         if isinstance(value, dict):
             for key, child in value.items():
                 child_path = f"{path}.{key}"
-                if key in PIN_KEYS and (child is None or isinstance(child, (int, bool))):
+                if key in PIN_KEYS:
+                    if child is not None and (
+                        isinstance(child, bool) or not isinstance(child, int)
+                    ):
+                        fail(f"{child_path} must be an integer GPIO or null")
                     if child is not None:
-                        if isinstance(child, bool):
-                            fail(f"{child_path} must be an integer GPIO or null")
                         pin_values.append((child, child_path))
                 else:
                     collect(child, child_path)
