@@ -25,10 +25,10 @@ The existing upstream `otto-robot` profile is a different product: it contains s
 ## Implementation sequence
 
 - [x] Record the hardware contract and safe JSON defaults.
-- [x] Add configuration validation and a GitHub Actions validation workflow.
+- [x] Add configuration validation, JSON Schema checks, regression tests and a passing GitHub Actions workflow.
 - [x] Confirm the upstream board profile mismatch and identify reusable audio/display components.
 - [x] Audit the existing Otto biped source and isolate reusable full-screen face and external I2S components.
-- [ ] Add the dedicated board selector and minimal desk-profile source.
+- [ ] Add the dedicated board selector and minimal desk-profile source (blocked until the runtime GPIO config and board initialization path are implemented together).
 - [ ] Integrate the runtime GPIO configuration service and persistent JSON storage.
 - [ ] Add Otto full-screen face rendering and head-servo state mapping.
 - [ ] Add the firmware build workflow and verify a downloadable merged BIN artifact.
