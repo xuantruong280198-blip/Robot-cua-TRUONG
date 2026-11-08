@@ -1099,7 +1099,7 @@ idf_component_register(SRCS ${SOURCES}
                         spi_flash
                         mbedtls
                         nvs_flash
-                        json
+                        cjson
                         console
                         efuse
                         bt
