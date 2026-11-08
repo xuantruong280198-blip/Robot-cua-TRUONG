@@ -24,6 +24,12 @@ def main() -> None:
         print(f"ERROR: cannot load schema/config: {exc}", file=sys.stderr)
         raise SystemExit(1)
 
+    try:
+        Draft202012Validator.check_schema(schema)
+    except Exception as exc:
+        print(f"ERROR: invalid JSON Schema: {exc}", file=sys.stderr)
+        raise SystemExit(1)
+
     validator = Draft202012Validator(schema)
     errors = sorted(validator.iter_errors(config), key=lambda error: list(map(str, error.absolute_path)))
     if errors:
