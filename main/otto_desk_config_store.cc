@@ -5,6 +5,7 @@
 #include <nvs_flash.h>
 
 #include <cctype>
+#include <initializer_list>
 
 namespace {
 constexpr char kNamespace[] = "ottdesk";
@@ -27,8 +28,30 @@ bool AllObjectValuesNull(const cJSON* object) {
     return true;
 }
 
+bool HasNullKeys(const cJSON* object, std::initializer_list<const char*> keys) {
+    if (!AllObjectValuesNull(object)) return false;
+    for (const char* key : keys) {
+        if (!cJSON_IsNull(Get(object, key))) return false;
+    }
+    return true;
+}
+
+bool HasNoDuplicateKeys(const cJSON* object) {
+    if (!cJSON_IsObject(object) && !cJSON_IsArray(object)) return true;
+    for (const cJSON* item = object->child; item != nullptr; item = item->next) {
+        if (cJSON_IsObject(object)) {
+            for (const cJSON* other = item->next; other != nullptr; other = other->next) {
+                if (item->string != nullptr && other->string != nullptr &&
+                    std::strcmp(item->string, other->string) == 0) return false;
+            }
+        }
+        if (!HasNoDuplicateKeys(item)) return false;
+    }
+    return true;
+}
+
 bool IsSafeConfig(const cJSON* root) {
-    if (!cJSON_IsObject(root)) return false;
+    if (!cJSON_IsObject(root) || !HasNoDuplicateKeys(root)) return false;
 
     const cJSON* version = Get(root, "schema_version");
     if (!cJSON_IsNumber(version) || version->valuedouble != 1) return false;
@@ -40,15 +63,16 @@ bool IsSafeConfig(const cJSON* root) {
 
     const cJSON* display = Get(root, "display");
     if (!IsFalse(display, "enabled") ||
-        !AllObjectValuesNull(Get(display, "gpio"))) return false;
+        !HasNullKeys(Get(display, "gpio"),
+                     {"sclk", "mosi", "cs", "dc", "reset", "backlight"})) return false;
 
     const cJSON* audio = Get(root, "audio");
     const cJSON* microphone = Get(audio, "microphone");
     const cJSON* amplifier = Get(audio, "amplifier");
     if (!IsFalse(microphone, "enabled") ||
-        !AllObjectValuesNull(Get(microphone, "i2s")) ||
+        !HasNullKeys(Get(microphone, "i2s"), {"ws", "sck", "sd"}) ||
         !IsFalse(amplifier, "enabled") ||
-        !AllObjectValuesNull(Get(amplifier, "i2s"))) return false;
+        !HasNullKeys(Get(amplifier, "i2s"), {"din", "bclk", "lrclk"})) return false;
 
     const cJSON* servos = Get(root, "servos");
     const cJSON* pan = Get(servos, "pan");
