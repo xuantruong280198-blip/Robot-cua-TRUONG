@@ -32,3 +32,4 @@ jobs:
         run: |
           python tools/validate_config.py
           python tools/validate_schema.py
+          python -m unittest tools/test_validate_config.py -v
