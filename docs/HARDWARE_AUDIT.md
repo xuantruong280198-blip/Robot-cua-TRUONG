@@ -1,42 +1,49 @@
-# Hardware audit — ESP32-S3 CAM N16R8
+# Hardware audit — Waveshare ESP32-S3-CAM N16R8
 
-## Status: identification required before board code or wiring
+## Status: board family identified; Otto pin assignments remain unapproved
 
-The project hardware is identified as a Waveshare ESP32-S3-CAM N16R8. The exact board revision and its matching schematic/pinout still need to be confirmed before assigning GPIOs. The N16R8 memory label alone does not identify connector routing, power circuitry, or which GPIOs are exposed.
+The project target is the Waveshare ESP32-S3-CAM family using ESP32-S3R8, 16 MB flash and 8 MB PSRAM. The official Waveshare documentation identifies V1 and V1.1 hardware revisions and states that these two revisions share the same programs. The physical revision on this particular board has not been confirmed, so revision-specific assumptions must remain disabled.
 
-Do not select a XiaoZhi board profile solely because another board also uses ESP32-S3 and has a camera connector.
+Official references:
+- Product documentation: https://docs.waveshare.com/ESP32-S3-CAM-OVxxxx
+- Resources and schematics: https://docs.waveshare.com/ESP32-S3-CAM-OVxxxx/Resources-And-Documents
+- V1.1 schematic: https://files.waveshare.com/wiki/ESP32-S3-CAM-OVxxxx/ESP32-S3-CAM-OVxxxx_Rev1.1.pdf
+
+## Important board facts from Waveshare
+
+The official product family includes:
+- ESP32-S3R8, 16 MB flash and 8 MB PSRAM.
+- 18-pin LCD interface supporting SPI and QSPI.
+- Onboard ES8311/ES7210 audio codec and dual-microphone circuitry.
+- CH32V003F4U6 I/O expander.
+- Camera interface, SD-card interface, speaker output and battery/power circuitry.
+- V1 and V1.1 revisions; Waveshare documents program compatibility between them.
+
+This means the upstream XiaoZhi profile at `main/boards/waveshare/esp32-s3-cam` is genuinely for the Waveshare ESP32-S3-CAM-OVxxxx family, unlike the DFRobot profile. However, the upstream implementation actively initializes the onboard I2C expander, codec, LCD interface and camera. It is not a drop-in Otto profile because this project currently targets external INMP441 + MAX98357A modules and a separate 240×240 ST7789 display, with the camera unused.
 
 ## Upstream candidate inspected
 
-The upstream v2.5.0 source contains `DFRobot ESP32-S3 AI Camera Module` at:
+- Kconfig symbol: `CONFIG_BOARD_TYPE_WAVESHARE_ESP32_S3_CAM_XXXX`
+- Board directory: `main/boards/waveshare/esp32-s3-cam`
+- Files inspected: `config.h`, `config.json`, `esp32-s3-cam-xxxx.cc`, `README.md`
 
-- `main/boards/dfrobot/df-s3-ai-cam/README.md`
-- `main/boards/dfrobot/df-s3-ai-cam/config.h`
+The upstream config uses I2S GPIO 10/11/12/13/14, I2C GPIO 7/8, and LCD SPI GPIO 1/2/3/5/6, plus a CH32V003 expander. Do not reuse those assignments for Otto's external modules without checking the exact header routing and any onboard electrical connections. The board's camera and onboard peripherals also occupy resources that must be considered even though Otto will not use the camera.
 
-Its documented profile is specifically for DFRobot SKU DFR1154, with an OV3660 camera and board-specific peripherals. Its config assigns microphone GPIO 38/39, speaker GPIO 42/45/46, gain GPIO 41, LED GPIO 3, and camera pins including GPIO 4–21.
+## Confirmed Otto project constraints
 
-**This is not verified to be the user's Waveshare ESP32-S3-CAM N16R8 module. Do not reuse that pin map.** The profile's camera and peripheral assignments may conflict with the user's wiring or board routing.
-
-## Confirmed project constraints
-
-- Target memory: 16 MB flash and 8 MB PSRAM (N16R8).
-- Camera must remain disabled.
-- Display target: ST7789, 240×240.
-- Audio devices: INMP441 microphone and MAX98357A amplifier.
-- Two servos: pan and tilt; servo outputs remain disabled until pinout and power are checked.
+- Camera disabled in firmware.
+- External display target: ST7789, 240×240.
+- External microphone: INMP441.
+- External amplifier: MAX98357A.
+- Two 180° servos: pan and tilt; separate regulated 5V supply and common ground with ESP32 required.
 - Optional PIR: HC-SR501.
-- Unknown GPIO assignments must remain null.
+- GPIO assignments for the external modules remain null until their exact header connections and conflicts are validated.
+- Do not enable both onboard codec audio and external I2S audio paths simultaneously by accident.
 
-## Required evidence before creating the custom board profile
+## Engineering decision
 
-1. Exact board manufacturer and product/SKU, or a clear photo of both sides and all printed labels.
-2. Board schematic/pinout for the exact revision.
-3. Confirmation of which GPIOs are physically exposed and which are reserved for flash/PSRAM, USB, camera, onboard peripherals, or boot strapping.
-4. Confirmed display and I2S wiring.
-5. Servo supply rating and common-ground arrangement.
+Skip the photo request and use the official Waveshare documentation/schematic as the board-family reference. Do not block software architecture work on a photo.
 
-## Next engineering step
+Still do not invent a pin map: N16R8 identifies memory capacity, not which breakout header pin the user connected each module to. Keep all Otto external-module GPIOs unassigned in the checked-in default configuration. Build a dedicated Otto profile by reusing only safe board-level facts, explicitly disabling camera and unused onboard peripherals, and keeping the Custom GPIO layer responsible for later verified assignments.
 
-Once the exact board is identified, add a dedicated XiaoZhi board directory and Kconfig entry, starting from the closest verified ESP32-S3 board implementation. Keep the camera driver out of the selected profile. Then build with ESP-IDF 6.1 and test each peripheral independently.
-
-A successful compile is not proof that the pinout or electrical design is safe.
+A successful compile is not proof that the external wiring or electrical design is safe.
