@@ -6,11 +6,17 @@
     "ref": "v2.5.0"
   },
   "board": {
-    "profile": "esp32-s3-cam-n16r8",
+    "manufacturer": "Waveshare",
+    "product_family": "ESP32-S3-CAM-OVxxxx",
+    "pcb_revision": null,
+    "profile": "otto-waveshare-esp32-s3-cam",
+    "upstream_reference_profile": "waveshare/esp32-s3-cam",
     "chip": "esp32s3",
     "flash_mb": 16,
     "psram_mb": 8,
-    "camera_enabled": false
+    "camera_enabled": false,
+    "onboard_codec_enabled": false,
+    "onboard_io_expander_enabled": false
   },
   "display": {
     "type": "st7789",
