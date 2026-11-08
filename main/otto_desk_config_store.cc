@@ -16,25 +16,65 @@ const cJSON* Get(const cJSON* object, const char* key) {
     return cJSON_IsObject(object) ? cJSON_GetObjectItemCaseSensitive(object, key) : nullptr;
 }
 
+bool HasExactKeys(const cJSON* object, std::initializer_list<const char*> keys) {
+    if (!cJSON_IsObject(object)) return false;
+
+    size_t count = 0;
+    for (const cJSON* item = object->child; item != nullptr; item = item->next) {
+        if (item->string == nullptr) return false;
+        bool known = false;
+        for (const char* key : keys) {
+            if (std::strcmp(item->string, key) == 0) {
+                known = true;
+                break;
+            }
+        }
+        if (!known) return false;
+        ++count;
+    }
+    return count == keys.size();
+}
+
 bool IsFalse(const cJSON* object, const char* key) {
     const cJSON* value = Get(object, key);
     return cJSON_IsBool(value) && cJSON_IsFalse(value);
 }
 
-bool AllObjectValuesNull(const cJSON* object) {
-    if (!cJSON_IsObject(object)) return false;
-    for (const cJSON* item = object->child; item != nullptr; item = item->next) {
-        if (!cJSON_IsNull(item)) return false;
+bool IsString(const cJSON* object, const char* key, const char* expected) {
+    const cJSON* value = Get(object, key);
+    return cJSON_IsString(value) && value->valuestring != nullptr &&
+           std::strcmp(value->valuestring, expected) == 0;
+}
+
+bool IsNumber(const cJSON* object, const char* key, double expected) {
+    const cJSON* value = Get(object, key);
+    return cJSON_IsNumber(value) && value->valuedouble == expected;
+}
+
+bool IsNullableString(const cJSON* object, const char* key) {
+    const cJSON* value = Get(object, key);
+    return cJSON_IsNull(value) ||
+           (cJSON_IsString(value) && value->valuestring != nullptr);
+}
+
+bool IsNull(const cJSON* object, const char* key) {
+    return cJSON_IsNull(Get(object, key));
+}
+
+bool HasNullKeys(const cJSON* object, std::initializer_list<const char*> keys) {
+    if (!HasExactKeys(object, keys)) return false;
+    for (const char* key : keys) {
+        if (!IsNull(object, key)) return false;
     }
     return true;
 }
 
-bool HasNullKeys(const cJSON* object, std::initializer_list<const char*> keys) {
-    if (!AllObjectValuesNull(object)) return false;
-    for (const char* key : keys) {
-        if (!cJSON_IsNull(Get(object, key))) return false;
-    }
-    return true;
+bool IsBoundedNumber(const cJSON* object, const char* key,
+                     double minimum, double maximum, bool allow_minimum = true) {
+    const cJSON* value = Get(object, key);
+    if (!cJSON_IsNumber(value)) return false;
+    return (allow_minimum ? value->valuedouble >= minimum : value->valuedouble > minimum) &&
+           value->valuedouble <= maximum;
 }
 
 bool HasNoDuplicateKeys(const cJSON* object) {
@@ -51,40 +91,99 @@ bool HasNoDuplicateKeys(const cJSON* object) {
     return true;
 }
 
-bool IsSafeConfig(const cJSON* root) {
-    if (!cJSON_IsObject(root) || !HasNoDuplicateKeys(root)) return false;
+bool IsSafeServo(const cJSON* servo) {
+    return HasExactKeys(servo, {"gpio", "min_deg", "center_deg", "max_deg",
+                                "speed_deg_per_sec", "enabled"}) &&
+           IsNull(servo, "gpio") && IsFalse(servo, "enabled") &&
+           IsBoundedNumber(servo, "min_deg", 0, 180) &&
+           IsBoundedNumber(servo, "center_deg", 0, 180) &&
+           IsBoundedNumber(servo, "max_deg", 0, 180) &&
+           IsBoundedNumber(servo, "speed_deg_per_sec", 0, 360, false) &&
+           Get(servo, "min_deg")->valuedouble < Get(servo, "center_deg")->valuedouble &&
+           Get(servo, "center_deg")->valuedouble < Get(servo, "max_deg")->valuedouble;
+}
 
-    const cJSON* version = Get(root, "schema_version");
-    if (!cJSON_IsNumber(version) || version->valuedouble != 1) return false;
+bool IsSafeConfig(const cJSON* root) {
+    if (!HasExactKeys(root, {"schema_version", "project", "firmware_base", "board",
+                             "display", "audio", "servos", "pir", "gpio_policy"}) ||
+        !HasNoDuplicateKeys(root)) return false;
+
+    if (!IsNumber(root, "schema_version", 1) ||
+        !IsString(root, "project", "Robot-cua-TRUONG")) return false;
+
+    const cJSON* firmware = Get(root, "firmware_base");
+    if (!HasExactKeys(firmware, {"repository", "ref"}) ||
+        !IsString(firmware, "repository", "https://github.com/78/xiaozhi-esp32") ||
+        !IsString(firmware, "ref", "v2.5.0")) return false;
 
     const cJSON* board = Get(root, "board");
-    if (!IsFalse(board, "camera_enabled") ||
+    if (!HasExactKeys(board, {"manufacturer", "product_family", "pcb_revision", "profile",
+                              "upstream_reference_profile", "chip", "flash_mb", "psram_mb",
+                              "camera_enabled", "onboard_codec_enabled",
+                              "onboard_io_expander_enabled"}) ||
+        !IsString(board, "manufacturer", "Waveshare") ||
+        !IsString(board, "product_family", "ESP32-S3-CAM-OVxxxx") ||
+        !IsNullableString(board, "pcb_revision") ||
+        !IsString(board, "profile", "otto-waveshare-esp32-s3-cam") ||
+        !IsString(board, "upstream_reference_profile", "waveshare/esp32-s3-cam") ||
+        !IsString(board, "chip", "esp32s3") ||
+        !IsNumber(board, "flash_mb", 16) || !IsNumber(board, "psram_mb", 8) ||
+        !IsFalse(board, "camera_enabled") ||
         !IsFalse(board, "onboard_codec_enabled") ||
         !IsFalse(board, "onboard_io_expander_enabled")) return false;
 
     const cJSON* display = Get(root, "display");
-    if (!IsFalse(display, "enabled") ||
+    if (!HasExactKeys(display, {"type", "width", "height", "rotation", "gpio", "enabled"}) ||
+        !IsString(display, "type", "st7789") ||
+        !IsNumber(display, "width", 240) || !IsNumber(display, "height", 240) ||
+        !(IsNull(display, "rotation") || IsNumber(display, "rotation", 0) ||
+          IsNumber(display, "rotation", 90) || IsNumber(display, "rotation", 180) ||
+          IsNumber(display, "rotation", 270)) ||
+        !IsFalse(display, "enabled") ||
         !HasNullKeys(Get(display, "gpio"),
                      {"sclk", "mosi", "cs", "dc", "reset", "backlight"})) return false;
 
     const cJSON* audio = Get(root, "audio");
+    if (!HasExactKeys(audio, {"microphone", "amplifier"})) return false;
     const cJSON* microphone = Get(audio, "microphone");
+    const cJSON* mic_i2s = Get(microphone, "i2s");
+    if (!HasExactKeys(microphone, {"type", "i2s", "enabled"}) ||
+        !IsString(microphone, "type", "inmp441") ||
+        !IsFalse(microphone, "enabled") ||
+        !HasNullKeys(mic_i2s, {"ws", "sck", "sd"})) return false;
+
     const cJSON* amplifier = Get(audio, "amplifier");
-    if (!IsFalse(microphone, "enabled") ||
-        !HasNullKeys(Get(microphone, "i2s"), {"ws", "sck", "sd"}) ||
+    const cJSON* amp_i2s = Get(amplifier, "i2s");
+    const cJSON* impedance = Get(amplifier, "speaker_impedance_ohm");
+    if (!HasExactKeys(amplifier, {"type", "i2s", "enabled", "speaker_impedance_ohm"}) ||
+        !IsString(amplifier, "type", "max98357a") ||
         !IsFalse(amplifier, "enabled") ||
-        !HasNullKeys(Get(amplifier, "i2s"), {"din", "bclk", "lrclk"})) return false;
+        !HasNullKeys(amp_i2s, {"din", "bclk", "lrclk"}) ||
+        !(cJSON_IsNull(impedance) ||
+          (cJSON_IsNumber(impedance) && impedance->valuedouble > 0))) return false;
 
     const cJSON* servos = Get(root, "servos");
-    const cJSON* pan = Get(servos, "pan");
-    const cJSON* tilt = Get(servos, "tilt");
-    if (!IsFalse(pan, "enabled") || !cJSON_IsNull(Get(pan, "gpio")) ||
-        !IsFalse(tilt, "enabled") || !cJSON_IsNull(Get(tilt, "gpio")) ||
+    if (!HasExactKeys(servos, {"pan", "tilt", "external_power_verified"}) ||
+        !IsSafeServo(Get(servos, "pan")) ||
+        !IsSafeServo(Get(servos, "tilt")) ||
         !IsFalse(servos, "external_power_verified")) return false;
 
     const cJSON* pir = Get(root, "pir");
-    if (!IsFalse(pir, "enabled") || !cJSON_IsNull(Get(pir, "gpio"))) return false;
+    if (!HasExactKeys(pir, {"type", "gpio", "enabled"}) ||
+        !IsString(pir, "type", "hc-sr501") ||
+        !IsNull(pir, "gpio") || !IsFalse(pir, "enabled")) return false;
 
+    const cJSON* policy = Get(root, "gpio_policy");
+    if (!HasExactKeys(policy, {"allow_unassigned", "reject_duplicate_assignments",
+                               "reject_bootstrap_conflicts", "reject_flash_psram_conflicts",
+                               "reject_usb_uart_conflicts", "require_board_pinout_validation"})) {
+        return false;
+    }
+    for (const char* key : {"allow_unassigned", "reject_duplicate_assignments",
+                            "reject_bootstrap_conflicts", "reject_flash_psram_conflicts",
+                            "reject_usb_uart_conflicts", "require_board_pinout_validation"}) {
+        if (!cJSON_IsBool(Get(policy, key))) return false;
+    }
     return true;
 }
 }  // namespace
