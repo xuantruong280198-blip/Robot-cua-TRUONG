@@ -67,8 +67,23 @@ bool IsSafeConfig(const cJSON* root) {
 esp_err_t OttoDeskConfigStore::ValidateSafeJson(const std::string& json) {
     if (json.empty() || json.size() > kMaxConfigBytes) return ESP_ERR_INVALID_SIZE;
 
-    cJSON* root = cJSON_ParseWithLength(json.c_str(), json.size());
-    if (root == nullptr) return ESP_ERR_INVALID_ARG;
+    const char* parse_end = nullptr;
+    cJSON* root = cJSON_ParseWithLengthOpts(
+        json.c_str(), json.size(), &parse_end, false);
+    if (root == nullptr || parse_end == nullptr) {
+        cJSON_Delete(root);
+        return ESP_ERR_INVALID_ARG;
+    }
+
+    const char* const input_end = json.c_str() + json.size();
+    while (parse_end < input_end &&
+           std::isspace(static_cast<unsigned char>(*parse_end))) {
+        ++parse_end;
+    }
+    if (parse_end != input_end) {
+        cJSON_Delete(root);
+        return ESP_ERR_INVALID_ARG;
+    }
 
     const bool safe = IsSafeConfig(root);
     cJSON_Delete(root);
