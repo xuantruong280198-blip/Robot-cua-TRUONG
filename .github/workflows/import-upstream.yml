@@ -1,0 +1,60 @@
+name: Import XiaoZhi upstream
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "README.md"
+      - "docs/**"
+      - "config/**"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: upstream-import-main
+  cancel-in-progress: false
+
+jobs:
+  import-upstream:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout project
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Skip if source is already imported
+        id: guard
+        run: |
+          if [ -f .upstream-imported ]; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Import pinned XiaoZhi source
+        if: steps.guard.outputs.skip == 'false'
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/xiaozhi-upstream
+          git clone --depth 1 --branch v2.5.0 https://github.com/78/xiaozhi-esp32.git /tmp/xiaozhi-upstream
+          cp README.md /tmp/project-README.md
+          tar -C /tmp/xiaozhi-upstream --exclude=.git -cf - . | tar -C . -xf -
+          cp /tmp/project-README.md README.md
+          mkdir -p docs config
+          cat > .upstream-imported <<'EOF'
+          repository=https://github.com/78/xiaozhi-esp32
+          ref=v2.5.0
+          imported_by=GitHub Actions
+          EOF
+          git add -A
+          if git diff --cached --quiet; then
+            echo "No upstream changes to commit."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "Import XiaoZhi ESP32 upstream v2.5.0"
+          git push origin HEAD:main
