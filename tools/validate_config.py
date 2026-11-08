@@ -91,6 +91,41 @@ def main() -> None:
     if data.get("pir", {}).get("enabled") is not False:
         fail("PIR must remain disabled until wiring is verified")
 
+    # Validate cross-field safety rules that JSON Schema alone does not
+    # express clearly for this versioned hardware contract.
+    servos = data.get("servos", {})
+    any_servo_enabled = False
+    for name in ("pan", "tilt"):
+        servo = servos.get(name, {})
+        minimum = servo.get("min_deg")
+        center = servo.get("center_deg")
+        maximum = servo.get("max_deg")
+        if not (minimum <= center <= maximum):
+            fail(f"servos.{name} must satisfy min_deg <= center_deg <= max_deg")
+        if servo.get("enabled") is True:
+            any_servo_enabled = True
+            if servo.get("gpio") is None:
+                fail(f"servos.{name}.gpio is required when that servo is enabled")
+
+    if any_servo_enabled and servos.get("external_power_verified") is not True:
+        fail("external servo power must be verified before enabling either servo")
+
+    required_pin_groups = [
+        ("display.enabled", data.get("display", {}).get("enabled"),
+         data.get("display", {}).get("gpio", {})),
+        ("audio.microphone.enabled", data.get("audio", {}).get("microphone", {}).get("enabled"),
+         data.get("audio", {}).get("microphone", {}).get("i2s", {})),
+        ("audio.amplifier.enabled", data.get("audio", {}).get("amplifier", {}).get("enabled"),
+         data.get("audio", {}).get("amplifier", {}).get("i2s", {})),
+    ]
+    for label, enabled, pins in required_pin_groups:
+        if enabled is True and any(value is None for value in pins.values()):
+            fail(f"{label} requires every GPIO in its pin group to be assigned")
+
+    pir = data.get("pir", {})
+    if pir.get("enabled") is True and pir.get("gpio") is None:
+        fail("pir.gpio is required when PIR is enabled")
+
     print("Hardware JSON validation passed (Waveshare target, safe unassigned defaults).")
 
 
