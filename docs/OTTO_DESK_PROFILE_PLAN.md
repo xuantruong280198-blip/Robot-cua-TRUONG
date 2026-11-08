@@ -34,8 +34,8 @@ The existing upstream `otto-robot` profile is a different product: it contains s
 - [x] Initialize NVS and read/revalidate a saved JSON config during application startup; invalid or missing stored data is logged without crashing the boot path. The loaded JSON is not yet applied to hardware drivers.
 - [ ] Add the local HTTP configuration API, browser editor/import/export, and explicit default-config recovery behavior.
 
-- [x] Add firmware-side conservative safe-state validation before accepting JSON into NVS.
-- [ ] Implement full firmware-side schema validation matching `config/schema-v1.schema.json` before enabling configurable peripherals.
+- [x] Add firmware-side conservative safe-state validation before accepting JSON into NVS, including exact object key sets, fixed board identity, duplicate-key rejection, and disabled/unassigned peripheral checks.
+- [ ] Implement full firmware-side schema validation matching `config/schema-v1.schema.json` before enabling configurable peripherals; the current exact-shape validator is a conservative safe-state gate only.
 - [ ] Add Otto full-screen face rendering and head-servo state mapping.
 - [ ] Add the firmware build workflow and verify a downloadable merged BIN artifact.
 - [ ] Validate the final firmware on the physical board; CI success alone is not hardware validation.
