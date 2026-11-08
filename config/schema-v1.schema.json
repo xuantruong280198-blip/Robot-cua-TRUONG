@@ -1,0 +1,388 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/xuantruong280198-blip/Robot-cua-TRUONG/blob/main/config/schema-v1.schema.json",
+  "title": "Otto Desk hardware configuration",
+  "description": "Version 1 configuration contract. GPIO assignments remain null until the exact external header mapping is verified.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "project",
+    "firmware_base",
+    "board",
+    "display",
+    "audio",
+    "servos",
+    "pir",
+    "gpio_policy"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "project": {
+      "const": "Robot-cua-TRUONG"
+    },
+    "firmware_base": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "repository",
+        "ref"
+      ],
+      "properties": {
+        "repository": {
+          "const": "https://github.com/78/xiaozhi-esp32"
+        },
+        "ref": {
+          "const": "v2.5.0"
+        }
+      }
+    },
+    "board": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "manufacturer",
+        "product_family",
+        "pcb_revision",
+        "profile",
+        "upstream_reference_profile",
+        "chip",
+        "flash_mb",
+        "psram_mb",
+        "camera_enabled",
+        "onboard_codec_enabled",
+        "onboard_io_expander_enabled"
+      ],
+      "properties": {
+        "manufacturer": {
+          "const": "Waveshare"
+        },
+        "product_family": {
+          "const": "ESP32-S3-CAM-OVxxxx"
+        },
+        "pcb_revision": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "profile": {
+          "const": "otto-waveshare-esp32-s3-cam"
+        },
+        "upstream_reference_profile": {
+          "const": "waveshare/esp32-s3-cam"
+        },
+        "chip": {
+          "const": "esp32s3"
+        },
+        "flash_mb": {
+          "const": 16
+        },
+        "psram_mb": {
+          "const": 8
+        },
+        "camera_enabled": {
+          "const": false
+        },
+        "onboard_codec_enabled": {
+          "const": false
+        },
+        "onboard_io_expander_enabled": {
+          "const": false
+        }
+      }
+    },
+    "display": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "width",
+        "height",
+        "rotation",
+        "gpio",
+        "enabled"
+      ],
+      "properties": {
+        "type": {
+          "const": "st7789"
+        },
+        "width": {
+          "const": 240
+        },
+        "height": {
+          "const": 240
+        },
+        "rotation": {
+          "enum": [
+            null,
+            0,
+            90,
+            180,
+            270
+          ]
+        },
+        "gpio": {
+          "$ref": "#/$defs/displayPins"
+        },
+        "enabled": {
+          "type": "boolean"
+        }
+      }
+    },
+    "audio": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "microphone",
+        "amplifier"
+      ],
+      "properties": {
+        "microphone": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "type",
+            "i2s",
+            "enabled"
+          ],
+          "properties": {
+            "type": {
+              "const": "inmp441"
+            },
+            "i2s": {
+              "$ref": "#/$defs/micPins"
+            },
+            "enabled": {
+              "type": "boolean"
+            }
+          }
+        },
+        "amplifier": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "type",
+            "i2s",
+            "enabled",
+            "speaker_impedance_ohm"
+          ],
+          "properties": {
+            "type": {
+              "const": "max98357a"
+            },
+            "i2s": {
+              "$ref": "#/$defs/ampPins"
+            },
+            "enabled": {
+              "type": "boolean"
+            },
+            "speaker_impedance_ohm": {
+              "type": [
+                "number",
+                "null"
+              ],
+              "exclusiveMinimum": 0
+            }
+          }
+        }
+      }
+    },
+    "servos": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "pan",
+        "tilt",
+        "external_power_verified"
+      ],
+      "properties": {
+        "pan": {
+          "$ref": "#/$defs/servo"
+        },
+        "tilt": {
+          "$ref": "#/$defs/servo"
+        },
+        "external_power_verified": {
+          "type": "boolean"
+        }
+      }
+    },
+    "pir": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "gpio",
+        "enabled"
+      ],
+      "properties": {
+        "type": {
+          "const": "hc-sr501"
+        },
+        "gpio": {
+          "$ref": "#/$defs/gpio"
+        },
+        "enabled": {
+          "type": "boolean"
+        }
+      }
+    },
+    "gpio_policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "allow_unassigned",
+        "reject_duplicate_assignments",
+        "reject_bootstrap_conflicts",
+        "reject_flash_psram_conflicts",
+        "reject_usb_uart_conflicts",
+        "require_board_pinout_validation"
+      ],
+      "properties": {
+        "allow_unassigned": {
+          "type": "boolean"
+        },
+        "reject_duplicate_assignments": {
+          "type": "boolean"
+        },
+        "reject_bootstrap_conflicts": {
+          "type": "boolean"
+        },
+        "reject_flash_psram_conflicts": {
+          "type": "boolean"
+        },
+        "reject_usb_uart_conflicts": {
+          "type": "boolean"
+        },
+        "require_board_pinout_validation": {
+          "type": "boolean"
+        }
+      }
+    }
+  },
+  "$defs": {
+    "gpio": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "minimum": 0,
+      "maximum": 48
+    },
+    "displayPins": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "sclk",
+        "mosi",
+        "cs",
+        "dc",
+        "reset",
+        "backlight"
+      ],
+      "properties": {
+        "sclk": {
+          "$ref": "#/$defs/gpio"
+        },
+        "mosi": {
+          "$ref": "#/$defs/gpio"
+        },
+        "cs": {
+          "$ref": "#/$defs/gpio"
+        },
+        "dc": {
+          "$ref": "#/$defs/gpio"
+        },
+        "reset": {
+          "$ref": "#/$defs/gpio"
+        },
+        "backlight": {
+          "$ref": "#/$defs/gpio"
+        }
+      }
+    },
+    "micPins": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "ws",
+        "sck",
+        "sd"
+      ],
+      "properties": {
+        "ws": {
+          "$ref": "#/$defs/gpio"
+        },
+        "sck": {
+          "$ref": "#/$defs/gpio"
+        },
+        "sd": {
+          "$ref": "#/$defs/gpio"
+        }
+      }
+    },
+    "ampPins": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "din",
+        "bclk",
+        "lrclk"
+      ],
+      "properties": {
+        "din": {
+          "$ref": "#/$defs/gpio"
+        },
+        "bclk": {
+          "$ref": "#/$defs/gpio"
+        },
+        "lrclk": {
+          "$ref": "#/$defs/gpio"
+        }
+      }
+    },
+    "servo": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "gpio",
+        "min_deg",
+        "center_deg",
+        "max_deg",
+        "speed_deg_per_sec",
+        "enabled"
+      ],
+      "properties": {
+        "gpio": {
+          "$ref": "#/$defs/gpio"
+        },
+        "min_deg": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 180
+        },
+        "center_deg": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 180
+        },
+        "max_deg": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 180
+        },
+        "speed_deg_per_sec": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 360
+        },
+        "enabled": {
+          "type": "boolean"
+        }
+      }
+    }
+  }
+}
