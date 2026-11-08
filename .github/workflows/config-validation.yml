@@ -5,6 +5,7 @@ on:
     paths:
       - "config/**"
       - "tools/validate_config.py"
+      - "tools/test_validate_config.py"
       - ".github/workflows/config-validation.yml"
   pull_request:
     paths:
