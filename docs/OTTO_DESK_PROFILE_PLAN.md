@@ -31,9 +31,11 @@ The existing upstream `otto-robot` profile is a different product: it contains s
 - [x] Audit the existing Otto biped source and isolate reusable full-screen face and external I2S components.
 - [ ] Add the dedicated board selector and minimal desk-profile source (blocked until the runtime GPIO config and board initialization path are implemented together).
 - [x] Add a bounded NVS JSON storage primitive (`OttoDeskConfigStore`) with read/write/clear operations and firmware-side JSON safety checks. It rejects non-object/invalid JSON, oversized payloads, enabled peripherals, and any assigned GPIO until a verified pin map exists.
-- [ ] Wire the NVS store into board startup and the local HTTP configuration API; initialize NVS and define default-config fallback/recovery behavior.
+- [x] Initialize NVS and read/revalidate a saved JSON config during application startup; invalid or missing stored data is logged without crashing the boot path. The loaded JSON is not yet applied to hardware drivers.
+- [ ] Add the local HTTP configuration API, browser editor/import/export, and explicit default-config recovery behavior.
 
-- [ ] Add firmware-side schema/safety validation before accepting JSON into NVS; host validation alone is not sufficient.
+- [x] Add firmware-side conservative safe-state validation before accepting JSON into NVS.
+- [ ] Implement full firmware-side schema validation matching `config/schema-v1.schema.json` before enabling configurable peripherals.
 - [ ] Add Otto full-screen face rendering and head-servo state mapping.
 - [ ] Add the firmware build workflow and verify a downloadable merged BIN artifact.
 - [ ] Validate the final firmware on the physical board; CI success alone is not hardware validation.
