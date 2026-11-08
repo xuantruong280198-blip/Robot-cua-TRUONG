@@ -33,6 +33,8 @@ This display class is a strong candidate for reuse, subject to confirming that i
 
 The actual I2S GPIO values must be supplied by the validated board configuration; do not copy values from another board's `config.h`.
 
+The source constructor maps the speaker as `spk_bclk`, `spk_ws`, `spk_dout` and the microphone as `mic_sck`, `mic_ws`, `mic_din`. It creates separate TX and RX I2S channels. The desk profile must map the JSON fields to this exact constructor order and must not use the PDM-specific `NoAudioCodecSimplexPdm` class for an INMP441 standard-I2S microphone.
+
 ## Desk-specific implementation boundary
 
 The new board profile should own only:
