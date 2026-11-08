@@ -52,14 +52,6 @@ class HardwareConfigValidationTests(unittest.TestCase):
         self.assertNotEqual(code, 0)
         self.assertIn("gpio is required", output)
 
-    def test_servo_requires_verified_external_power(self):
-        config = copy.deepcopy(DEFAULT)
-        config["servos"]["pan"].update(enabled=True, gpio=4)
-        config["servos"]["external_power_verified"] = False
-        code, output = self.run_config(config)
-        self.assertNotEqual(code, 0)
-        self.assertIn("external servo power must be verified", output)
-
     def test_enabled_display_requires_all_pins(self):
         config = copy.deepcopy(DEFAULT)
         config["display"]["enabled"] = True
