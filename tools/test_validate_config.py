@@ -51,6 +51,7 @@ class HardwareConfigValidationTests(unittest.TestCase):
         code, output = self.run_config(config)
         self.assertNotEqual(code, 0)
         self.assertIn("must remain disabled until wiring is verified", output)
+
     def test_enabled_display_requires_all_pins(self):
         config = copy.deepcopy(DEFAULT)
         config["display"]["enabled"] = True
@@ -65,6 +66,29 @@ class HardwareConfigValidationTests(unittest.TestCase):
         code, output = self.run_config(config)
         self.assertNotEqual(code, 0)
         self.assertIn("assigned more than once", output)
+
+    def test_gpio_out_of_range_is_rejected(self):
+        config = copy.deepcopy(DEFAULT)
+        config["display"]["gpio"]["sclk"] = 49
+        code, output = self.run_config(config)
+        self.assertNotEqual(code, 0)
+        self.assertIn("out-of-range GPIO 49", output)
+
+    def test_boolean_is_not_accepted_as_gpio_number(self):
+        config = copy.deepcopy(DEFAULT)
+        config["display"]["gpio"]["sclk"] = True
+        code, output = self.run_config(config)
+        self.assertNotEqual(code, 0)
+        self.assertIn("must be an integer GPIO or null", output)
+
+    def test_servo_requires_verified_external_power(self):
+        config = copy.deepcopy(DEFAULT)
+        config["servos"]["external_power_verified"] = True
+        config["servos"]["pan"]["enabled"] = True
+        config["servos"]["pan"]["gpio"] = 4
+        code, output = self.run_config(config)
+        self.assertNotEqual(code, 0)
+        self.assertIn("must be null until the exact header mapping is verified", output)
 
     def test_camera_must_remain_disabled(self):
         config = copy.deepcopy(DEFAULT)
