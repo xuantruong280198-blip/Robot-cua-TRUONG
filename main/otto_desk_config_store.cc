@@ -5,6 +5,7 @@
 #include <nvs_flash.h>
 
 #include <cctype>
+#include <cstring>
 #include <initializer_list>
 
 namespace {
