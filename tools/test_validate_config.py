@@ -7,6 +7,8 @@ import importlib.util
 import io
 import json
 import pathlib
+import subprocess
+import sys
 import tempfile
 import unittest
 from unittest.mock import patch
@@ -37,6 +39,32 @@ class HardwareConfigValidationTests(unittest.TestCase):
     def test_safe_default_passes(self):
         code, output = self.run_config(copy.deepcopy(DEFAULT))
         self.assertEqual(code, 0, output)
+
+    def test_cli_validates_an_imported_json_file(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = pathlib.Path(directory) / "imported.json"
+            path.write_text(json.dumps(copy.deepcopy(DEFAULT)), encoding="utf-8")
+            result = subprocess.run(
+                [sys.executable, str(ROOT / "tools" / "validate_config.py"),
+                 "--config", str(path)],
+                capture_output=True, text=True, check=False,
+            )
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            self.assertIn("Hardware JSON validation passed", result.stdout)
+
+    def test_cli_rejects_invalid_imported_json_file(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = pathlib.Path(directory) / "imported.json"
+            config = copy.deepcopy(DEFAULT)
+            config["display"]["gpio"]["sclk"] = 49
+            path.write_text(json.dumps(config), encoding="utf-8")
+            result = subprocess.run(
+                [sys.executable, str(ROOT / "tools" / "validate_config.py"),
+                 "--config", str(path)],
+                capture_output=True, text=True, check=False,
+            )
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("out-of-range GPIO 49", result.stderr)
 
     def test_servo_angle_order_is_enforced(self):
         config = copy.deepcopy(DEFAULT)
