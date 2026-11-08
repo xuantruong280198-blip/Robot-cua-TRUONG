@@ -1,0 +1,30 @@
+name: Validate robot configuration
+
+on:
+  push:
+    paths:
+      - "config/**"
+      - "tools/validate_config.py"
+      - ".github/workflows/config-validation.yml"
+  pull_request:
+    paths:
+      - "config/**"
+      - "tools/validate_config.py"
+      - ".github/workflows/config-validation.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate-config:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+      - name: Validate safe hardware defaults
+        run: python tools/validate_config.py
