@@ -41,7 +41,7 @@ jobs:
           mkdir -p /tmp/xiaozhi-upstream
           git clone --depth 1 --branch v2.5.0 https://github.com/78/xiaozhi-esp32.git /tmp/xiaozhi-upstream
           cp README.md /tmp/project-README.md
-          tar -C /tmp/xiaozhi-upstream --exclude=.git -cf - . | tar -C . -xf -
+          tar -C /tmp/xiaozhi-upstream --exclude=.git --exclude='./.github/workflows' -cf - . | tar -C . -xf -
           cp /tmp/project-README.md README.md
           mkdir -p docs config
           cat > .upstream-imported <<'EOF'
