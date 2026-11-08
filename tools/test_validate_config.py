@@ -81,6 +81,15 @@ class HardwareConfigValidationTests(unittest.TestCase):
         self.assertNotEqual(code, 0)
         self.assertIn("must be an integer GPIO or null", output)
 
+    def test_non_integer_gpio_values_are_rejected(self):
+        for invalid in ("GPIO5", 5.5):
+            with self.subTest(invalid=invalid):
+                config = copy.deepcopy(DEFAULT)
+                config["display"]["gpio"]["sclk"] = invalid
+                code, output = self.run_config(config)
+                self.assertNotEqual(code, 0)
+                self.assertIn("must be an integer GPIO or null", output)
+
     def test_servo_requires_verified_external_power(self):
         config = copy.deepcopy(DEFAULT)
         config["servos"]["external_power_verified"] = True
