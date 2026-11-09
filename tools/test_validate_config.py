@@ -301,6 +301,19 @@ class RuntimeConfigDecodeContractTests(unittest.TestCase):
         self.assertIn("config.pan = ReadServo", self.decode)
         self.assertIn("config.tilt = ReadServo", self.decode)
 
+    def test_decoder_carries_all_gpio_safety_policy_flags(self):
+        for field in (
+            "allow_unassigned", "reject_duplicate_assignments",
+            "reject_bootstrap_conflicts", "reject_flash_psram_conflicts",
+            "reject_usb_uart_conflicts", "require_board_pinout_validation",
+        ):
+            with self.subTest(field=field):
+                self.assertIn(f"config.gpio_policy.{field}", self.decode)
+                self.assertRegex(
+                    self.header,
+                    rf"bool {field} = true;",
+                )
+
     def test_runtime_config_defaults_cannot_activate_hardware(self):
         self.assertIn("bool hardware_activation_permitted = false;", self.header)
         for field in (
