@@ -70,6 +70,17 @@ orientation, or replace calibration. In particular, the sign of the tilt
 offset depends on how the pan/tilt bracket is mounted and must be checked
 before any PWM output is enabled.
 
+## ESP32-S3 N16R8 GPIO safety policy
+
+The servo and HC-SR501 drivers now share `otto_desk_gpio_safety.h`.
+The conservative chip-level denylist blocks GPIO0/3/19/20, GPIO26-37
+(octal flash/PSRAM routing risk), and GPIO43-46 (UART0/strapping roles).
+Host-side tests run in the Otto Desk CI before the ESP-IDF build.
+
+This denylist is not a board pinout. GPIOs that pass it are not automatically
+approved for use: activation still requires the exact 40-pin carrier mapping,
+conflict checks, and the existing explicit safety interlocks.
+
 ## Guarded PIR input driver
 
 `otto_desk_pir.h/.cc` now provides a small HC-SR501 input driver. It
