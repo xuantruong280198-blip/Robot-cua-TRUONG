@@ -4,6 +4,7 @@ on:
   push:
     paths:
       - "main/**"
+      - "tools/**"
       - "components/**"
       - "CMakeLists.txt"
       - "sdkconfig.defaults*"
