@@ -126,7 +126,7 @@ void OttoI2sAudioCodec::SetOutputVolume(int volume) {
 }
 
 int OttoI2sAudioCodec::Read(int16_t* dest, int samples) {
-    if (!input_enabled_ || dest == nullptr || samples <= 0) return samples;
+    if (!input_enabled_ || dest == nullptr || samples <= 0) return 0;
 
     std::array<int32_t, AUDIO_CODEC_DMA_FRAME_NUM> raw{};
     int remaining = samples;
@@ -137,11 +137,16 @@ int OttoI2sAudioCodec::Read(int16_t* dest, int samples) {
         const esp_err_t err = i2s_channel_read(
             rx_handle_, raw.data(), static_cast<size_t>(count) * sizeof(int32_t),
             &bytes_read, portMAX_DELAY);
-        if (err != ESP_OK || bytes_read == 0) {
-            ESP_LOGE(kTag, "I2S microphone read failed: %s", esp_err_to_name(err));
+        if (err != ESP_OK || bytes_read == 0 || bytes_read % sizeof(int32_t) != 0) {
+            ESP_LOGE(kTag, "I2S microphone read failed or returned a partial sample: %s",
+                     esp_err_to_name(err));
             return written;
         }
         const int frames = static_cast<int>(bytes_read / sizeof(int32_t));
+        if (frames <= 0 || frames > count) {
+            ESP_LOGE(kTag, "I2S microphone returned an invalid frame count: %d", frames);
+            return written;
+        }
         for (int i = 0; i < frames; ++i) {
             // INMP441's signed 24-bit payload is left-aligned in the 32-bit slot.
             dest[written + i] = static_cast<int16_t>(raw[i] >> 16);
@@ -153,7 +158,7 @@ int OttoI2sAudioCodec::Read(int16_t* dest, int samples) {
 }
 
 int OttoI2sAudioCodec::Write(const int16_t* data, int samples) {
-    if (!output_enabled_ || data == nullptr || samples <= 0) return samples;
+    if (!output_enabled_ || data == nullptr || samples <= 0) return 0;
 
     std::array<int16_t, AUDIO_CODEC_DMA_FRAME_NUM> scaled{};
     int written = 0;
@@ -171,11 +176,17 @@ int OttoI2sAudioCodec::Write(const int16_t* data, int samples) {
         const esp_err_t err = i2s_channel_write(
             tx_handle_, scaled.data(), static_cast<size_t>(count) * sizeof(int16_t),
             &bytes_written, portMAX_DELAY);
-        if (err != ESP_OK || bytes_written == 0) {
-            ESP_LOGE(kTag, "I2S amplifier write failed: %s", esp_err_to_name(err));
+        if (err != ESP_OK || bytes_written == 0 || bytes_written % sizeof(int16_t) != 0) {
+            ESP_LOGE(kTag, "I2S amplifier write failed or returned a partial sample: %s",
+                     esp_err_to_name(err));
             return written;
         }
-        written += static_cast<int>(bytes_written / sizeof(int16_t));
+        const int frames = static_cast<int>(bytes_written / sizeof(int16_t));
+        if (frames <= 0 || frames > count) {
+            ESP_LOGE(kTag, "I2S amplifier returned an invalid frame count: %d", frames);
+            return written;
+        }
+        written += frames;
     }
     return written;
 }
