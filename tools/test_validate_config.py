@@ -269,22 +269,22 @@ class RuntimeConfigDecodeContractTests(unittest.TestCase):
 
     def test_decoder_maps_every_default_schema_gpio_key(self):
         mappings = (
-            ("display", "sclk", "display_sclk"),
-            ("display", "mosi", "display_mosi"),
-            ("display", "cs", "display_cs"),
-            ("display", "dc", "display_dc"),
-            ("display", "reset", "display_reset"),
-            ("display", "backlight", "display_backlight"),
-            ("microphone", "ws", "microphone_ws"),
-            ("microphone", "sck", "microphone_sck"),
-            ("microphone", "sd", "microphone_sd"),
-            ("amplifier", "din", "amplifier_din"),
-            ("amplifier", "bclk", "amplifier_bclk"),
-            ("amplifier", "lrclk", "amplifier_lrclk"),
+            ("display_gpio", "sclk", "display_sclk"),
+            ("display_gpio", "mosi", "display_mosi"),
+            ("display_gpio", "cs", "display_cs"),
+            ("display_gpio", "dc", "display_dc"),
+            ("display_gpio", "reset", "display_reset"),
+            ("display_gpio", "backlight", "display_backlight"),
+            ("mic_i2s", "ws", "microphone_ws"),
+            ("mic_i2s", "sck", "microphone_sck"),
+            ("mic_i2s", "sd", "microphone_sd"),
+            ("amp_i2s", "din", "amplifier_din"),
+            ("amp_i2s", "bclk", "amplifier_bclk"),
+            ("amp_i2s", "lrclk", "amplifier_lrclk"),
         )
-        for section, key, target in mappings:
-            with self.subTest(section=section, key=key):
-                self.assertIn(f'ReadOptionalInt({section}_gpio, "{key}")', self.decode)
+        for source, key, target in mappings:
+            with self.subTest(source=source, key=key):
+                self.assertIn(f'ReadOptionalInt({source}, "{key}")', self.decode)
                 self.assertIn(f"config.{target}", self.decode)
 
     def test_decoder_maps_device_enable_flags_and_servo_limits(self):
