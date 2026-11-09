@@ -191,6 +191,30 @@ class HardwareConfigValidationTests(unittest.TestCase):
                 self.assertNotEqual(code, 0)
                 self.assertIn(f"unavailable ESP32-S3 GPIO", output)
 
+
+    def test_n16r8_module_blocked_gpio_is_rejected(self):
+        blocked = (0, 3, 19, 20, *range(26, 38), 43, 44, 45, 46)
+        for gpio in blocked:
+            with self.subTest(gpio=gpio):
+                config = copy.deepcopy(DEFAULT)
+                config["display"]["gpio"]["sclk"] = gpio
+                code, output = self.run_config(config)
+                self.assertNotEqual(code, 0)
+                self.assertIn(
+                    f"GPIO {gpio}, blocked by the N16R8 module safety policy",
+                    output,
+                )
+
+    def test_unblocked_gpio_still_requires_verified_header_mapping(self):
+        config = copy.deepcopy(DEFAULT)
+        config["display"]["gpio"]["sclk"] = 4
+        code, output = self.run_config(config)
+        self.assertNotEqual(code, 0)
+        self.assertIn(
+            "must be null until the exact header mapping is verified",
+            output,
+        )
+
     def test_boolean_is_not_accepted_as_gpio_number(self):
         config = copy.deepcopy(DEFAULT)
         config["display"]["gpio"]["sclk"] = True
