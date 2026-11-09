@@ -16,12 +16,13 @@ constexpr uint16_t kPort = 8080;
 constexpr char kDefaultConfig[] = R"json({
   "schema_version": 1,
   "project": "Robot-cua-TRUONG",
-  "firmware_base": {"repository": "https://github.com/78/xiaozhi-esp32", "ref": "v2.5.0"},
+  "firmware_base": {
+    "repository": "https://github.com/78/xiaozhi-esp32",
+    "ref": "v2.5.0"
+  },
   "board": {
     "manufacturer": "Waveshare",
-    "product_family": "ESP32-S3-CAM-N16R8",
-    "header_pin_count": 40,
-    "header_pinout_verified": false,
+    "product_family": "ESP32-S3-CAM-OVxxxx",
     "pcb_revision": null,
     "profile": "otto-waveshare-esp32-s3-cam",
     "upstream_reference_profile": "waveshare/esp32-s3-cam",
@@ -30,26 +31,70 @@ constexpr char kDefaultConfig[] = R"json({
     "psram_mb": 8,
     "camera_enabled": false,
     "onboard_codec_enabled": false,
-    "onboard_io_expander_enabled": false
+    "onboard_io_expander_enabled": false,
+    "header_pin_count": 40,
+    "header_pinout_verified": false
   },
   "display": {
-    "type": "st7789", "width": 240, "height": 240, "rotation": null,
-    "gpio": {"sclk": null, "mosi": null, "cs": null, "dc": null, "reset": null, "backlight": null},
+    "type": "st7789",
+    "width": 240,
+    "height": 240,
+    "rotation": null,
+    "gpio": {
+      "sclk": null,
+      "mosi": null,
+      "cs": null,
+      "dc": null,
+      "reset": null,
+      "backlight": null
+    },
     "enabled": false
   },
   "audio": {
-    "microphone": {"type": "inmp441", "i2s": {"ws": null, "sck": null, "sd": null}, "enabled": false},
-    "amplifier": {"type": "max98357a", "i2s": {"din": null, "bclk": null, "lrclk": null},
-                  "enabled": false, "speaker_impedance_ohm": null}
+    "microphone": {
+      "type": "inmp441",
+      "i2s": {
+        "ws": null,
+        "sck": null,
+        "sd": null
+      },
+      "enabled": false
+    },
+    "amplifier": {
+      "type": "max98357a",
+      "i2s": {
+        "din": null,
+        "bclk": null,
+        "lrclk": null
+      },
+      "enabled": false,
+      "speaker_impedance_ohm": null
+    }
   },
   "servos": {
-    "pan": {"gpio": null, "min_deg": 20, "center_deg": 90, "max_deg": 160,
-            "speed_deg_per_sec": 60, "enabled": false},
-    "tilt": {"gpio": null, "min_deg": 35, "center_deg": 90, "max_deg": 145,
-             "speed_deg_per_sec": 45, "enabled": false},
+    "pan": {
+      "gpio": null,
+      "min_deg": 20,
+      "center_deg": 90,
+      "max_deg": 160,
+      "speed_deg_per_sec": 60,
+      "enabled": false
+    },
+    "tilt": {
+      "gpio": null,
+      "min_deg": 35,
+      "center_deg": 90,
+      "max_deg": 145,
+      "speed_deg_per_sec": 45,
+      "enabled": false
+    },
     "external_power_verified": false
   },
-  "pir": {"type": "hc-sr501", "gpio": null, "enabled": false},
+  "pir": {
+    "type": "hc-sr501",
+    "gpio": null,
+    "enabled": false
+  },
   "gpio_policy": {
     "allow_unassigned": true,
     "reject_duplicate_assignments": true,
