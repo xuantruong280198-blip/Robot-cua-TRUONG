@@ -343,6 +343,13 @@ class RuntimeConfigDecodeContractTests(unittest.TestCase):
         self.assertIn("Chưa gán · khóa an toàn", source)
         self.assertIn("không phải sơ đồ chân đã xác minh", source)
 
+    def test_config_post_requires_json_content_type(self):
+        source = (ROOT / "main" / "otto_desk_config_server.cc").read_text(encoding="utf-8")
+        self.assertIn('httpd_req_get_hdr_value_str(request, "Content-Type"', source)
+        self.assertIn('strncasecmp(content_type, "application/json"', source)
+        self.assertIn('415 Unsupported Media Type', source)
+        self.assertIn('content_type_must_be_application_json', source)
+
     def test_config_api_never_reports_hardware_activation(self):
         source = (ROOT / "main" / "otto_desk_config_server.cc").read_text(encoding="utf-8")
         self.assertIn("\\\"hardware_activation\\\":false", source)
