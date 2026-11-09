@@ -99,3 +99,11 @@ refuses to finish or select an image unless the received byte count exactly
 matches the declared content length. This is software-side validation; a
 release still needs a verified partition layout and a real-device rollback /
 recovery test.
+
+## Latest CI verification (2026-11-10)
+
+The dedicated Otto Desk workflow passed on commit `19fd9e2a5b4074f74f76e2e0db600e865f173ca8` in [run 42675679927](https://github.com/xuantruong280198-blip/Robot-cua-TRUONG/actions/runs/42675679927). The run completed all host-side JSON/config-page, head-motion and GPIO-safety tests, selected the Otto Desk ESP32-S3 profile, and compiled the firmware with ESP-IDF v6.0.2. The generated ESP32-S3 image is 0x1FFE10 bytes; the configured app partition has 0x1F01F0 bytes free. The artifact is `otto-desk-safe-scaffold-not-for-hardware-flashing` (artifact ID 13701081112).
+
+The generic ESP32-S3 workflow also passed on commit `49f562224f647f67db683aa0500fefe6f24204b4` in [run 42675686330](https://github.com/xuantruong280198-blip/Robot-cua-TRUONG/actions/runs/42675686330).
+
+These are reproducible CI/source-build results only. The Otto board still uses `DummyAudioCodec`; the display and external I2S, servo and PIR drivers are not started. No header GPIO assignment has been approved, and no physical-device test has been performed. The CI artifact must not be flashed as a finished robot firmware.
