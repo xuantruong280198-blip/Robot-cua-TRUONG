@@ -2,6 +2,7 @@
 
 #include "otto_desk_config_store.h"
 
+#include <esp_err.h>
 #include <esp_http_server.h>
 #include <esp_log.h>
 
