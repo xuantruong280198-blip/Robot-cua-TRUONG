@@ -470,7 +470,7 @@ class OtaSafetyRegressionTests(unittest.TestCase):
     def setUpClass(cls):
         cls.source = (ROOT / "main" / "ota.cc").read_text(encoding="utf-8")
         start = cls.source.index("bool Ota::Upgrade(")
-        end = cls.source.index("\\nbool Ota::StartUpgrade(", start)
+        end = cls.source.index("bool Ota::StartUpgrade(", start)
         cls.upgrade = cls.source[start:end]
 
     def test_download_is_bounded_by_inactive_partition_size(self):
