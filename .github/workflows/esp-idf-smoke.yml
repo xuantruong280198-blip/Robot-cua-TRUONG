@@ -48,3 +48,17 @@ jobs:
         run: |
           . /opt/esp/idf/export.sh
           idf.py build
+
+      - name: Upload ESP32-S3 build outputs
+        uses: actions/upload-artifact@v4
+        with:
+          name: otto-desk-esp32s3-build
+          if-no-files-found: error
+          retention-days: 14
+          path: |
+            build/*.bin
+            build/*.elf
+            build/flasher_args.json
+            build/project_description.json
+            build/bootloader/*.bin
+            build/partition_table/*.bin
