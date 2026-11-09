@@ -17,6 +17,15 @@ struct OttoDeskServoConfig {
     bool enabled = false;
 };
 
+struct OttoDeskGpioPolicy {
+    bool allow_unassigned = true;
+    bool reject_duplicate_assignments = true;
+    bool reject_bootstrap_conflicts = true;
+    bool reject_flash_psram_conflicts = true;
+    bool reject_usb_uart_conflicts = true;
+    bool require_board_pinout_validation = true;
+};
+
 struct OttoDeskRuntimeConfig {
     int display_width = 240;
     int display_height = 240;
@@ -45,6 +54,8 @@ struct OttoDeskRuntimeConfig {
 
     std::optional<int> pir_gpio;
     bool pir_enabled = false;
+
+    OttoDeskGpioPolicy gpio_policy;
 
     // These flags are descriptive only. The current board scaffold does not
     // apply GPIO assignments or start peripheral drivers from this structure.
