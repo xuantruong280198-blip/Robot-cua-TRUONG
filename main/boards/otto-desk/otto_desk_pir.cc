@@ -1,17 +1,9 @@
 #include "otto_desk_pir.h"
-
-#include <driver/gpio.h>
+#include "otto_desk_gpio_safety.h"
 
 OttoDeskPirSensor::OttoDeskPirSensor(gpio_num_t gpio, bool board_pinout_validated)
-    : gpio_(gpio), permitted_(board_pinout_validated) {
-    // PIR is input-only here. Reject strapping, flash/PSRAM, USB and UART pins.
-    if (!board_pinout_validated || gpio < GPIO_NUM_0 || gpio >= GPIO_NUM_MAX ||
-        gpio == GPIO_NUM_0 || gpio == GPIO_NUM_3 ||
-        gpio == GPIO_NUM_19 || gpio == GPIO_NUM_20 ||
-        gpio == GPIO_NUM_43 || gpio == GPIO_NUM_44 ||
-        gpio == GPIO_NUM_45 || gpio == GPIO_NUM_46) {
-        permitted_ = false;
-    }
+    : gpio_(gpio), permitted_(board_pinout_validated &&
+                              otto_desk::IsSafeEsp32S3Gpio(static_cast<int>(gpio))) {
 }
 
 esp_err_t OttoDeskPirSensor::Initialize() {
