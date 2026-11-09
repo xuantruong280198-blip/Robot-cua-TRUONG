@@ -3,6 +3,8 @@
 #include <esp_err.h>
 #include <esp_log.h>
 
+#include <algorithm>
+
 #include "display/lvgl_display/lvgl_image.h"
 #include "display/lvgl_display/lvgl_theme.h"
 
@@ -35,8 +37,57 @@ void OttoDeskDisplay::SetupUI() {
         }
     }
 
+    // Remove the legacy XiaoZhi chrome: the face owns the whole 240x240 panel.
+    {
+        DisplayLockGuard lock(this);
+        const lv_obj_t* chrome[] = {top_bar_, status_bar_, content_, side_bar_, bottom_bar_,
+                                    status_label_, notification_label_, network_label_,
+                                    mute_label_, battery_label_, chat_message_label_};
+        for (auto* object : chrome) {
+            if (object != nullptr) {
+                lv_obj_add_flag(const_cast<lv_obj_t*>(object), LV_OBJ_FLAG_HIDDEN);
+            }
+        }
+        if (emoji_box_ != nullptr) {
+            lv_obj_set_size(emoji_box_, width_, height_);
+            lv_obj_set_style_bg_opa(emoji_box_, LV_OPA_TRANSP, 0);
+            lv_obj_set_style_pad_all(emoji_box_, 0, 0);
+            lv_obj_set_style_border_width(emoji_box_, 0, 0);
+            lv_obj_center(emoji_box_);
+        }
+        if (emoji_label_ != nullptr) {
+            lv_obj_center(emoji_label_);
+        }
+    }
+
     // The Otto GIF collection is selected for the otto-desk board in main/CMakeLists.txt.
     SetEmotion("staticstate");
+}
+
+void OttoDeskDisplay::SetEmotion(const char* emotion) {
+    LcdDisplay::SetEmotion(emotion);
+    FitEmotionToScreen();
+}
+
+void OttoDeskDisplay::FitEmotionToScreen() {
+    DisplayLockGuard lock(this);
+    if (emoji_image_ == nullptr) {
+        return;
+    }
+
+    const auto* source = static_cast<const lv_image_dsc_t*>(lv_image_get_src(emoji_image_));
+    if (source == nullptr || source->header.w == 0 || source->header.h == 0) {
+        return;
+    }
+
+    // Cover the complete panel while preserving the GIF aspect ratio.
+    const uint32_t scale_x = (256U * static_cast<uint32_t>(width_) + source->header.w - 1U) /
+                             source->header.w;
+    const uint32_t scale_y = (256U * static_cast<uint32_t>(height_) + source->header.h - 1U) /
+                             source->header.h;
+    const uint32_t scale = std::max(scale_x, scale_y);
+    lv_image_set_scale(emoji_image_, static_cast<uint16_t>(std::min(scale, 65535U)));
+    lv_obj_center(emoji_image_);
 }
 
 void OttoDeskDisplay::SetPreviewImage(std::unique_ptr<LvglImage> image) {
