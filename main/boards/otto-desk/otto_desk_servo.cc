@@ -21,7 +21,7 @@ OttoDeskServoAxis::OttoDeskServoAxis(
       permitted_(board_pinout_validated && external_power_verified &&
                  otto_desk::IsSafeEsp32S3Gpio(static_cast<int>(gpio))),
       timer_(static_cast<ledc_timer_t>(channel)) {
-    if (!permitted_ || channel > LEDC_CHANNEL_3) {
+    if (!permitted_ || channel < LEDC_CHANNEL_0 || channel > LEDC_CHANNEL_3) {
         permitted_ = false;
     }
 }
