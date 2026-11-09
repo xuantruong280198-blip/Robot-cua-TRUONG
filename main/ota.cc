@@ -328,6 +328,7 @@ bool Ota::Upgrade(const std::string& firmware_url, std::function<void(int progre
             ESP_LOGE(TAG, "Failed to read HTTP data: %s", ret.error().ToString().c_str());
             http->Close();
             heap_caps_free(buffer);
+            if (image_header_checked) esp_ota_abort(update_handle);
             return false;
         }
         int n = *ret;
@@ -335,6 +336,7 @@ bool Ota::Upgrade(const std::string& firmware_url, std::function<void(int progre
             ESP_LOGE(TAG, "HTTP reader returned a negative byte count");
             http->Close();
             heap_caps_free(buffer);
+            if (image_header_checked) esp_ota_abort(update_handle);
             return false;
         }
 
