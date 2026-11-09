@@ -40,12 +40,12 @@ void OttoDeskDisplay::SetupUI() {
     // Remove the legacy XiaoZhi chrome: the face owns the whole 240x240 panel.
     {
         DisplayLockGuard lock(this);
-        const lv_obj_t* chrome[] = {top_bar_, status_bar_, content_, side_bar_, bottom_bar_,
-                                    status_label_, notification_label_, network_label_,
-                                    mute_label_, battery_label_, chat_message_label_};
+        lv_obj_t* chrome[] = {top_bar_, status_bar_, content_, side_bar_, bottom_bar_,
+                              status_label_, notification_label_, network_label_, mute_label_,
+                              battery_label_, chat_message_label_};
         for (auto* object : chrome) {
             if (object != nullptr) {
-                lv_obj_add_flag(const_cast<lv_obj_t*>(object), LV_OBJ_FLAG_HIDDEN);
+                lv_obj_add_flag(object, LV_OBJ_FLAG_HIDDEN);
             }
         }
         if (emoji_box_ != nullptr) {
@@ -99,9 +99,15 @@ void OttoDeskDisplay::SetPreviewImage(std::unique_ptr<LvglImage> image) {
 
     if (image == nullptr) {
         esp_timer_stop(preview_timer_);
-        lv_obj_remove_flag(emoji_box_, LV_OBJ_FLAG_HIDDEN);
         lv_obj_add_flag(preview_image_, LV_OBJ_FLAG_HIDDEN);
         preview_image_cached_.reset();
+        if (emoji_box_ != nullptr) {
+            lv_obj_remove_flag(emoji_box_, LV_OBJ_FLAG_HIDDEN);
+        } else if (gif_controller_ != nullptr) {
+            lv_obj_remove_flag(emoji_image_, LV_OBJ_FLAG_HIDDEN);
+        } else if (emoji_label_ != nullptr) {
+            lv_obj_remove_flag(emoji_label_, LV_OBJ_FLAG_HIDDEN);
+        }
         if (gif_controller_ != nullptr) {
             gif_controller_->Start();
         }
@@ -119,7 +125,16 @@ void OttoDeskDisplay::SetPreviewImage(std::unique_ptr<LvglImage> image) {
     if (gif_controller_ != nullptr) {
         gif_controller_->Stop();
     }
-    lv_obj_add_flag(emoji_box_, LV_OBJ_FLAG_HIDDEN);
+    if (emoji_box_ != nullptr) {
+        lv_obj_add_flag(emoji_box_, LV_OBJ_FLAG_HIDDEN);
+    } else {
+        if (emoji_image_ != nullptr) {
+            lv_obj_add_flag(emoji_image_, LV_OBJ_FLAG_HIDDEN);
+        }
+        if (emoji_label_ != nullptr) {
+            lv_obj_add_flag(emoji_label_, LV_OBJ_FLAG_HIDDEN);
+        }
+    }
     lv_obj_remove_flag(preview_image_, LV_OBJ_FLAG_HIDDEN);
     esp_timer_stop(preview_timer_);
     ESP_ERROR_CHECK(esp_timer_start_once(preview_timer_, PREVIEW_IMAGE_DURATION_MS * 1000));
