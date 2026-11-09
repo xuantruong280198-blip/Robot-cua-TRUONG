@@ -1,17 +1,12 @@
 #include "otto_desk_servo.h"
 #include "otto_desk_gpio_safety.h"
+#include "otto_desk_servo_math.h"
 
-#include <algorithm>
-#include <cstdint>
 
 namespace {
 constexpr ledc_mode_t kSpeedMode = LEDC_LOW_SPEED_MODE;
 constexpr ledc_timer_bit_t kResolution = LEDC_TIMER_14_BIT;
 constexpr uint32_t kPwmFrequencyHz = 50;
-constexpr uint32_t kDutyMaximum = (1U << 14) - 1U;
-constexpr uint32_t kPulseMinUs = 500;
-constexpr uint32_t kPulseMaxUs = 2500;
-constexpr uint32_t kPeriodUs = 1000000U / kPwmFrequencyHz;
 }
 
 OttoDeskServoAxis::OttoDeskServoAxis(
@@ -64,10 +59,7 @@ esp_err_t OttoDeskServoAxis::Initialize() {
 
 esp_err_t OttoDeskServoAxis::SetAngle(int angle_deg) {
     if (!ready_) return ESP_ERR_INVALID_STATE;
-    const int angle = std::clamp(angle_deg, 0, 180);
-    const uint32_t pulse_us = kPulseMinUs +
-        (static_cast<uint32_t>(angle) * (kPulseMaxUs - kPulseMinUs)) / 180U;
-    const uint32_t duty = (pulse_us * kDutyMaximum) / kPeriodUs;
+    const uint32_t duty = otto_desk::ServoDutyForAngle(angle_deg);
     esp_err_t err = ledc_set_duty(kSpeedMode, channel_, duty);
     if (err != ESP_OK) return err;
     return ledc_update_duty(kSpeedMode, channel_);
