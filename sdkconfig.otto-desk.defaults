@@ -1,0 +1,4 @@
+# Otto Desk board-selection smoke test only.
+# No GPIO or physical peripherals are enabled by this configuration.
+CONFIG_BOARD_TYPE_OTTO_DESK=y
+CONFIG_HTTPD_WS_SUPPORT=y
