@@ -248,5 +248,67 @@ class HardwareConfigValidationTests(unittest.TestCase):
                 self.assertNotEqual(code, 0)
                 self.assertTrue("integers" in output or "0 <= min_deg" in output, output)
 
+
+class RuntimeConfigDecodeContractTests(unittest.TestCase):
+    """Guard the C++ decoder against drifting away from the JSON schema."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.source = (ROOT / "main" / "otto_desk_config_store.cc").read_text(encoding="utf-8")
+        cls.header = (ROOT / "main" / "otto_desk_config_store.h").read_text(encoding="utf-8")
+        start = cls.source.index("esp_err_t OttoDeskConfigStore::Decode(")
+        end = cls.source.index("\nesp_err_t OttoDeskConfigStore::Load(", start)
+        cls.decode = cls.source[start:end]
+
+    def test_decode_validates_before_parsing_and_fails_closed(self):
+        self.assertLess(self.decode.index("ValidateSafeJson(json)"),
+                        self.decode.index("cJSON_ParseWithLength"))
+        self.assertIn("config = OttoDeskRuntimeConfig{};", self.decode)
+        self.assertIn("config.hardware_activation_permitted = false;", self.decode)
+        self.assertIn("if (err != ESP_OK) return err;", self.decode)
+
+    def test_decoder_maps_every_default_schema_gpio_key(self):
+        mappings = (
+            ("display", "sclk", "display_sclk"),
+            ("display", "mosi", "display_mosi"),
+            ("display", "cs", "display_cs"),
+            ("display", "dc", "display_dc"),
+            ("display", "reset", "display_reset"),
+            ("display", "backlight", "display_backlight"),
+            ("microphone", "ws", "microphone_ws"),
+            ("microphone", "sck", "microphone_sck"),
+            ("microphone", "sd", "microphone_sd"),
+            ("amplifier", "din", "amplifier_din"),
+            ("amplifier", "bclk", "amplifier_bclk"),
+            ("amplifier", "lrclk", "amplifier_lrclk"),
+        )
+        for section, key, target in mappings:
+            with self.subTest(section=section, key=key):
+                self.assertIn(f'ReadOptionalInt({section}_gpio, "{key}")', self.decode)
+                self.assertIn(f"config.{target}", self.decode)
+
+    def test_decoder_maps_device_enable_flags_and_servo_limits(self):
+        for field in (
+            "display_enabled", "microphone_enabled", "amplifier_enabled",
+            "servo_external_power_verified", "pir_enabled",
+        ):
+            with self.subTest(field=field):
+                self.assertIn(f"config.{field}", self.decode)
+        for field in ("min_deg", "center_deg", "max_deg", "speed_deg_per_sec"):
+            with self.subTest(field=field):
+                self.assertIn(f'"{field}"', self.source)
+        self.assertIn('ReadOptionalInt(pir, "gpio")', self.decode)
+        self.assertIn("config.pan = ReadServo", self.decode)
+        self.assertIn("config.tilt = ReadServo", self.decode)
+
+    def test_runtime_config_defaults_cannot_activate_hardware(self):
+        self.assertIn("bool hardware_activation_permitted = false;", self.header)
+        for field in (
+            "display_enabled", "microphone_enabled", "amplifier_enabled", "pir_enabled",
+        ):
+            with self.subTest(field=field):
+                self.assertRegex(self.header, rf"bool {field} = false;")
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)
