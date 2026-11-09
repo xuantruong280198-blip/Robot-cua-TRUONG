@@ -476,6 +476,20 @@ class OtaSafetyRegressionTests(unittest.TestCase):
     def test_download_is_bounded_by_inactive_partition_size(self):
         self.assertIn("content_length > update_partition->size", self.upgrade)
 
+    def test_http_connection_is_closed_when_status_check_fails(self):
+        status_check = self.upgrade.index("auto status_code = http->GetStatusCode();")
+        content_length = self.upgrade.index("size_t content_length = http->GetBodyLength();")
+        status_block = self.upgrade[status_check:content_length]
+        self.assertGreaterEqual(status_block.count("http->Close();"), 2)
+
+    def test_invalid_app_descriptor_is_rejected_before_flash_session(self):
+        invalid_header = self.upgrade.index(
+            "new_app_info.magic_word != ESP_APP_DESC_MAGIC_WORD"
+        )
+        ota_begin = self.upgrade.index("esp_ota_begin(")
+        self.assertLess(invalid_header, ota_begin)
+        self.assertIn("http->Close();", self.upgrade[invalid_header:ota_begin])
+
     def test_image_descriptor_is_checked_before_ota_begin(self):
         self.assertIn("new_app_info.magic_word != ESP_APP_DESC_MAGIC_WORD", self.upgrade)
         self.assertLess(
