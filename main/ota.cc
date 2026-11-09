@@ -300,6 +300,14 @@ bool Ota::Upgrade(const std::string& firmware_url, std::function<void(int progre
     size_t content_length = http->GetBodyLength();
     if (content_length == 0) {
         ESP_LOGE(TAG, "Failed to get content length");
+        http->Close();
+        return false;
+    }
+    if (content_length > update_partition->size) {
+        ESP_LOGE(TAG, "Firmware image (%u bytes) exceeds update partition (%u bytes)",
+                 static_cast<unsigned>(content_length),
+                 static_cast<unsigned>(update_partition->size));
+        http->Close();
         return false;
     }
 
@@ -307,6 +315,7 @@ bool Ota::Upgrade(const std::string& firmware_url, std::function<void(int progre
     char* buffer = (char*)heap_caps_malloc(PAGE_SIZE, MALLOC_CAP_INTERNAL);
     if (buffer == nullptr) {
         ESP_LOGE(TAG, "Failed to allocate buffer");
+        http->Close();
         return false;
     }
 
@@ -317,15 +326,29 @@ bool Ota::Upgrade(const std::string& firmware_url, std::function<void(int progre
         auto ret = http->Read(buffer + buffer_offset, PAGE_SIZE - buffer_offset);
         if (!ret) {
             ESP_LOGE(TAG, "Failed to read HTTP data: %s", ret.error().ToString().c_str());
+            http->Close();
             heap_caps_free(buffer);
             return false;
         }
         int n = *ret;
+        if (n < 0) {
+            ESP_LOGE(TAG, "HTTP reader returned a negative byte count");
+            http->Close();
+            heap_caps_free(buffer);
+            return false;
+        }
 
         // Calculate speed and progress every second
         recent_read += n;
-        total_read += n;
-        buffer_offset += n;
+        total_read += static_cast<size_t>(n);
+        buffer_offset += static_cast<size_t>(n);
+        if (total_read > content_length) {
+            ESP_LOGE(TAG, "Firmware response exceeded its declared content length");
+            http->Close();
+            heap_caps_free(buffer);
+            if (image_header_checked) esp_ota_abort(update_handle);
+            return false;
+        }
         if (esp_timer_get_time() - last_calc_time >= 1000000 || n == 0) {
             size_t progress = total_read * 100 / content_length;
             ESP_LOGI(TAG, "Progress: %u%% (%u/%u), Speed: %uB/s", progress, total_read, content_length, recent_read);
@@ -340,11 +363,22 @@ bool Ota::Upgrade(const std::string& firmware_url, std::function<void(int progre
             image_header.append(buffer, buffer_offset);
             if (image_header.size() >= sizeof(esp_image_header_t) + sizeof(esp_image_segment_header_t) + sizeof(esp_app_desc_t)) {
                 esp_app_desc_t new_app_info;
-                memcpy(&new_app_info, image_header.data() + sizeof(esp_image_header_t) + sizeof(esp_image_segment_header_t), sizeof(esp_app_desc_t));
+                memcpy(&new_app_info,
+                       image_header.data() + sizeof(esp_image_header_t) +
+                           sizeof(esp_image_segment_header_t),
+                       sizeof(esp_app_desc_t));
+                if (new_app_info.magic_word != ESP_APP_DESC_MAGIC_WORD) {
+                    ESP_LOGE(TAG, "Firmware image has an invalid application descriptor");
+                    http->Close();
+                    heap_caps_free(buffer);
+                    return false;
+                }
 
-                if (esp_ota_begin(update_partition, OTA_WITH_SEQUENTIAL_WRITES, &update_handle)) {
-                    esp_ota_abort(update_handle);
-                    ESP_LOGE(TAG, "Failed to begin OTA");
+                esp_err_t begin_err = esp_ota_begin(
+                    update_partition, OTA_WITH_SEQUENTIAL_WRITES, &update_handle);
+                if (begin_err != ESP_OK) {
+                    ESP_LOGE(TAG, "Failed to begin OTA: %s", esp_err_to_name(begin_err));
+                    http->Close();
                     heap_caps_free(buffer);
                     return false;
                 }
@@ -361,6 +395,7 @@ bool Ota::Upgrade(const std::string& firmware_url, std::function<void(int progre
             if (err != ESP_OK) {
                 ESP_LOGE(TAG, "Failed to write OTA data: %s", esp_err_to_name(err));
                 esp_ota_abort(update_handle);
+                http->Close();
                 heap_caps_free(buffer);
                 return false;
             }
@@ -374,6 +409,19 @@ bool Ota::Upgrade(const std::string& firmware_url, std::function<void(int progre
     }
     http->Close();
     heap_caps_free(buffer);
+
+    if (!image_header_checked || update_handle == 0) {
+        ESP_LOGE(TAG, "Firmware response ended before a valid image header was received");
+        if (update_handle != 0) esp_ota_abort(update_handle);
+        return false;
+    }
+    if (total_read != content_length) {
+        ESP_LOGE(TAG, "Incomplete firmware download: received %u of %u bytes",
+                 static_cast<unsigned>(total_read),
+                 static_cast<unsigned>(content_length));
+        esp_ota_abort(update_handle);
+        return false;
+    }
 
     esp_err_t err = esp_ota_end(update_handle);
     if (err != ESP_OK) {
