@@ -349,6 +349,7 @@ class RuntimeConfigDecodeContractTests(unittest.TestCase):
         self.assertIn('strncasecmp(content_type, "application/json"', source)
         self.assertIn('415 Unsupported Media Type', source)
         self.assertIn('content_type_must_be_application_json', source)
+        self.assertIn('return httpd_resp_sendstr(request, "{\\\"error\\\":\\\"content_type_must_be_application_json\\\"}");', source)
 
     def test_config_api_never_reports_hardware_activation(self):
         source = (ROOT / "main" / "otto_desk_config_server.cc").read_text(encoding="utf-8")
