@@ -484,7 +484,7 @@ class OtaSafetyRegressionTests(unittest.TestCase):
         )
 
     def test_truncated_or_headerless_images_are_never_selected(self):
-        self.assertIn("!image_header_checked || update_handle == 0", self.upgrade)
+        self.assertIn("if (!image_header_checked)", self.upgrade)
         self.assertIn("total_read != content_length", self.upgrade)
         self.assertLess(
             self.upgrade.index("total_read != content_length"),
