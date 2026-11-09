@@ -46,6 +46,16 @@ jobs:
         run: |
           python -m unittest tools/test_validate_config.py -v
 
+      - name: Compile and run hardware-independent head motion tests
+        shell: bash
+        run: |
+          c++ -std=c++17 -Wall -Wextra -Werror \
+            -Imain/boards/otto-desk \
+            tools/test_head_motion_planner.cc \
+            main/boards/otto-desk/otto_desk_head_motion.cc \
+            -o /tmp/otto-head-motion-tests
+          /tmp/otto-head-motion-tests
+
       - name: Configure ESP-IDF and select Otto Desk
         shell: bash
         run: |
