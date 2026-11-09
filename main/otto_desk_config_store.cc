@@ -162,9 +162,12 @@ bool IsSafeConfig(const cJSON* root) {
     if (!HasExactKeys(board, {"manufacturer", "product_family", "pcb_revision", "profile",
                               "upstream_reference_profile", "chip", "flash_mb", "psram_mb",
                               "camera_enabled", "onboard_codec_enabled",
-                              "onboard_io_expander_enabled"}) ||
+                              "onboard_io_expander_enabled", "header_pin_count",
+                              "header_pinout_verified"}) ||
         !IsString(board, "manufacturer", "Waveshare") ||
-        !IsString(board, "product_family", "ESP32-S3-CAM-OVxxxx") ||
+        !IsString(board, "product_family", "ESP32-S3-CAM-N16R8") ||
+        !IsNumber(board, "header_pin_count", 40) ||
+        !IsFalse(board, "header_pinout_verified") ||
         !IsNullableString(board, "pcb_revision") ||
         !IsString(board, "profile", "otto-waveshare-esp32-s3-cam") ||
         !IsString(board, "upstream_reference_profile", "waveshare/esp32-s3-cam") ||
