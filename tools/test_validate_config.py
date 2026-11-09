@@ -331,6 +331,18 @@ class RuntimeConfigDecodeContractTests(unittest.TestCase):
         self.assertIn("event == NetworkEvent::WifiConfigModeExit", board_source)
         self.assertIn("OttoDeskConfigServer::Stop()", board_source)
 
+    def test_gpio_inventory_lists_each_signal_individually(self):
+        source = (ROOT / "main" / "otto_desk_config_server.cc").read_text(encoding="utf-8")
+        for signal in (
+            "SCLK", "MOSI", "CS", "DC", "RESET", "BACKLIGHT",
+            "WS", "SCK", "SD", "DIN", "BCLK", "LRCLK",
+            "PAN signal", "TILT signal", "HC-SR501",
+        ):
+            with self.subTest(signal=signal):
+                self.assertIn(signal, source)
+        self.assertIn("Chưa gán · khóa an toàn", source)
+        self.assertIn("không phải sơ đồ chân đã xác minh", source)
+
     def test_config_api_never_reports_hardware_activation(self):
         source = (ROOT / "main" / "otto_desk_config_server.cc").read_text(encoding="utf-8")
         self.assertIn("\\\"hardware_activation\\\":false", source)
