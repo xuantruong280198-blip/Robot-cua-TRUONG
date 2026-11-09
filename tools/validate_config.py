@@ -170,8 +170,8 @@ def main(config_path: pathlib.Path | None = None) -> None:
         angles = (minimum, center, maximum)
         if any(isinstance(value, bool) or not isinstance(value, int) for value in angles):
             fail(f"servos.{name} angle limits must be integers")
-        if not (0 <= minimum <= center <= maximum <= 180):
-            fail(f"servos.{name} must satisfy 0 <= min_deg <= center_deg <= max_deg <= 180")
+        if not (0 <= minimum < center < maximum <= 180):
+            fail(f"servos.{name} must satisfy 0 <= min_deg < center_deg < max_deg <= 180")
         if servo.get("enabled") is True:
             any_servo_enabled = True
             if servo.get("gpio") is None:
