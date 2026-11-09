@@ -4,6 +4,7 @@
 #include <esp_log.h>
 
 #include <algorithm>
+#include <cstring>
 
 #include "display/lvgl_display/lvgl_image.h"
 #include "display/lvgl_display/lvgl_theme.h"
@@ -65,7 +66,16 @@ void OttoDeskDisplay::SetupUI() {
 }
 
 void OttoDeskDisplay::SetEmotion(const char* emotion) {
-    LcdDisplay::SetEmotion(emotion);
+    // Application::ApplyAssets() uses "robot_2" as its generic boot logo.
+    // The Otto GIF pack uses Xiaozhi emotion names, so keep the animated face
+    // visible by translating legacy boot tokens to its neutral expression.
+    const char* resolved_emotion = emotion;
+    if (resolved_emotion == nullptr || std::strcmp(resolved_emotion, "robot_2") == 0 ||
+        std::strcmp(resolved_emotion, "staticstate") == 0) {
+        resolved_emotion = "neutral";
+    }
+
+    LcdDisplay::SetEmotion(resolved_emotion);
     FitEmotionToScreen();
 }
 
