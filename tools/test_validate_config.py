@@ -67,6 +67,19 @@ class HardwareConfigValidationTests(unittest.TestCase):
         code, output = self.run_config(embedded)
         self.assertEqual(code, 0, output)
 
+    def test_user_confirmed_40_pin_header_is_recorded_but_pinout_stays_unverified(self):
+        self.assertEqual(DEFAULT["board"]["header_pin_count"], 40)
+        self.assertIs(DEFAULT["board"]["header_pinout_verified"], False)
+        code, output = self.run_config(copy.deepcopy(DEFAULT))
+        self.assertEqual(code, 0, output)
+
+    def test_header_pinout_cannot_be_marked_verified_without_review(self):
+        config = copy.deepcopy(DEFAULT)
+        config["board"]["header_pinout_verified"] = True
+        code, output = self.run_config(config)
+        self.assertNotEqual(code, 0)
+        self.assertIn("header_pinout_verified must remain false", output)
+
     def test_safe_default_passes(self):
         code, output = self.run_config(copy.deepcopy(DEFAULT))
         self.assertEqual(code, 0, output)
