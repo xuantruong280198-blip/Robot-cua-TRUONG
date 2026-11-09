@@ -89,3 +89,9 @@ The port-8080 provisioning page now supports local JSON file import (maximum 3,0
 Firmware-side validation now requires every GPIO policy flag to remain true, including duplicate assignment, bootstrap, flash/PSRAM, USB/UART and board-pinout checks. The host-side validator applies the same fail-closed policy and regression tests reject attempts to turn off any of these flags.
 
 Latest relevant commits: 2082a5b (JSON import/export), 749e60b (firmware fail-closed policy), 7b2d43d (README), 0e193a1 (host validator regression test). CI is still running for the latest changes; do not treat them as passed until the corresponding runs finish.
+
+## GPIO planning matrix in provisioning page (2026-11-09)
+
+The Wi-Fi provisioning page now presents a read-only hardware signal matrix for ST7789, INMP441, MAX98357A, pan/tilt servos and HC-SR501 PIR. It explicitly labels every signal unassigned and states that the table is not a verified board pinout. The JSON editor remains fail-closed and cannot activate any peripheral.
+
+Host-side configuration validation passed on commit f89d658. The dedicated Otto Desk compile and generic ESP-IDF compile for the GPIO matrix UI commit 1d145549 are still running; wait for CI before calling this revision build-verified.
