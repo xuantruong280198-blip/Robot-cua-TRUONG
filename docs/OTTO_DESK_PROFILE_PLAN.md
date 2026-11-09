@@ -55,8 +55,10 @@ The workflow artifact is deliberately named `generic-esp32s3-smoke-not-for-flash
 Next implementation gate: add a dedicated Kconfig choice, CMake board directory and exactly one board factory, then add a board-specific CI job. Keep display, external I2S, servos and PIR disabled until a verified pin map and runtime config application layer exist.
 
 
-## Wi-Fi configuration portal integration findings
+## Wi-Fi configuration portal integration findings (2026-11-09)
 
-The upstream `78/esp-wifi-connect` dependency exposes `WifiManager::StartConfigAp()` and the captive-portal URL, but its `WifiConfigurationAp` keeps the `esp_http_server` handle and route-registration method private. The current public API does not provide a safe way for the board profile to register Otto-specific routes into the existing port-80 portal.
+The tracked `main/boards/common/wifi_board.cc` initializes `WifiManager`, starts its captive AP through `StartConfigAp()`, and displays `GetApWebUrl()`. The tracked `WifiBoard` interface does not expose an HTTP-server handle or route-registration hook. The implementation of the external Wi-Fi manager dependency is not present in the repository tree, so its private internals and extension points have not been verified.
 
-Do not patch generated `managed_components/` or rely on undocumented private members. The viable first implementation is a separate, explicitly documented Otto configuration HTTP server on a non-conflicting port (for example 8081), started only after the config AP or station network is ready, with bounded request bodies, strict JSON validation, NVS save/reload behavior, and no peripheral activation. The browser UI can link from the Wi-Fi portal later if the upstream dependency gains a supported extension hook.
+Do not assume that the Otto JSON editor can be mounted into the existing captive portal. Before adding endpoints, inspect the exact resolved dependency version and its public API. If it has no supported route extension, implement a separate, explicitly documented Otto configuration server on a non-conflicting port after network readiness. Require bounded request bodies, strict JSON validation, NVS save/reload behavior, and no peripheral activation in the first iteration.
+
+The generic CI artifact is explicitly named `generic-esp32s3-smoke-not-for-flashing`; its build manifest records that it is not an Otto Desk image. Keep that safety label until an Otto-specific Kconfig selection, board factory, partition verification, and board-specific build all exist.
