@@ -187,10 +187,15 @@ bool IsSafeConfig(const cJSON* root) {
                                "reject_usb_uart_conflicts", "require_board_pinout_validation"})) {
         return false;
     }
-    for (const char* key : {"allow_unassigned", "reject_duplicate_assignments",
-                            "reject_bootstrap_conflicts", "reject_flash_psram_conflicts",
-                            "reject_usb_uart_conflicts", "require_board_pinout_validation"}) {
-        if (!cJSON_IsBool(Get(policy, key))) return false;
+    // Keep the safety policy fail-closed. A JSON import must not be able to
+    // disable duplicate-pin, boot-strap, flash/PSRAM, USB/UART or pinout checks.
+    if (!cJSON_IsTrue(Get(policy, "allow_unassigned")) ||
+        !cJSON_IsTrue(Get(policy, "reject_duplicate_assignments")) ||
+        !cJSON_IsTrue(Get(policy, "reject_bootstrap_conflicts")) ||
+        !cJSON_IsTrue(Get(policy, "reject_flash_psram_conflicts")) ||
+        !cJSON_IsTrue(Get(policy, "reject_usb_uart_conflicts")) ||
+        !cJSON_IsTrue(Get(policy, "require_board_pinout_validation"))) {
+        return false;
     }
     return true;
 }
