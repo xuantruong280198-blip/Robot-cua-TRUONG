@@ -1,4 +1,5 @@
 #include "otto_desk_servo.h"
+#include "otto_desk_gpio_safety.h"
 
 #include <algorithm>
 #include <cstdint>
@@ -17,18 +18,11 @@ OttoDeskServoAxis::OttoDeskServoAxis(
     gpio_num_t gpio, ledc_channel_t channel,
     bool board_pinout_validated, bool external_power_verified)
     : gpio_(gpio), channel_(channel),
-      permitted_(board_pinout_validated && external_power_verified),
+      permitted_(board_pinout_validated && external_power_verified &&
+                 otto_desk::IsSafeEsp32S3Gpio(static_cast<int>(gpio))),
       timer_(static_cast<ledc_timer_t>(channel)) {
-    // Fail closed: no PWM on a guessed pin or from the ESP32 3V3 rail.
-    if (!board_pinout_validated || !external_power_verified ||
-        gpio < GPIO_NUM_0 || gpio >= GPIO_NUM_MAX ||
-        channel > LEDC_CHANNEL_3 ||
-        gpio == GPIO_NUM_0 || gpio == GPIO_NUM_3 ||
-        gpio == GPIO_NUM_19 || gpio == GPIO_NUM_20 ||
-        gpio == GPIO_NUM_43 || gpio == GPIO_NUM_44 ||
-        gpio == GPIO_NUM_45 || gpio == GPIO_NUM_46) {
+    if (!permitted_ || channel > LEDC_CHANNEL_3) {
         permitted_ = false;
-        return;
     }
 }
 
@@ -40,7 +34,6 @@ OttoDeskServoAxis::~OttoDeskServoAxis() {
 
 esp_err_t OttoDeskServoAxis::Initialize() {
     if (!permitted_) return ESP_ERR_INVALID_STATE;
-    if (gpio_ < GPIO_NUM_0 || gpio_ >= GPIO_NUM_MAX) return ESP_ERR_INVALID_ARG;
     if (ready_) return ESP_OK;
 
     if (!timer_initialized_) {
