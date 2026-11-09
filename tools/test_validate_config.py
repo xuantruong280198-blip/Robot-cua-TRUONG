@@ -169,6 +169,15 @@ class HardwareConfigValidationTests(unittest.TestCase):
         self.assertNotEqual(code, 0)
         self.assertIn("out-of-range GPIO 49", output)
 
+    def test_unavailable_esp32s3_gpio_numbers_are_rejected(self):
+        for gpio in (22, 23, 24, 25):
+            with self.subTest(gpio=gpio):
+                config = copy.deepcopy(DEFAULT)
+                config["display"]["gpio"]["sclk"] = gpio
+                code, output = self.run_config(config)
+                self.assertNotEqual(code, 0)
+                self.assertIn(f"unavailable ESP32-S3 GPIO", output)
+
     def test_boolean_is_not_accepted_as_gpio_number(self):
         config = copy.deepcopy(DEFAULT)
         config["display"]["gpio"]["sclk"] = True
