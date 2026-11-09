@@ -7,6 +7,8 @@ import importlib.util
 import io
 import json
 import pathlib
+import re
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -35,6 +37,22 @@ class HardwareConfigValidationTests(unittest.TestCase):
                     except SystemExit as exc:
                         return exc.code, output.getvalue()
             return 0, output.getvalue()
+
+    def test_configuration_page_javascript_syntax(self):
+        node = shutil.which("node")
+        if node is None:
+            self.skipTest("Node.js is not installed")
+        source = (ROOT / "main" / "otto_desk_config_server.cc").read_text(encoding="utf-8")
+        match = re.search(r"<script>\\s*(.*?)\\s*</script>", source, re.DOTALL)
+        self.assertIsNotNone(match, "configuration page script block was not found")
+        script = match.group(1)
+        self.assertNotIn(r"\\nasync function", script,
+                         "literal backslash-n must not split JavaScript statements")
+        result = subprocess.run(
+            [node, "--check"], input=script, capture_output=True,
+            text=True, check=False,
+        )
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
 
     def test_safe_default_passes(self):
         code, output = self.run_config(copy.deepcopy(DEFAULT))
