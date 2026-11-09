@@ -53,3 +53,10 @@ The current workflow runs `idf.py set-target esp32s3` followed by `idf.py build`
 The workflow artifact is deliberately named `generic-esp32s3-smoke-not-for-flashing` and includes `BUILD-MANIFEST.txt` to make this distinction visible. Its `xiaozhi.bin` is evidence that the generic firmware tree compiles; it is not a validated firmware image for the user's N16R8 board. Do not flash it to the physical robot.
 
 Next implementation gate: add a dedicated Kconfig choice, CMake board directory and exactly one board factory, then add a board-specific CI job. Keep display, external I2S, servos and PIR disabled until a verified pin map and runtime config application layer exist.
+
+
+## Wi-Fi configuration portal integration findings
+
+The upstream `78/esp-wifi-connect` dependency exposes `WifiManager::StartConfigAp()` and the captive-portal URL, but its `WifiConfigurationAp` keeps the `esp_http_server` handle and route-registration method private. The current public API does not provide a safe way for the board profile to register Otto-specific routes into the existing port-80 portal.
+
+Do not patch generated `managed_components/` or rely on undocumented private members. The viable first implementation is a separate, explicitly documented Otto configuration HTTP server on a non-conflicting port (for example 8081), started only after the config AP or station network is ready, with bounded request bodies, strict JSON validation, NVS save/reload behavior, and no peripheral activation. The browser UI can link from the Wi-Fi portal later if the upstream dependency gains a supported extension hook.
