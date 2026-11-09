@@ -352,6 +352,12 @@ class RuntimeConfigDecodeContractTests(unittest.TestCase):
         self.assertIn("while (*value == ' '", source)
         self.assertIn("return *value ==", source)
         self.assertIn('415 Unsupported Media Type', source)
+        self.assertIn('if (request->content_len == 0)', source)
+        self.assertIn('400 Bad Request', source)
+        self.assertIn('config_body_must_not_be_empty', source)
+        self.assertIn('if (request->content_len > OttoDeskConfigStore::kMaxConfigBytes)', source)
+        self.assertIn('413 Payload Too Large', source)
+        self.assertIn('config_size_must_not_exceed_3072_bytes', source)
         self.assertIn('content_type_must_be_application_json', source)
         self.assertIn('return httpd_resp_sendstr(request, "{\\\"error\\\":\\\"content_type_must_be_application_json\\\"}");', source)
 
