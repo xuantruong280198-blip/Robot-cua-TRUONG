@@ -7,6 +7,7 @@
 #include <cctype>
 #include <cstring>
 #include <initializer_list>
+#include <optional>
 
 namespace {
 constexpr char kNamespace[] = "ottdesk";
@@ -97,6 +98,39 @@ bool HasNoDuplicateKeys(const cJSON* object) {
         if (!HasNoDuplicateKeys(item)) return false;
     }
     return true;
+}
+
+
+int ReadInt(const cJSON* object, const char* key, int fallback = 0) {
+    const cJSON* value = Get(object, key);
+    return cJSON_IsNumber(value) ? value->valueint : fallback;
+}
+
+float ReadFloat(const cJSON* object, const char* key, float fallback = 0.0F) {
+    const cJSON* value = Get(object, key);
+    return cJSON_IsNumber(value) ? static_cast<float>(value->valuedouble) : fallback;
+}
+
+bool ReadBool(const cJSON* object, const char* key) {
+    return cJSON_IsTrue(Get(object, key));
+}
+
+std::optional<int> ReadOptionalInt(const cJSON* object, const char* key) {
+    const cJSON* value = Get(object, key);
+    if (cJSON_IsNull(value) || value == nullptr) return std::nullopt;
+    if (!cJSON_IsNumber(value)) return std::nullopt;
+    return value->valueint;
+}
+
+OttoDeskServoConfig ReadServo(const cJSON* servo) {
+    OttoDeskServoConfig result;
+    result.gpio = ReadOptionalInt(servo, "gpio");
+    result.min_deg = ReadInt(servo, "min_deg");
+    result.center_deg = ReadInt(servo, "center_deg", 90);
+    result.max_deg = ReadInt(servo, "max_deg", 180);
+    result.speed_deg_per_sec = ReadFloat(servo, "speed_deg_per_sec");
+    result.enabled = ReadBool(servo, "enabled");
+    return result;
 }
 
 bool IsSafeServo(const cJSON* servo) {
@@ -225,6 +259,61 @@ esp_err_t OttoDeskConfigStore::ValidateSafeJson(const std::string& json) {
     const bool safe = IsSafeConfig(root);
     cJSON_Delete(root);
     return safe ? ESP_OK : ESP_ERR_INVALID_STATE;
+}
+
+
+esp_err_t OttoDeskConfigStore::Decode(const std::string& json,
+                                      OttoDeskRuntimeConfig& config) {
+    config = OttoDeskRuntimeConfig{};
+    esp_err_t err = ValidateSafeJson(json);
+    if (err != ESP_OK) return err;
+
+    cJSON* root = cJSON_ParseWithLength(json.c_str(), json.size());
+    if (root == nullptr) return ESP_ERR_INVALID_ARG;
+
+    const cJSON* display = Get(root, "display");
+    const cJSON* display_gpio = Get(display, "gpio");
+    config.display_width = ReadInt(display, "width", 240);
+    config.display_height = ReadInt(display, "height", 240);
+    const cJSON* rotation = Get(display, "rotation");
+    if (cJSON_IsNumber(rotation)) config.display_rotation = rotation->valueint;
+    config.display_sclk = ReadOptionalInt(display_gpio, "sclk");
+    config.display_mosi = ReadOptionalInt(display_gpio, "mosi");
+    config.display_cs = ReadOptionalInt(display_gpio, "cs");
+    config.display_dc = ReadOptionalInt(display_gpio, "dc");
+    config.display_reset = ReadOptionalInt(display_gpio, "reset");
+    config.display_backlight = ReadOptionalInt(display_gpio, "backlight");
+    config.display_enabled = ReadBool(display, "enabled");
+
+    const cJSON* audio = Get(root, "audio");
+    const cJSON* microphone = Get(audio, "microphone");
+    const cJSON* mic_i2s = Get(microphone, "i2s");
+    config.microphone_ws = ReadOptionalInt(mic_i2s, "ws");
+    config.microphone_sck = ReadOptionalInt(mic_i2s, "sck");
+    config.microphone_sd = ReadOptionalInt(mic_i2s, "sd");
+    config.microphone_enabled = ReadBool(microphone, "enabled");
+
+    const cJSON* amplifier = Get(audio, "amplifier");
+    const cJSON* amp_i2s = Get(amplifier, "i2s");
+    config.amplifier_din = ReadOptionalInt(amp_i2s, "din");
+    config.amplifier_bclk = ReadOptionalInt(amp_i2s, "bclk");
+    config.amplifier_lrclk = ReadOptionalInt(amp_i2s, "lrclk");
+    config.amplifier_enabled = ReadBool(amplifier, "enabled");
+
+    const cJSON* servos = Get(root, "servos");
+    config.pan = ReadServo(Get(servos, "pan"));
+    config.tilt = ReadServo(Get(servos, "tilt"));
+    config.servo_external_power_verified = ReadBool(servos, "external_power_verified");
+
+    const cJSON* pir = Get(root, "pir");
+    config.pir_gpio = ReadOptionalInt(pir, "gpio");
+    config.pir_enabled = ReadBool(pir, "enabled");
+
+    // Fail closed: decoding configuration never grants permission to activate
+    // hardware. A separate, reviewed board-pinout gate is required later.
+    config.hardware_activation_permitted = false;
+    cJSON_Delete(root);
+    return ESP_OK;
 }
 
 esp_err_t OttoDeskConfigStore::Load(std::string& json) {
