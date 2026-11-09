@@ -45,7 +45,148 @@ jobs:
           . /opt/esp/idf/export.sh
           idf.py set-target esp32s3
           idf.py -D SDKCONFIG_DEFAULTS="sdkconfig.defaults;sdkconfig.otto-desk.defaults" reconfigure
-          grep -q '^CONFIG_BOARD_TYPE_OTTO_DESK=y$' sdkconfig
+          grep -q '^CONFIG_BOARD_TYPE_OTTO_DESK=y
+
+      - name: Compile Otto Desk scaffold
+        shell: bash
+        run: |
+          . /opt/esp/idf/export.sh
+          idf.py build
+
+      - name: Write build identity manifest
+        shell: bash
+        run: |
+          {
+            echo "artifact=otto-desk-safe-scaffold-not-for-hardware-flashing"
+            echo "target=esp32s3"
+            echo "board_selection=CONFIG_BOARD_TYPE_OTTO_DESK"
+            echo "flash_size=16MB"
+            echo "partition_table=partitions/v2/16m.csv"
+            echo "hardware_validation=not-performed"
+            echo "gpio_assignments=unconfigured"
+            echo "commit=${GITHUB_SHA}"
+          } > build/BUILD-MANIFEST.txt
+
+      - name: Upload Otto Desk scaffold build
+        uses: actions/upload-artifact@v4
+        with:
+          name: otto-desk-safe-scaffold-not-for-hardware-flashing
+          if-no-files-found: error
+          retention-days: 14
+          path: |
+            build/*.bin
+            build/*.elf
+            build/flasher_args.json
+            build/project_description.json
+            build/BUILD-MANIFEST.txt
+            build/bootloader/*.bin
+            build/partition_table/*.bin
+ sdkconfig
+          grep -q '^CONFIG_ESPTOOLPY_FLASHSIZE_16MB=y
+
+      - name: Compile Otto Desk scaffold
+        shell: bash
+        run: |
+          . /opt/esp/idf/export.sh
+          idf.py build
+
+      - name: Write build identity manifest
+        shell: bash
+        run: |
+          {
+            echo "artifact=otto-desk-safe-scaffold-not-for-hardware-flashing"
+            echo "target=esp32s3"
+            echo "board_selection=CONFIG_BOARD_TYPE_OTTO_DESK"
+            echo "hardware_validation=not-performed"
+            echo "gpio_assignments=unconfigured"
+            echo "commit=${GITHUB_SHA}"
+          } > build/BUILD-MANIFEST.txt
+
+      - name: Upload Otto Desk scaffold build
+        uses: actions/upload-artifact@v4
+        with:
+          name: otto-desk-safe-scaffold-not-for-hardware-flashing
+          if-no-files-found: error
+          retention-days: 14
+          path: |
+            build/*.bin
+            build/*.elf
+            build/flasher_args.json
+            build/project_description.json
+            build/BUILD-MANIFEST.txt
+            build/bootloader/*.bin
+            build/partition_table/*.bin
+ sdkconfig
+          grep -q '^CONFIG_PARTITION_TABLE_CUSTOM=y
+
+      - name: Compile Otto Desk scaffold
+        shell: bash
+        run: |
+          . /opt/esp/idf/export.sh
+          idf.py build
+
+      - name: Write build identity manifest
+        shell: bash
+        run: |
+          {
+            echo "artifact=otto-desk-safe-scaffold-not-for-hardware-flashing"
+            echo "target=esp32s3"
+            echo "board_selection=CONFIG_BOARD_TYPE_OTTO_DESK"
+            echo "hardware_validation=not-performed"
+            echo "gpio_assignments=unconfigured"
+            echo "commit=${GITHUB_SHA}"
+          } > build/BUILD-MANIFEST.txt
+
+      - name: Upload Otto Desk scaffold build
+        uses: actions/upload-artifact@v4
+        with:
+          name: otto-desk-safe-scaffold-not-for-hardware-flashing
+          if-no-files-found: error
+          retention-days: 14
+          path: |
+            build/*.bin
+            build/*.elf
+            build/flasher_args.json
+            build/project_description.json
+            build/BUILD-MANIFEST.txt
+            build/bootloader/*.bin
+            build/partition_table/*.bin
+ sdkconfig
+          grep -q '^CONFIG_PARTITION_TABLE_CUSTOM_FILENAME="partitions/v2/16m.csv"
+
+      - name: Compile Otto Desk scaffold
+        shell: bash
+        run: |
+          . /opt/esp/idf/export.sh
+          idf.py build
+
+      - name: Write build identity manifest
+        shell: bash
+        run: |
+          {
+            echo "artifact=otto-desk-safe-scaffold-not-for-hardware-flashing"
+            echo "target=esp32s3"
+            echo "board_selection=CONFIG_BOARD_TYPE_OTTO_DESK"
+            echo "hardware_validation=not-performed"
+            echo "gpio_assignments=unconfigured"
+            echo "commit=${GITHUB_SHA}"
+          } > build/BUILD-MANIFEST.txt
+
+      - name: Upload Otto Desk scaffold build
+        uses: actions/upload-artifact@v4
+        with:
+          name: otto-desk-safe-scaffold-not-for-hardware-flashing
+          if-no-files-found: error
+          retention-days: 14
+          path: |
+            build/*.bin
+            build/*.elf
+            build/flasher_args.json
+            build/project_description.json
+            build/BUILD-MANIFEST.txt
+            build/bootloader/*.bin
+            build/partition_table/*.bin
+ sdkconfig
 
       - name: Compile Otto Desk scaffold
         shell: bash
