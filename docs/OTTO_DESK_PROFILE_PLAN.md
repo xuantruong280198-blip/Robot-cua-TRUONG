@@ -29,7 +29,7 @@ The existing upstream `otto-robot` profile is a different product: it contains s
 - [x] Add host-side validation for externally supplied/imported JSON files (`--config`) with valid/invalid import regression tests.
 - [x] Confirm the upstream board profile mismatch and identify reusable audio/display components.
 - [x] Audit the existing Otto biped source and isolate reusable full-screen face and external I2S components.
-- [ ] Add the dedicated board selector and minimal desk-profile source (blocked until the runtime GPIO config and board initialization path are implemented together).
+- [x] Add a dedicated `CONFIG_BOARD_TYPE_OTTO_DESK` selector, CMake board directory and minimal safe board factory. The current scaffold uses a dummy audio codec and initializes no GPIO, display, camera, servo, PIR or onboard peripheral; it is not yet a usable robot firmware.
 - [x] Add a bounded NVS JSON storage primitive (`OttoDeskConfigStore`) with read/write/clear operations and firmware-side JSON safety checks. It rejects non-object/invalid JSON, oversized payloads, enabled peripherals, and any assigned GPIO until a verified pin map exists.
 - [x] Initialize NVS and read/revalidate a saved JSON config during application startup; invalid or missing stored data is logged without crashing the boot path. The loaded JSON is not yet applied to hardware drivers.
 - [ ] Add the local HTTP configuration API, browser editor/import/export, and explicit default-config recovery behavior.
@@ -38,7 +38,7 @@ The existing upstream `otto-robot` profile is a different product: it contains s
 - [ ] Implement full firmware-side schema validation matching `config/schema-v1.schema.json` before enabling configurable peripherals; the current exact-shape validator is a conservative safe-state gate only.
 - [ ] Add Otto full-screen face rendering and head-servo state mapping.
 - [x] Add an ESP32-S3 generic compile smoke workflow and downloadable build artifact. This validates the current repository default-board build only; it is not an Otto Desk firmware release and must not be flashed to the Waveshare module.
-- [ ] Add an Otto Desk-specific build workflow after the dedicated board selector/profile is implemented; verify its board identity, partition map, merged BIN and flash offsets before publishing a flashable release.
+- [ ] Add an Otto Desk-specific build workflow and verify its board identity, partition map, merged BIN and flash offsets before publishing a flashable release. The selector/profile scaffold exists but has not yet passed an Otto-specific build.
 - [ ] Validate the final firmware on the physical board; CI success alone is not hardware validation.
 
 ## Important distinction
@@ -62,3 +62,8 @@ The tracked `main/boards/common/wifi_board.cc` initializes `WifiManager`, starts
 Do not assume that the Otto JSON editor can be mounted into the existing captive portal. Before adding endpoints, inspect the exact resolved dependency version and its public API. If it has no supported route extension, implement a separate, explicitly documented Otto configuration server on a non-conflicting port after network readiness. Require bounded request bodies, strict JSON validation, NVS save/reload behavior, and no peripheral activation in the first iteration.
 
 The generic CI artifact is explicitly named `generic-esp32s3-smoke-not-for-flashing`; its build manifest records that it is not an Otto Desk image. Keep that safety label until an Otto-specific Kconfig selection, board factory, partition verification, and board-specific build all exist.
+
+
+## Dedicated board scaffold (2026-11-09)
+
+Added `main/boards/otto-desk/` with a board factory, build metadata and safety README. The board factory returns a `DummyAudioCodec` and inherits Wi-Fi behavior; it does not configure any GPIO or initialize physical hardware. This avoids borrowing the unrelated Waveshare camera or ElectronBot pin maps while allowing the board selection path to be integrated. The next step is an Otto-specific compile job that selects `CONFIG_BOARD_TYPE_OTTO_DESK`, then fix any compile/configuration issues before adding display and external I2S drivers.
