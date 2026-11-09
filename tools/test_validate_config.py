@@ -43,10 +43,10 @@ class HardwareConfigValidationTests(unittest.TestCase):
         if node is None:
             self.skipTest("Node.js is not installed")
         source = (ROOT / "main" / "otto_desk_config_server.cc").read_text(encoding="utf-8")
-        match = re.search(r"<script>\\s*(.*?)\\s*</script>", source, re.DOTALL)
+        match = re.search(r"<script>\s*(.*?)\s*</script>", source, re.DOTALL)
         self.assertIsNotNone(match, "configuration page script block was not found")
         script = match.group(1)
-        self.assertNotIn(r"\\nasync function", script,
+        self.assertNotIn(r"\nasync function", script,
                          "literal backslash-n must not split JavaScript statements")
         result = subprocess.run(
             [node, "--check"], input=script, capture_output=True,
