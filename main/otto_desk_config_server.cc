@@ -8,6 +8,7 @@
 #include <nvs.h>
 
 #include <string>
+#include <strings.h>
 
 namespace {
 constexpr char TAG[] = "OttoDeskConfig";
@@ -124,6 +125,19 @@ esp_err_t GetConfigHandler(httpd_req_t* request) {
 }
 
 esp_err_t SaveConfigHandler(httpd_req_t* request) {
+    char content_type[64] = {};
+    const esp_err_t header_err =
+        httpd_req_get_hdr_value_str(request, "Content-Type", content_type, sizeof(content_type));
+    if (header_err != ESP_OK ||
+        strncasecmp(content_type, "application/json", sizeof("application/json") - 1) != 0 ||
+        (content_type[sizeof("application/json") - 1] != '\\0' &&
+         content_type[sizeof("application/json") - 1] != ';' &&
+         content_type[sizeof("application/json") - 1] != ' ')) {
+        httpd_resp_set_status(request, "415 Unsupported Media Type");
+        httpd_resp_set_type(request, "application/json");
+        return httpd_resp_sendstr(request, "{\\\"error\\\":\\\"content_type_must_be_application_json\\\"}");
+    }
+
     if (request->content_len == 0 || request->content_len > OttoDeskConfigStore::kMaxConfigBytes) {
         httpd_resp_set_status(request, "413 Payload Too Large");
         return httpd_resp_sendstr(request, "{\"error\":\"config_size_must_be_1_to_3072_bytes\"}");
