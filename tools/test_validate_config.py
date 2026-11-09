@@ -323,6 +323,22 @@ class RuntimeConfigDecodeContractTests(unittest.TestCase):
                     rf"bool {field} = true;",
                 )
 
+    def test_config_portal_is_scoped_to_wifi_provisioning_mode(self):
+        board_source = (ROOT / "main" / "boards" / "otto-desk" / "otto_desk.cc").read_text(encoding="utf-8")
+        self.assertIn("event == NetworkEvent::WifiConfigModeEnter", board_source)
+        self.assertIn("OttoDeskConfigServer::Start()", board_source)
+        self.assertIn("event == NetworkEvent::Connected", board_source)
+        self.assertIn("event == NetworkEvent::WifiConfigModeExit", board_source)
+        self.assertIn("OttoDeskConfigServer::Stop()", board_source)
+
+    def test_config_api_never_reports_hardware_activation(self):
+        source = (ROOT / "main" / "otto_desk_config_server.cc").read_text(encoding="utf-8")
+        self.assertIn("\\\"hardware_activation\\\":false", source)
+        self.assertIn("kMaxConfigBytes", source)
+        self.assertIn("OttoDeskConfigStore::Save(json)", source)
+        self.assertIn("Cache-Control", source)
+        self.assertIn("X-Otto-Config-Source", source)
+
     def test_main_entrypoint_keeps_gpio_and_peripheral_activation_locked(self):
         main_source = (ROOT / "main" / "main.cc").read_text(encoding="utf-8")
         board_source = (ROOT / "main" / "boards" / "otto-desk" / "otto_desk.cc").read_text(encoding="utf-8")
