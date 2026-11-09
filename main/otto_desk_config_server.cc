@@ -109,6 +109,8 @@ esp_err_t GetConfigHandler(httpd_req_t* request) {
         return httpd_resp_sendstr(request, "{\"error\":\"stored_config_unavailable\"}");
     }
     httpd_resp_set_type(request, "application/json");
+    httpd_resp_set_hdr(request, "Cache-Control", "no-store");
+    httpd_resp_set_hdr(request, "X-Otto-Config-Source", "saved");
     return httpd_resp_send(request, json.c_str(), json.size());
 }
 
