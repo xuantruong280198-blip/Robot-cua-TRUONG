@@ -1,6 +1,7 @@
 #include "otto_desk_head_motion.h"
 
 #include <cmath>
+#include <cstdio>
 #include <cstdint>
 #include <limits>
 
