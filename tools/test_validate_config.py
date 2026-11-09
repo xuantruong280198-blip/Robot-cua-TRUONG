@@ -54,6 +54,19 @@ class HardwareConfigValidationTests(unittest.TestCase):
         )
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
 
+    def test_config_api_embedded_first_run_default_matches_checked_in_schema(self):
+        source = (ROOT / "main" / "otto_desk_config_server.cc").read_text(encoding="utf-8")
+        match = re.search(
+            r'constexpr char kDefaultConfig\\[\\] = R"json\\((.*?)\\)json";',
+            source,
+            re.DOTALL,
+        )
+        self.assertIsNotNone(match, "embedded first-run default JSON was not found")
+        embedded = json.loads(match.group(1))
+        self.assertEqual(embedded, DEFAULT)
+        code, output = self.run_config(embedded)
+        self.assertEqual(code, 0, output)
+
     def test_safe_default_passes(self):
         code, output = self.run_config(copy.deepcopy(DEFAULT))
         self.assertEqual(code, 0, output)
