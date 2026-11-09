@@ -86,7 +86,7 @@ void OttoDeskDisplay::FitEmotionToScreen() {
     const uint32_t scale_y = (256U * static_cast<uint32_t>(height_) + source->header.h - 1U) /
                              source->header.h;
     const uint32_t scale = std::max(scale_x, scale_y);
-    lv_image_set_scale(emoji_image_, static_cast<uint16_t>(std::min(scale, 65535U)));
+    lv_image_set_scale(emoji_image_, static_cast<uint16_t>(std::min<uint32_t>(scale, UINT32_C(65535))));
     lv_obj_center(emoji_image_);
 }
 
