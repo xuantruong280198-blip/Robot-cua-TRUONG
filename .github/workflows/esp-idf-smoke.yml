@@ -34,6 +34,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Install ESP-IDF v6.0.2
+        uses: espressif/install-esp-idf-action@v1
+        with:
+          version: "v6.0.2"
+
       - name: Configure ESP-IDF environment
         shell: bash
         run: |
@@ -42,7 +47,6 @@ jobs:
       - name: Compile firmware
         shell: bash
         run: |
-          . /opt/esp/idf/export.sh
           idf.py build
 
       - name: Write build identity manifest
