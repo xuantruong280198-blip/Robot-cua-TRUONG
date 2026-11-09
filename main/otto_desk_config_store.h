@@ -1,9 +1,55 @@
 #pragma once
 
 #include <cstddef>
+#include <cstdint>
+#include <optional>
 #include <string>
 
 #include "esp_err.h"
+
+
+struct OttoDeskServoConfig {
+    std::optional<int> gpio;
+    int min_deg = 0;
+    int center_deg = 90;
+    int max_deg = 180;
+    float speed_deg_per_sec = 0.0F;
+    bool enabled = false;
+};
+
+struct OttoDeskRuntimeConfig {
+    int display_width = 240;
+    int display_height = 240;
+    std::optional<int> display_rotation;
+    std::optional<int> display_sclk;
+    std::optional<int> display_mosi;
+    std::optional<int> display_cs;
+    std::optional<int> display_dc;
+    std::optional<int> display_reset;
+    std::optional<int> display_backlight;
+    bool display_enabled = false;
+
+    std::optional<int> microphone_ws;
+    std::optional<int> microphone_sck;
+    std::optional<int> microphone_sd;
+    bool microphone_enabled = false;
+
+    std::optional<int> amplifier_din;
+    std::optional<int> amplifier_bclk;
+    std::optional<int> amplifier_lrclk;
+    bool amplifier_enabled = false;
+
+    OttoDeskServoConfig pan;
+    OttoDeskServoConfig tilt;
+    bool servo_external_power_verified = false;
+
+    std::optional<int> pir_gpio;
+    bool pir_enabled = false;
+
+    // These flags are descriptive only. The current board scaffold does not
+    // apply GPIO assignments or start peripheral drivers from this structure.
+    bool hardware_activation_permitted = false;
+};
 
 // Bounded NVS storage for the Otto Desk JSON configuration.
 // This layer deliberately accepts only the conservative, hardware-disabled
@@ -16,4 +62,5 @@ public:
     static esp_err_t Save(const std::string& json);
     static esp_err_t Clear();
     static esp_err_t ValidateSafeJson(const std::string& json);
+    static esp_err_t Decode(const std::string& json, OttoDeskRuntimeConfig& config);
 };
