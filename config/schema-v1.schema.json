@@ -53,14 +53,16 @@
         "psram_mb",
         "camera_enabled",
         "onboard_codec_enabled",
-        "onboard_io_expander_enabled"
+        "onboard_io_expander_enabled",
+        "header_pin_count",
+        "header_pinout_verified"
       ],
       "properties": {
         "manufacturer": {
           "const": "Waveshare"
         },
         "product_family": {
-          "const": "ESP32-S3-CAM-OVxxxx"
+          "const": "ESP32-S3-CAM-N16R8"
         },
         "pcb_revision": {
           "type": [
@@ -90,6 +92,12 @@
           "const": false
         },
         "onboard_io_expander_enabled": {
+          "const": false
+        },
+        "header_pin_count": {
+          "const": 40
+        },
+        "header_pinout_verified": {
           "const": false
         }
       }
