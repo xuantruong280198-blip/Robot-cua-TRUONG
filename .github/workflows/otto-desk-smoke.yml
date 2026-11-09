@@ -16,6 +16,7 @@ on:
   pull_request:
     paths:
       - "main/**"
+      - "tools/**"
       - "components/**"
       - "CMakeLists.txt"
       - "sdkconfig.defaults*"
