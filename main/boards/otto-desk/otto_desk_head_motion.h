@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cmath>
 #include <cstdint>
+#include <limits>
 
 namespace otto_desk {
 
@@ -26,31 +27,42 @@ public:
                limits.speed_deg_per_sec <= 360.0F;
     }
 
+    // Invalid limits fail closed to the physical 0..180 degree envelope.
     static int ClampTarget(int target_deg, const HeadAxisLimits& limits) {
+        if (!IsValid(limits)) return std::clamp(target_deg, 0, 180);
         return std::clamp(target_deg, limits.min_deg, limits.max_deg);
     }
 
-    // Zero speed means an explicitly instantaneous move. A positive speed
-    // produces a duration rounded up to whole milliseconds.
+    // Zero speed means an explicitly instantaneous move. Very slow speeds
+    // saturate rather than overflowing the millisecond duration type.
     static uint32_t DurationMs(int from_deg, int to_deg,
                                const HeadAxisLimits& limits) {
-        if (limits.speed_deg_per_sec <= 0.0F) return 0;
+        if (!IsValid(limits) || limits.speed_deg_per_sec <= 0.0F) return 0;
         const int delta = std::abs(ClampTarget(to_deg, limits) -
                                    ClampTarget(from_deg, limits));
         if (delta == 0) return 0;
-        return static_cast<uint32_t>(
+        const double duration =
             std::ceil((static_cast<double>(delta) * 1000.0) /
-                      static_cast<double>(limits.speed_deg_per_sec)));
+                      static_cast<double>(limits.speed_deg_per_sec));
+        if (duration >= static_cast<double>(
+                            std::numeric_limits<uint32_t>::max())) {
+            return std::numeric_limits<uint32_t>::max();
+        }
+        return static_cast<uint32_t>(duration);
     }
 
     // Ease-out cubic gives a quick initial response and a soft arrival.
+    // Non-finite progress safely holds the clamped starting position.
     static float Interpolate(float progress, int from_deg, int to_deg,
                              const HeadAxisLimits& limits) {
+        const int from = ClampTarget(from_deg, limits);
+        const int to = ClampTarget(to_deg, limits);
+        if (!IsValid(limits) || !std::isfinite(progress)) {
+            return static_cast<float>(from);
+        }
         const float t = std::clamp(progress, 0.0F, 1.0F);
         const float inverse = 1.0F - t;
         const float eased = 1.0F - inverse * inverse * inverse;
-        const int from = ClampTarget(from_deg, limits);
-        const int to = ClampTarget(to_deg, limits);
         return static_cast<float>(from) +
                static_cast<float>(to - from) * eased;
     }
