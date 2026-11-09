@@ -43,3 +43,16 @@ This scaffold's dedicated ESP32-S3 board-selection build passed in GitHub Action
 ## Safe configuration page
 
 When the firmware enters its Wi-Fi provisioning access-point mode, it starts a separate Otto JSON editor at `http://192.168.4.1:8080/` (the existing captive portal remains on port 80). The editor can load the saved JSON, import a local `.json` file (maximum 3,072 bytes), export the editor contents, and submit a replacement. The endpoint accepts only the conservative safe schema: every device stays disabled and every GPIO remains null; all GPIO safety-policy flags must remain enabled. It stops when station Wi-Fi connection begins. This endpoint is a first provisioning tool, not a runtime hardware configurator.
+
+
+## Two-axis head motion planner
+
+`otto_desk_head_motion.h` provides a hardware-independent planner for the
+pan/tilt head. It validates per-axis min/center/max limits and speed, clamps
+requested targets, computes a bounded move duration, and provides ease-out
+cubic interpolation for smooth arrivals. The module has no GPIO, LEDC, or
+servo-driver calls and is not yet connected to physical outputs.
+
+Servo activation remains deliberately disabled until the exact 40-pin header
+pinout is verified and the external servo supply is confirmed. Do not connect
+servo power to the ESP32 3V3 rail.
