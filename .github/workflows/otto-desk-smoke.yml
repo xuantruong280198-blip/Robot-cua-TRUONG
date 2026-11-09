@@ -56,6 +56,15 @@ jobs:
             -o /tmp/otto-head-motion-tests
           /tmp/otto-head-motion-tests
 
+      - name: Compile and run ESP32-S3 GPIO safety tests
+        shell: bash
+        run: |
+          c++ -std=c++17 -Wall -Wextra -Werror \
+            -Imain/boards/otto-desk \
+            tools/test_gpio_safety.cc \
+            -o /tmp/otto-gpio-safety-tests
+          /tmp/otto-gpio-safety-tests
+
       - name: Configure ESP-IDF and select Otto Desk
         shell: bash
         run: |
