@@ -1,0 +1,13 @@
+{
+  "type": "otto-desk",
+  "target": "esp32s3",
+  "manufacturer": "OpenAI community project",
+  "builds": [
+    {
+      "name": "otto-desk-safe-scaffold",
+      "sdkconfig_append": [
+        "CONFIG_HTTPD_WS_SUPPORT=y"
+      ]
+    }
+  ]
+}
