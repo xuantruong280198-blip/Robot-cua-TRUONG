@@ -52,6 +52,42 @@ class HardwareConfigValidationTests(unittest.TestCase):
             self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
             self.assertIn("Hardware JSON validation passed", result.stdout)
 
+    def test_duplicate_json_object_keys_are_rejected(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = pathlib.Path(directory) / "duplicate.json"
+            path.write_text('{"schema_version":1,"schema_version":1}', encoding="utf-8")
+            result = subprocess.run(
+                [sys.executable, str(ROOT / "tools" / "validate_config.py"),
+                 "--config", str(path)],
+                capture_output=True, text=True, check=False,
+            )
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("duplicate JSON object key", result.stderr)
+
+    def test_oversized_config_is_rejected_before_parsing(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = pathlib.Path(directory) / "oversized.json"
+            path.write_bytes(b" " * 3073)
+            result = subprocess.run(
+                [sys.executable, str(ROOT / "tools" / "validate_config.py"),
+                 "--config", str(path)],
+                capture_output=True, text=True, check=False,
+            )
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("between 1 and 3072 bytes", result.stderr)
+
+    def test_non_object_json_root_is_rejected(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = pathlib.Path(directory) / "array.json"
+            path.write_text("[]", encoding="utf-8")
+            result = subprocess.run(
+                [sys.executable, str(ROOT / "tools" / "validate_config.py"),
+                 "--config", str(path)],
+                capture_output=True, text=True, check=False,
+            )
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("root must be a JSON object", result.stderr)
+
     def test_cli_rejects_invalid_imported_json_file(self):
         with tempfile.TemporaryDirectory() as directory:
             path = pathlib.Path(directory) / "imported.json"
