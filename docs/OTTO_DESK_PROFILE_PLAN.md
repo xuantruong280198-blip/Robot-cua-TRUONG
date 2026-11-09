@@ -61,7 +61,7 @@ The tracked `main/boards/common/wifi_board.cc` initializes `WifiManager`, starts
 
 Do not assume that the Otto JSON editor can be mounted into the existing captive portal. Before adding endpoints, inspect the exact resolved dependency version and its public API. If it has no supported route extension, implement a separate, explicitly documented Otto configuration server on a non-conflicting port after network readiness. Require bounded request bodies, strict JSON validation, NVS save/reload behavior, and no peripheral activation in the first iteration.
 
-The generic CI artifact is explicitly named `generic-esp32s3-smoke-not-for-flashing`; its build manifest records that it is not an Otto Desk image. Keep that safety label until an Otto-specific Kconfig selection, board factory, partition verification, and board-specific build all exist.
+The generic CI artifact remains explicitly named `generic-esp32s3-smoke-not-for-flashing`; it is still not an Otto Desk image. A separate Otto Desk Kconfig selector, board factory and successful board-specific compile now exist, but partition/flash-offset verification, merged-image verification and hardware validation remain incomplete. Keep both artifacts clearly distinguished and do not flash either one.
 
 
 ## Dedicated board scaffold (2026-11-09)
