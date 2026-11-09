@@ -80,7 +80,6 @@ jobs:
       - name: Compile Otto Desk scaffold
         shell: bash
         run: |
-          . /opt/esp/idf/export.sh
           idf.py build
 
       - name: Write build identity manifest
