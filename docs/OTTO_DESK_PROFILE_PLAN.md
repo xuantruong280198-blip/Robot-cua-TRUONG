@@ -72,3 +72,12 @@ Added `main/boards/otto-desk/` with a board factory, build metadata and safety R
 ## Otto Desk CI result (2026-11-09)
 
 The dedicated workflow `.github/workflows/otto-desk-smoke.yml` completed successfully: run `42547497724`, commit `faf3f032346a804888d5b30620ea568f39f2ca13`. Its ESP-IDF 6.0.2 job selected `CONFIG_BOARD_TYPE_OTTO_DESK`, compiled the safe scaffold, and uploaded artifact `otto-desk-safe-scaffold-not-for-hardware-flashing` (artifact ID `13643729485`, SHA-256 `3bf65af09c2d27d1b1bc9b0e04d55223c53a29a4711b996ebd3727d3e92cb45b`, expires 2026-11-23). The workflow manifest explicitly records `hardware_validation=not-performed` and `gpio_assignments=unconfigured`. This artifact is a CI proof package, not a flashable robot firmware. Partition layout, flash offsets, full image assembly and physical hardware validation are still open gates.
+
+
+## Safe provisioning configuration API (2026-11-09)
+
+Added `OttoDeskConfigServer` on port 8080. The server starts only after the Wi-Fi provisioning AP reports `WifiConfigModeEnter`, and stops when station connection/config-mode exit is reported. The existing captive portal remains on its own port 80. The new page provides a small JSON editor; `GET /api/config` reads the validated NVS value and `POST /api/config` accepts a body only when it is 1–3072 bytes and passes `OttoDeskConfigStore::Save`. There is no route to enable hardware, no GPIO write path, and no clear/reset route. The stored schema remains intentionally all-disabled/unassigned.
+
+The external `78/esp-wifi-connect` public API confirms the config AP uses an HTTP server and emits `WifiConfigModeEnter` after AP startup; the board hook now uses that event rather than trying to register routes inside the dependency's private HTTP server. The Otto endpoint uses port 8080 to avoid the existing portal on port 80.
+
+This is a provisioning-only first iteration. It has not yet passed the latest dedicated build, and it has not been exercised on physical hardware. Do not assume the page is available in normal station mode; it is intentionally stopped when Wi-Fi station connection begins.
