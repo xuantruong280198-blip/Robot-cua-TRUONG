@@ -17,7 +17,9 @@ constexpr uint32_t kPeriodUs = 1000000U / kPwmFrequencyHz;
 OttoDeskServoAxis::OttoDeskServoAxis(
     gpio_num_t gpio, ledc_channel_t channel,
     bool board_pinout_validated, bool external_power_verified)
-    : gpio_(gpio), channel_(channel) {
+    : gpio_(gpio), channel_(channel),
+      permitted_(board_pinout_validated && external_power_verified),
+      timer_(static_cast<ledc_timer_t>(channel)) {
     // Fail closed: no PWM on a guessed pin or from the ESP32 3V3 rail.
     if (!board_pinout_validated || !external_power_verified ||
         gpio < GPIO_NUM_0 || gpio >= GPIO_NUM_MAX ||
@@ -36,6 +38,7 @@ OttoDeskServoAxis::~OttoDeskServoAxis() {
 }
 
 esp_err_t OttoDeskServoAxis::Initialize() {
+    if (!permitted_) return ESP_ERR_INVALID_STATE;
     if (gpio_ < GPIO_NUM_0 || gpio_ >= GPIO_NUM_MAX) return ESP_ERR_INVALID_ARG;
     if (ready_) return ESP_OK;
 
@@ -43,7 +46,7 @@ esp_err_t OttoDeskServoAxis::Initialize() {
         ledc_timer_config_t timer = {};
         timer.speed_mode = kSpeedMode;
         timer.duty_resolution = kResolution;
-        timer.timer_num = kTimer;
+        timer.timer_num = timer_;
         timer.freq_hz = kPwmFrequencyHz;
         timer.clk_cfg = LEDC_AUTO_CLK;
         esp_err_t err = ledc_timer_config(&timer);
@@ -56,7 +59,7 @@ esp_err_t OttoDeskServoAxis::Initialize() {
     channel.speed_mode = kSpeedMode;
     channel.channel = channel_;
     channel.intr_type = LEDC_INTR_DISABLE;
-    channel.timer_sel = kTimer;
+    channel.timer_sel = timer_;
     channel.duty = 0;
     channel.hpoint = 0;
     esp_err_t err = ledc_channel_config(&channel);
