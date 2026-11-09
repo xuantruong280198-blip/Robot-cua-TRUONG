@@ -34,6 +34,30 @@ public:
                limits.speed_deg_per_sec <= 360.0F;
     }
 
+    // Resolve XiaoZhi emotion/status tokens into small relative head offsets.
+    // Tilt sign depends on bracket mounting; calibrate before enabling outputs.
+    static HeadPoseOffset PoseForEmotion(const char* emotion) {
+        if (emotion == nullptr) return {};
+        if (std::strcmp(emotion, "listening") == 0) return {0, -5};
+        if (std::strcmp(emotion, "thinking") == 0) return {10, -7};
+        if (std::strcmp(emotion, "speaking") == 0) return {0, 3};
+        if (std::strcmp(emotion, "happy") == 0) return {-7, -5};
+        if (std::strcmp(emotion, "sad") == 0) return {0, 10};
+        if (std::strcmp(emotion, "surprised") == 0) return {0, -12};
+        if (std::strcmp(emotion, "angry") == 0) return {7, 2};
+        return {};
+    }
+
+    static HeadPoseOffset TargetForEmotion(const char* emotion,
+                                           const HeadAxisLimits& pan,
+                                           const HeadAxisLimits& tilt) {
+        const HeadPoseOffset offset = PoseForEmotion(emotion);
+        return {
+            ClampTarget(pan.center_deg + offset.pan_deg, pan),
+            ClampTarget(tilt.center_deg + offset.tilt_deg, tilt),
+        };
+    }
+
     // Invalid limits fail closed to the physical 0..180 degree envelope.
     static int ClampTarget(int target_deg, const HeadAxisLimits& limits) {
         if (!IsValid(limits)) return std::clamp(target_deg, 0, 180);
