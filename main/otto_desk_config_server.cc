@@ -59,6 +59,19 @@ constexpr char kDefaultConfig[] = R"json({
 })json";
 httpd_handle_t server = nullptr;
 
+bool IsJsonContentType(const char* value) {
+    if (value == nullptr) return false;
+
+    while (*value == ' ' || *value == '\\t') ++value;
+    constexpr char kJsonMediaType[] = "application/json";
+    constexpr size_t kJsonMediaTypeLength = sizeof(kJsonMediaType) - 1;
+    if (strncasecmp(value, kJsonMediaType, kJsonMediaTypeLength) != 0) return false;
+
+    value += kJsonMediaTypeLength;
+    while (*value == ' ' || *value == '\\t') ++value;
+    return *value == '\\0' || *value == ';';
+}
+
 esp_err_t RootHandler(httpd_req_t* request) {
     static constexpr char kPage[] = R"html(<!doctype html>
 <html lang="vi"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
@@ -128,11 +141,7 @@ esp_err_t SaveConfigHandler(httpd_req_t* request) {
     char content_type[64] = {};
     const esp_err_t header_err =
         httpd_req_get_hdr_value_str(request, "Content-Type", content_type, sizeof(content_type));
-    if (header_err != ESP_OK ||
-        strncasecmp(content_type, "application/json", sizeof("application/json") - 1) != 0 ||
-        (content_type[sizeof("application/json") - 1] != 0 &&
-         content_type[sizeof("application/json") - 1] != ';' &&
-         content_type[sizeof("application/json") - 1] != ' ')) {
+    if (header_err != ESP_OK || !IsJsonContentType(content_type)) {
         httpd_resp_set_status(request, "415 Unsupported Media Type");
         httpd_resp_set_type(request, "application/json");
         return httpd_resp_sendstr(request, "{\"error\":\"content_type_must_be_application_json\"}");
