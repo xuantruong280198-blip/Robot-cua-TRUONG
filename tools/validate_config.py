@@ -20,14 +20,29 @@ def fail(message: str) -> None:
     raise SystemExit(1)
 
 
+def _reject_duplicate_keys(pairs):
+    """Reject duplicate object keys instead of silently accepting the last value."""
+    result = {}
+    for key, value in pairs:
+        if key in result:
+            raise ValueError(f"duplicate JSON object key: {key}")
+        result[key] = value
+    return result
+
+
 def main(config_path: pathlib.Path | None = None) -> None:
     """Validate a supplied configuration file (defaults to the checked-in safe config)."""
     if config_path is None:
         config_path = CONFIG
     try:
-        data = json.loads(config_path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError) as exc:
+        raw = config_path.read_bytes()
+        if not raw or len(raw) > 3072:
+            fail("configuration file must be between 1 and 3072 bytes")
+        data = json.loads(raw.decode("utf-8"), object_pairs_hook=_reject_duplicate_keys)
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError, ValueError) as exc:
         fail(f"cannot read valid JSON from {config_path}: {exc}")
+    if not isinstance(data, dict):
+        fail("configuration root must be a JSON object")
 
     if data.get("schema_version") != 1:
         fail("schema_version must be 1")
