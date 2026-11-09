@@ -63,6 +63,31 @@ int main() {
                     20.0F) < 0.001F,
           "invalid limits hold safe clamped source");
 
+    const HeadAxisLimits pan{30, 90, 150, 60.0F};
+    const HeadAxisLimits tilt{40, 90, 140, 45.0F};
+    const auto neutral = HeadMotionPlanner::TargetForEmotion("neutral", pan, tilt);
+    Check(neutral.pan_deg == 90 && neutral.tilt_deg == 90,
+          "neutral emotion returns calibrated center");
+    const auto sad = HeadMotionPlanner::TargetForEmotion("sad", pan, tilt);
+    Check(sad.pan_deg == 90 && sad.tilt_deg == 100,
+          "sad emotion requests gentle tilt offset");
+    const auto thinking = HeadMotionPlanner::TargetForEmotion("thinking", pan, tilt);
+    Check(thinking.pan_deg == 100 && thinking.tilt_deg == 83,
+          "thinking emotion requests pan and tilt offsets");
+    const auto listening = HeadMotionPlanner::TargetForEmotion("listening", pan, tilt);
+    Check(listening.pan_deg == 90 && listening.tilt_deg == 85,
+          "listening emotion leans subtly");
+    const auto unknown = HeadMotionPlanner::TargetForEmotion("unmapped-token", pan, tilt);
+    Check(unknown.pan_deg == 90 && unknown.tilt_deg == 90,
+          "unknown emotion falls back to neutral");
+    const auto bounded = HeadMotionPlanner::TargetForEmotion(
+        "sad", pan, {40, 135, 140, 45.0F});
+    Check(bounded.tilt_deg == 140,
+          "emotion offsets obey configured axis limits");
+    const auto null_emotion = HeadMotionPlanner::TargetForEmotion(nullptr, pan, tilt);
+    Check(null_emotion.pan_deg == 90 && null_emotion.tilt_deg == 90,
+          "null emotion falls back to neutral");
+
     if (failures != 0) {
         std::fprintf(stderr, "%d head motion test(s) failed\n", failures);
         return 1;
