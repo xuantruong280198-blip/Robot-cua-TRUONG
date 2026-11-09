@@ -218,5 +218,35 @@ class HardwareConfigValidationTests(unittest.TestCase):
                 self.assertIn(f"gpio_policy.{flag} must remain true", output)
 
 
+    def test_malformed_nested_objects_are_rejected_without_tracebacks(self):
+        mutations = (
+            lambda c: c.update(board=None),
+            lambda c: c.update(display=[]),
+            lambda c: c["display"].update(gpio=None),
+            lambda c: c["audio"].update(microphone="bad"),
+            lambda c: c["servos"].update(pan=None),
+            lambda c: c.update(pir=False),
+            lambda c: c.update(gpio_policy=[]),
+        )
+        for mutate in mutations:
+            with self.subTest(mutation=mutate):
+                config = copy.deepcopy(DEFAULT)
+                mutate(config)
+                code, output = self.run_config(config)
+                self.assertNotEqual(code, 0)
+                self.assertIn("must be a JSON object", output)
+                self.assertNotIn("Traceback", output)
+
+    def test_servo_angles_must_be_integer_and_within_range(self):
+        for values in ((True, 90, 160), (-1, 90, 160), (20, 90, 181), (20, 90.5, 160)):
+            with self.subTest(values=values):
+                config = copy.deepcopy(DEFAULT)
+                config["servos"]["pan"].update(
+                    min_deg=values[0], center_deg=values[1], max_deg=values[2]
+                )
+                code, output = self.run_config(config)
+                self.assertNotEqual(code, 0)
+                self.assertTrue("integers" in output or "0 <= min_deg" in output, output)
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)
