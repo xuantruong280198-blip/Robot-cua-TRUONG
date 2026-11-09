@@ -2,7 +2,6 @@
 #include <esp_err.h>
 #include <nvs.h>
 #include <nvs_flash.h>
-#include <driver/gpio.h>
 #include <esp_event.h>
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
