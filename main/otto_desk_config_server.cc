@@ -12,6 +12,50 @@
 namespace {
 constexpr char TAG[] = "OttoDeskConfig";
 constexpr uint16_t kPort = 8080;
+constexpr char kDefaultConfig[] = R"json({
+  "schema_version": 1,
+  "project": "Robot-cua-TRUONG",
+  "firmware_base": {"repository": "https://github.com/78/xiaozhi-esp32", "ref": "v2.5.0"},
+  "board": {
+    "manufacturer": "Waveshare",
+    "product_family": "ESP32-S3-CAM-OVxxxx",
+    "pcb_revision": null,
+    "profile": "otto-waveshare-esp32-s3-cam",
+    "upstream_reference_profile": "waveshare/esp32-s3-cam",
+    "chip": "esp32s3",
+    "flash_mb": 16,
+    "psram_mb": 8,
+    "camera_enabled": false,
+    "onboard_codec_enabled": false,
+    "onboard_io_expander_enabled": false
+  },
+  "display": {
+    "type": "st7789", "width": 240, "height": 240, "rotation": null,
+    "gpio": {"sclk": null, "mosi": null, "cs": null, "dc": null, "reset": null, "backlight": null},
+    "enabled": false
+  },
+  "audio": {
+    "microphone": {"type": "inmp441", "i2s": {"ws": null, "sck": null, "sd": null}, "enabled": false},
+    "amplifier": {"type": "max98357a", "i2s": {"din": null, "bclk": null, "lrclk": null},
+                  "enabled": false, "speaker_impedance_ohm": null}
+  },
+  "servos": {
+    "pan": {"gpio": null, "min_deg": 20, "center_deg": 90, "max_deg": 160,
+            "speed_deg_per_sec": 60, "enabled": false},
+    "tilt": {"gpio": null, "min_deg": 35, "center_deg": 90, "max_deg": 145,
+             "speed_deg_per_sec": 45, "enabled": false},
+    "external_power_verified": false
+  },
+  "pir": {"type": "hc-sr501", "gpio": null, "enabled": false},
+  "gpio_policy": {
+    "allow_unassigned": true,
+    "reject_duplicate_assignments": true,
+    "reject_bootstrap_conflicts": true,
+    "reject_flash_psram_conflicts": true,
+    "reject_usb_uart_conflicts": true,
+    "require_board_pinout_validation": true
+  }
+})json";
 httpd_handle_t server = nullptr;
 
 esp_err_t RootHandler(httpd_req_t* request) {
@@ -40,7 +84,7 @@ small{color:#cbd5e1}#status{white-space:pre-wrap}
 <p id="status">Chưa tải cấu hình.</p>
 <script>
 const box=document.getElementById('json'),status=document.getElementById('status');
-async function loadConfig(){status.textContent='Đang tải...';try{const r=await fetch('/api/config');const t=await r.text();if(!r.ok)throw Error(t);box.value=JSON.stringify(JSON.parse(t),null,2);status.textContent='Đã tải cấu hình từ NVS.';}catch(e){status.textContent='Chưa có cấu hình lưu hoặc lỗi: '+e.message;}}
+async function loadConfig(){status.textContent='Đang tải...';try{const r=await fetch('/api/config');const t=await r.text();if(!r.ok)throw Error(t);box.value=JSON.stringify(JSON.parse(t),null,2);status.textContent=r.status===204?'Đã tải cấu hình mặc định an toàn (chưa có cấu hình lưu).':'Đã tải cấu hình đã lưu.';}catch(e){status.textContent='Chưa có cấu hình lưu hoặc lỗi: '+e.message;}}
 async function saveConfig(){status.textContent='Đang kiểm tra và lưu...';try{JSON.parse(box.value);const r=await fetch('/api/config',{method:'POST',headers:{'Content-Type':'application/json'},body:box.value});const t=await r.text();if(!r.ok)throw Error(t);status.textContent='Đã lưu JSON an toàn. Thiết bị ngoại vi vẫn đang tắt.';}catch(e){status.textContent='Không lưu được: '+e.message;}}
 async function importConfig(event){const file=event.target.files&&event.target.files[0];if(!file)return;if(file.size>3072){status.textContent='File vượt quá giới hạn 3072 byte.';event.target.value='';return;}try{const text=await file.text();JSON.parse(text);box.value=text;status.textContent='Đã nhập '+file.name+'. Nhấn Kiểm tra và lưu để firmware xác thực.';}catch(e){status.textContent='File JSON không hợp lệ: '+e.message;}event.target.value='';}
 function exportConfig(){try{JSON.parse(box.value);const blob=new Blob([box.value],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='otto-desk-config.json';a.click();URL.revokeObjectURL(url);status.textContent='Đã xuất otto-desk-config.json.';}catch(e){status.textContent='Không thể xuất: JSON chưa hợp lệ.';}}
@@ -53,9 +97,11 @@ esp_err_t GetConfigHandler(httpd_req_t* request) {
     std::string json;
     const esp_err_t err = OttoDeskConfigStore::Load(json);
     if (err == ESP_ERR_NVS_NOT_FOUND) {
-        httpd_resp_set_status(request, "404 Not Found");
+        // First-use experience: return the same fail-closed schema as config/default.json.
+        // Every peripheral remains disabled and every GPIO remains null.
         httpd_resp_set_type(request, "application/json");
-        return httpd_resp_sendstr(request, "{\"error\":\"no_saved_config\",\"hint\":\"paste config/default.json and save\"}");
+        httpd_resp_set_hdr(request, "Cache-Control", "no-store");
+        return httpd_resp_sendstr(request, kDefaultConfig);
     }
     if (err != ESP_OK) {
         httpd_resp_set_status(request, "500 Internal Server Error");
