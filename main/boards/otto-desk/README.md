@@ -70,6 +70,15 @@ orientation, or replace calibration. In particular, the sign of the tilt
 offset depends on how the pan/tilt bracket is mounted and must be checked
 before any PWM output is enabled.
 
+## Guarded PIR input driver
+
+`otto_desk_pir.h/.cc` now provides a small HC-SR501 input driver. It
+requires an explicitly validated board pinout, rejects reserved/strapping
+GPIOs, configures a plain digital input without an interrupt, and exposes
+`IsMotionDetected()` for a future board polling task. It is compiled by the
+Otto Desk board-source glob. It is not yet instantiated by the board because
+the saved runtime configuration keeps PIR disabled and its GPIO unassigned.
+
 ## OTA safety checks
 
 The shared XiaoZhi OTA path now rejects firmware downloads larger than the
