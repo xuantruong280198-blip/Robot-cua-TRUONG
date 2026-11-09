@@ -9,7 +9,8 @@ This is a dedicated XiaoZhi board profile for the stationary Otto Desk AI projec
 - Wi-Fi lifecycle inherited from `WifiBoard`
 - Dummy audio codec only, so application startup does not initialize unknown I2S pins
 - No camera, no onboard codec, no CH32V003 expander, no battery logic, no walking/limb servos
-- No display or external audio hardware is initialized yet
+- Otto full-screen display class now exists and uses the `otto-gif` asset collection; the board does not instantiate it until a verified runtime pin map is supplied
+- No display panel, I2S, servo, camera, onboard codec or I/O expander is initialized at boot
 
 ## Hardware safety
 
