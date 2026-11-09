@@ -25,7 +25,16 @@ button{padding:10px 16px;margin:8px 8px 8px 0;border:0;border-radius:7px;font-we
 small{color:#cbd5e1}#status{white-space:pre-wrap}
 </style>
 <h2>Otto Desk AI - Cấu hình an toàn</h2>
-<p>API này chỉ hoạt động trong chế độ Wi-Fi cấu hình. Firmware hiện chỉ chấp nhận JSON có toàn bộ thiết bị và GPIO ở trạng thái tắt/chưa gán.</p>
+<p>API này chỉ hoạt động trong chế độ Wi-Fi cấu hình. Firmware hiện chỉ chấp nhận JSON có toàn bộ thiết bị và GPIO ở trạng thái tắt/chưa gán. Bảng dưới đây là danh sách tín hiệu cần cấu hình, không phải sơ đồ chân đã xác minh.</p>
+<section style="overflow-x:auto;margin:16px 0"><table style="width:100%;border-collapse:collapse;background:#1f2937"><thead><tr><th style="text-align:left;padding:9px">Thiết bị</th><th style="text-align:left;padding:9px">Tín hiệu</th><th style="text-align:left;padding:9px">GPIO</th><th style="text-align:left;padding:9px">Trạng thái</th></tr></thead><tbody>
+<tr><td>ST7789</td><td>SCLK / MOSI / CS / DC / RESET / BACKLIGHT</td><td>6 chân</td><td>Chưa gán</td></tr>
+<tr><td>INMP441</td><td>WS / SCK / SD</td><td>3 chân</td><td>Chưa gán</td></tr>
+<tr><td>MAX98357A</td><td>DIN / BCLK / LRCLK</td><td>3 chân</td><td>Chưa gán</td></tr>
+<tr><td>Servo đầu ngang</td><td>PAN signal</td><td>1 chân</td><td>Chưa gán</td></tr>
+<tr><td>Servo đầu dọc</td><td>TILT signal</td><td>1 chân</td><td>Chưa gán</td></tr>
+<tr><td>PIR HC-SR501</td><td>OUT</td><td>1 chân</td><td>Chưa gán</td></tr>
+</tbody></table></section>
+<p><strong>Phần cứng đang khóa an toàn:</strong> màn hình, mic, ampli, hai servo và PIR đều chưa được firmware kích hoạt. Chỉ mở khóa sau khi xác minh pinout đúng revision và kiểm tra nguồn servo.</p>
 <textarea id="json" spellcheck="false" placeholder="Dán nội dung config/default.json tại đây..."></textarea><br>
 <button onclick="loadConfig()">Tải cấu hình đã lưu</button><button onclick="saveConfig()">Kiểm tra và lưu</button><button onclick="exportConfig()">Xuất JSON</button><label style="display:inline-block;padding:10px 16px;margin:8px;background:#334155;border-radius:7px;cursor:pointer">Nhập JSON<input id="file" type="file" accept=".json,application/json" hidden onchange="importConfig(event)"></label>
 <p id="status">Chưa tải cấu hình.</p>
