@@ -14,6 +14,17 @@ PIN_KEYS = {
     "sclk", "mosi", "miso", "cs", "dc", "reset", "backlight",
 }
 
+# Keep this in sync with boards/otto-desk/otto_desk_gpio_safety.h.
+# These pins are withheld on the target module regardless of carrier routing.
+BLOCKED_GPIO_RANGES = ((26, 37),)
+BLOCKED_GPIOS = {0, 3, 19, 20, 43, 44, 45, 46}
+
+
+def is_blocked_gpio(gpio: int) -> bool:
+    return gpio in BLOCKED_GPIOS or any(
+        first <= gpio <= last for first, last in BLOCKED_GPIO_RANGES
+    )
+
 
 def fail(message: str) -> None:
     print(f"ERROR: {message}", file=sys.stderr)
@@ -103,11 +114,11 @@ def main(config_path: pathlib.Path | None = None) -> None:
 
     seen = {}
     for gpio, path in pin_values:
-        # ESP32-S3 exposes GPIO0-21 and GPIO26-48. GPIO22-25 do
-        # not exist on this SoC; board-specific reserved pins are checked
-        # separately only after the exact PCB pinout is verified.
+        # ESP32-S3 exposes GPIO0-21 and GPIO26-48; GPIO22-25 do not exist.
         if not (0 <= gpio <= 21 or 26 <= gpio <= 48):
             fail(f"{path} uses out-of-range GPIO {gpio} or unavailable ESP32-S3 GPIO")
+        if is_blocked_gpio(gpio):
+            fail(f"{path} uses GPIO {gpio}, blocked by the N16R8 module safety policy")
         if gpio in seen:
             fail(f"GPIO {gpio} is assigned more than once: {seen[gpio]} and {path}")
         seen[gpio] = path
