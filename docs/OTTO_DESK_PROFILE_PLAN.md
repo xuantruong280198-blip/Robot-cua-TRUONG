@@ -81,3 +81,11 @@ Added `OttoDeskConfigServer` on port 8080. The server starts only after the Wi-F
 The external `78/esp-wifi-connect` public API confirms the config AP uses an HTTP server and emits `WifiConfigModeEnter` after AP startup; the board hook now uses that event rather than trying to register routes inside the dependency's private HTTP server. The Otto endpoint uses port 8080 to avoid the existing portal on port 80.
 
 This is a provisioning-only first iteration. It has not yet passed the latest dedicated build, and it has not been exercised on physical hardware. Do not assume the page is available in normal station mode; it is intentionally stopped when Wi-Fi station connection begins.
+
+## JSON provisioning editor and policy hardening (2026-11-09)
+
+The port-8080 provisioning page now supports local JSON file import (maximum 3,072 bytes), in-browser JSON parsing, export to a local JSON file, and NVS submission through the bounded API. This remains a safe-state editor only: no peripheral or GPIO can be enabled.
+
+Firmware-side validation now requires every GPIO policy flag to remain true, including duplicate assignment, bootstrap, flash/PSRAM, USB/UART and board-pinout checks. The host-side validator applies the same fail-closed policy and regression tests reject attempts to turn off any of these flags.
+
+Latest relevant commits: 2082a5b (JSON import/export), 749e60b (firmware fail-closed policy), 7b2d43d (README), 0e193a1 (host validator regression test). CI is still running for the latest changes; do not treat them as passed until the corresponding runs finish.
