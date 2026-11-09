@@ -1,6 +1,7 @@
 #include "otto_desk_gpio_safety.h"
 
 #include <cassert>
+#include <initializer_list>
 
 int main() {
     using otto_desk::IsSafeEsp32S3Gpio;
