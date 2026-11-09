@@ -47,7 +47,13 @@ def main(config_path: pathlib.Path | None = None) -> None:
     if data.get("schema_version") != 1:
         fail("schema_version must be 1")
 
-    board = data.get("board", {})
+    def require_object(parent, key, path):
+        value = parent.get(key)
+        if not isinstance(value, dict):
+            fail(f"{path} must be a JSON object")
+        return value
+
+    board = require_object(data, "board", "board")
     if board.get("manufacturer") != "Waveshare":
         fail("board.manufacturer must be Waveshare")
     if board.get("camera_enabled") is not False:
@@ -56,6 +62,19 @@ def main(config_path: pathlib.Path | None = None) -> None:
         fail("onboard codec must remain disabled while external I2S audio is selected")
     if board.get("onboard_io_expander_enabled") is not False:
         fail("onboard I/O expander must remain disabled until its role is implemented")
+
+    display = require_object(data, "display", "display")
+    display_gpio = require_object(display, "gpio", "display.gpio")
+    audio = require_object(data, "audio", "audio")
+    microphone = require_object(audio, "microphone", "audio.microphone")
+    mic_i2s = require_object(microphone, "i2s", "audio.microphone.i2s")
+    amplifier = require_object(audio, "amplifier", "audio.amplifier")
+    amp_i2s = require_object(amplifier, "i2s", "audio.amplifier.i2s")
+    servos = require_object(data, "servos", "servos")
+    pan = require_object(servos, "pan", "servos.pan")
+    tilt = require_object(servos, "tilt", "servos.tilt")
+    pir = require_object(data, "pir", "pir")
+    policy = require_object(data, "gpio_policy", "gpio_policy")
 
     pin_values = []
 
@@ -103,7 +122,6 @@ def main(config_path: pathlib.Path | None = None) -> None:
 
     assert_unassigned(data)
 
-    servos = data.get("servos", {})
     if servos.get("external_power_verified") is not False:
         fail("servo external_power_verified must remain false until verified")
     for name in ("pan", "tilt"):
@@ -112,7 +130,6 @@ def main(config_path: pathlib.Path | None = None) -> None:
     if data.get("pir", {}).get("enabled") is not False:
         fail("PIR must remain disabled until wiring is verified")
 
-    policy = data.get("gpio_policy", {})
     required_safety_flags = (
         "allow_unassigned",
         "reject_duplicate_assignments",
@@ -127,15 +144,16 @@ def main(config_path: pathlib.Path | None = None) -> None:
 
     # Validate cross-field safety rules that JSON Schema alone does not
     # express clearly for this versioned hardware contract.
-    servos = data.get("servos", {})
     any_servo_enabled = False
-    for name in ("pan", "tilt"):
-        servo = servos.get(name, {})
+    for name, servo in (("pan", pan), ("tilt", tilt)):
         minimum = servo.get("min_deg")
         center = servo.get("center_deg")
         maximum = servo.get("max_deg")
-        if not (minimum <= center <= maximum):
-            fail(f"servos.{name} must satisfy min_deg <= center_deg <= max_deg")
+        angles = (minimum, center, maximum)
+        if any(isinstance(value, bool) or not isinstance(value, int) for value in angles):
+            fail(f"servos.{name} angle limits must be integers")
+        if not (0 <= minimum <= center <= maximum <= 180):
+            fail(f"servos.{name} must satisfy 0 <= min_deg <= center_deg <= max_deg <= 180")
         if servo.get("enabled") is True:
             any_servo_enabled = True
             if servo.get("gpio") is None:
@@ -145,18 +163,14 @@ def main(config_path: pathlib.Path | None = None) -> None:
         fail("external servo power must be verified before enabling either servo")
 
     required_pin_groups = [
-        ("display.enabled", data.get("display", {}).get("enabled"),
-         data.get("display", {}).get("gpio", {})),
-        ("audio.microphone.enabled", data.get("audio", {}).get("microphone", {}).get("enabled"),
-         data.get("audio", {}).get("microphone", {}).get("i2s", {})),
-        ("audio.amplifier.enabled", data.get("audio", {}).get("amplifier", {}).get("enabled"),
-         data.get("audio", {}).get("amplifier", {}).get("i2s", {})),
+        ("display.enabled", display.get("enabled"), display_gpio),
+        ("audio.microphone.enabled", microphone.get("enabled"), mic_i2s),
+        ("audio.amplifier.enabled", amplifier.get("enabled"), amp_i2s),
     ]
     for label, enabled, pins in required_pin_groups:
         if enabled is True and any(value is None for value in pins.values()):
             fail(f"{label} requires every GPIO in its pin group to be assigned")
 
-    pir = data.get("pir", {})
     if pir.get("enabled") is True and pir.get("gpio") is None:
         fail("pir.gpio is required when PIR is enabled")
 
