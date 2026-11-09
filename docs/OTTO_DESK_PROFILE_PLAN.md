@@ -37,9 +37,19 @@ The existing upstream `otto-robot` profile is a different product: it contains s
 - [x] Add firmware-side conservative safe-state validation before accepting JSON into NVS, including exact object key sets, fixed board identity, duplicate-key rejection, and disabled/unassigned peripheral checks.
 - [ ] Implement full firmware-side schema validation matching `config/schema-v1.schema.json` before enabling configurable peripherals; the current exact-shape validator is a conservative safe-state gate only.
 - [ ] Add Otto full-screen face rendering and head-servo state mapping.
-- [ ] Add the firmware build workflow and verify a downloadable merged BIN artifact.
+- [x] Add an ESP32-S3 generic compile smoke workflow and downloadable build artifact. This validates the current repository default-board build only; it is not an Otto Desk firmware release and must not be flashed to the Waveshare module.
+- [ ] Add an Otto Desk-specific build workflow after the dedicated board selector/profile is implemented; verify its board identity, partition map, merged BIN and flash offsets before publishing a flashable release.
 - [ ] Validate the final firmware on the physical board; CI success alone is not hardware validation.
 
 ## Important distinction
 
 Skipping additional board photos does not authorize guessing GPIO assignments. Firmware structure and the configuration interface can be developed now with safe unassigned defaults; actual peripherals remain disabled until their GPIO mapping is entered and validated.
+
+
+## CI artifact safety (2026-11-09)
+
+The current workflow runs `idf.py set-target esp32s3` followed by `idf.py build` without selecting `CONFIG_BOARD_TYPE_OTTO_DESK` (that board choice does not exist yet). ESP-IDF therefore builds the repository's default ESP32-S3 board configuration, not the Waveshare Otto Desk hardware profile.
+
+The workflow artifact is deliberately named `generic-esp32s3-smoke-not-for-flashing` and includes `BUILD-MANIFEST.txt` to make this distinction visible. Its `xiaozhi.bin` is evidence that the generic firmware tree compiles; it is not a validated firmware image for the user's N16R8 board. Do not flash it to the physical robot.
+
+Next implementation gate: add a dedicated Kconfig choice, CMake board directory and exactly one board factory, then add a board-specific CI job. Keep display, external I2S, servos and PIR disabled until a verified pin map and runtime config application layer exist.
