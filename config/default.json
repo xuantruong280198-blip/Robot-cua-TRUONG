@@ -7,7 +7,7 @@
   },
   "board": {
     "manufacturer": "Waveshare",
-    "product_family": "ESP32-S3-CAM-OVxxxx",
+    "product_family": "ESP32-S3-CAM-N16R8",
     "pcb_revision": null,
     "profile": "otto-waveshare-esp32-s3-cam",
     "upstream_reference_profile": "waveshare/esp32-s3-cam",
