@@ -39,6 +39,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Run hardware JSON and config-page regression tests
+        shell: bash
+        run: |
+          python -m unittest tools/test_validate_config.py -v
+
       - name: Configure ESP-IDF and select Otto Desk
         shell: bash
         run: |
