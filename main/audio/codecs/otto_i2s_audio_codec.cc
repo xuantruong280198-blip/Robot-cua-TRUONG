@@ -1,4 +1,5 @@
 #include "otto_i2s_audio_codec.h"
+#include "otto_i2s_audio_math.h"
 
 #include <driver/i2s_std.h>
 #include <esp_log.h>
@@ -149,7 +150,7 @@ int OttoI2sAudioCodec::Read(int16_t* dest, int samples) {
         }
         for (int i = 0; i < frames; ++i) {
             // INMP441's signed 24-bit payload is left-aligned in the 32-bit slot.
-            dest[written + i] = static_cast<int16_t>(raw[i] >> 16);
+            dest[written + i] = otto_desk::Inmp441SlotToPcm16(raw[i]);
         }
         written += frames;
         remaining -= frames;
@@ -166,11 +167,7 @@ int OttoI2sAudioCodec::Write(const int16_t* data, int samples) {
         const int count = std::min(
             samples - written, static_cast<int>(scaled.size()));
         for (int i = 0; i < count; ++i) {
-            const int32_t value = static_cast<int32_t>(data[written + i]) *
-                                  std::clamp(output_volume_, 0, 100) / 100;
-            scaled[i] = static_cast<int16_t>(std::clamp(
-                value, static_cast<int32_t>(std::numeric_limits<int16_t>::min()),
-                static_cast<int32_t>(std::numeric_limits<int16_t>::max())));
+            scaled[i] = otto_desk::ScalePcm16(data[written + i], output_volume_);
         }
         size_t bytes_written = 0;
         const esp_err_t err = i2s_channel_write(
