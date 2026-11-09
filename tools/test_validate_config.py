@@ -151,7 +151,7 @@ class HardwareConfigValidationTests(unittest.TestCase):
         config["servos"]["pan"].update(min_deg=100, center_deg=90, max_deg=160)
         code, output = self.run_config(config)
         self.assertNotEqual(code, 0)
-        self.assertIn("min_deg <= center_deg <= max_deg", output)
+        self.assertIn("min_deg < center_deg < max_deg", output)
 
     def test_safe_default_rejects_enabling_unverified_servo(self):
         config = copy.deepcopy(DEFAULT)
@@ -282,6 +282,17 @@ class HardwareConfigValidationTests(unittest.TestCase):
                 self.assertNotEqual(code, 0)
                 self.assertIn("must be a JSON object", output)
                 self.assertNotIn("Traceback", output)
+
+    def test_servo_center_must_be_strictly_inside_limits(self):
+        for values in ((90, 90, 160), (20, 90, 90), (90, 90, 90)):
+            with self.subTest(values=values):
+                config = copy.deepcopy(DEFAULT)
+                config["servos"]["pan"].update(
+                    min_deg=values[0], center_deg=values[1], max_deg=values[2]
+                )
+                code, output = self.run_config(config)
+                self.assertNotEqual(code, 0)
+                self.assertIn("min_deg < center_deg < max_deg", output)
 
     def test_servo_angles_must_be_integer_and_within_range(self):
         for values in ((True, 90, 160), (-1, 90, 160), (20, 90, 181), (20, 90.5, 160)):
