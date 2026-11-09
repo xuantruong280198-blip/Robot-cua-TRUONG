@@ -64,6 +64,12 @@ jobs:
           c++ -std=c++17 -Wall -Wextra -Werror -Imain/boards/otto-desk tools/test_servo_math.cc -o /tmp/otto-servo-math-tests
           /tmp/otto-servo-math-tests
 
+      - name: Compile and run hardware-independent I2S PCM conversion tests
+        shell: bash
+        run: |
+          c++ -std=c++17 -Wall -Wextra -Werror -Imain/audio/codecs tools/test_i2s_audio_math.cc -o /tmp/otto-i2s-audio-math-tests
+          /tmp/otto-i2s-audio-math-tests
+
       - name: Compile and run ESP32-S3 GPIO safety tests
         shell: bash
         run: |
