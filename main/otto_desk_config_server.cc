@@ -130,7 +130,7 @@ esp_err_t SaveConfigHandler(httpd_req_t* request) {
         httpd_req_get_hdr_value_str(request, "Content-Type", content_type, sizeof(content_type));
     if (header_err != ESP_OK ||
         strncasecmp(content_type, "application/json", sizeof("application/json") - 1) != 0 ||
-        (content_type[sizeof("application/json") - 1] != '\\0' &&
+        (content_type[sizeof("application/json") - 1] != 0 &&
          content_type[sizeof("application/json") - 1] != ';' &&
          content_type[sizeof("application/json") - 1] != ' ')) {
         httpd_resp_set_status(request, "415 Unsupported Media Type");
