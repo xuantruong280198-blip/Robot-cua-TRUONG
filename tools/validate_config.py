@@ -99,8 +99,11 @@ def main(config_path: pathlib.Path | None = None) -> None:
 
     seen = {}
     for gpio, path in pin_values:
-        if not 0 <= gpio <= 48:
-            fail(f"{path} uses out-of-range GPIO {gpio}")
+        # ESP32-S3 exposes GPIO0-21 and GPIO26-48. GPIO22-25 do
+        # not exist on this SoC; board-specific reserved pins are checked
+        # separately only after the exact PCB pinout is verified.
+        if not (0 <= gpio <= 21 or 26 <= gpio <= 48):
+            fail(f"{path} uses out-of-range GPIO {gpio} or unavailable ESP32-S3 GPIO")
         if gpio in seen:
             fail(f"GPIO {gpio} is assigned more than once: {seen[gpio]} and {path}")
         seen[gpio] = path
