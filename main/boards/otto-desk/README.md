@@ -17,4 +17,4 @@ All physical GPIO assignments remain intentionally absent. The ST7789, INMP441, 
 
 ## Not a flashable Otto release
 
-This scaffold is a board-selection and compile-integration milestone, not a usable robot firmware. Do not flash it to the physical board until an Otto Desk-specific build, partition/flash-offset audit, and hardware validation have passed.
+This scaffold's dedicated ESP32-S3 board-selection build passed in GitHub Actions run `42547497724` (commit `faf3f032346a804888d5b30620ea568f39f2ca13`). The CI artifact is named `otto-desk-safe-scaffold-not-for-hardware-flashing`. This proves the profile compiles; it does not prove that the partition map and flash offsets are suitable for the physical N16R8 module, and it does not validate hardware. Do not flash this artifact. A flashable release still requires partition/flash-offset audit, merged-image verification, real display/audio/servo drivers, and hardware validation.
