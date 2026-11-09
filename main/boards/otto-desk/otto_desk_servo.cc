@@ -5,7 +5,6 @@
 
 namespace {
 constexpr ledc_mode_t kSpeedMode = LEDC_LOW_SPEED_MODE;
-constexpr ledc_timer_t kTimer = LEDC_TIMER_0;
 constexpr ledc_timer_bit_t kResolution = LEDC_TIMER_14_BIT;
 constexpr uint32_t kPwmFrequencyHz = 50;
 constexpr uint32_t kDutyMaximum = (1U << 14) - 1U;
@@ -23,10 +22,12 @@ OttoDeskServoAxis::OttoDeskServoAxis(
     // Fail closed: no PWM on a guessed pin or from the ESP32 3V3 rail.
     if (!board_pinout_validated || !external_power_verified ||
         gpio < GPIO_NUM_0 || gpio >= GPIO_NUM_MAX ||
+        channel > LEDC_CHANNEL_3 ||
         gpio == GPIO_NUM_0 || gpio == GPIO_NUM_3 ||
         gpio == GPIO_NUM_19 || gpio == GPIO_NUM_20 ||
         gpio == GPIO_NUM_43 || gpio == GPIO_NUM_44 ||
         gpio == GPIO_NUM_45 || gpio == GPIO_NUM_46) {
+        permitted_ = false;
         return;
     }
 }
