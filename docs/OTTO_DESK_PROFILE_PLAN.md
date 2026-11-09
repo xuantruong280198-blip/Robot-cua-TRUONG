@@ -38,7 +38,7 @@ The existing upstream `otto-robot` profile is a different product: it contains s
 - [ ] Implement full firmware-side schema validation matching `config/schema-v1.schema.json` before enabling configurable peripherals; the current exact-shape validator is a conservative safe-state gate only.
 - [ ] Add Otto full-screen face rendering and head-servo state mapping.
 - [x] Add an ESP32-S3 generic compile smoke workflow and downloadable build artifact. This validates the current repository default-board build only; it is not an Otto Desk firmware release and must not be flashed to the Waveshare module.
-- [ ] Add an Otto Desk-specific build workflow and verify its board identity, partition map, merged BIN and flash offsets before publishing a flashable release. The selector/profile scaffold exists but has not yet passed an Otto-specific build.
+- [x] Add a dedicated Otto Desk CI build workflow and verify the selected `CONFIG_BOARD_TYPE_OTTO_DESK` profile compiles on ESP32-S3. Run `42547497724` completed successfully on 2026-11-09 and uploaded `otto-desk-safe-scaffold-not-for-hardware-flashing` (14-day retention). This proves board-selection/build integration only; partition-map suitability, merged flash image/offset audit and physical hardware validation remain pending. Do not flash this artifact.
 - [ ] Validate the final firmware on the physical board; CI success alone is not hardware validation.
 
 ## Important distinction
@@ -67,3 +67,8 @@ The generic CI artifact is explicitly named `generic-esp32s3-smoke-not-for-flash
 ## Dedicated board scaffold (2026-11-09)
 
 Added `main/boards/otto-desk/` with a board factory, build metadata and safety README. The board factory returns a `DummyAudioCodec` and inherits Wi-Fi behavior; it does not configure any GPIO or initialize physical hardware. This avoids borrowing the unrelated Waveshare camera or ElectronBot pin maps while allowing the board selection path to be integrated. The next step is an Otto-specific compile job that selects `CONFIG_BOARD_TYPE_OTTO_DESK`, then fix any compile/configuration issues before adding display and external I2S drivers.
+
+
+## Otto Desk CI result (2026-11-09)
+
+The dedicated workflow `.github/workflows/otto-desk-smoke.yml` completed successfully: run `42547497724`, commit `faf3f032346a804888d5b30620ea568f39f2ca13`. Its ESP-IDF 6.0.2 job selected `CONFIG_BOARD_TYPE_OTTO_DESK`, compiled the safe scaffold, and uploaded artifact `otto-desk-safe-scaffold-not-for-hardware-flashing` (artifact ID `13643729485`, SHA-256 `3bf65af09c2d27d1b1bc9b0e04d55223c53a29a4711b996ebd3727d3e92cb45b`, expires 2026-11-23). The workflow manifest explicitly records `hardware_validation=not-performed` and `gpio_assignments=unconfigured`. This artifact is a CI proof package, not a flashable robot firmware. Partition layout, flash offsets, full image assembly and physical hardware validation are still open gates.
