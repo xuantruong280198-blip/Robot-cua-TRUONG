@@ -346,7 +346,11 @@ class RuntimeConfigDecodeContractTests(unittest.TestCase):
     def test_config_post_requires_json_content_type(self):
         source = (ROOT / "main" / "otto_desk_config_server.cc").read_text(encoding="utf-8")
         self.assertIn('httpd_req_get_hdr_value_str(request, "Content-Type"', source)
-        self.assertIn('strncasecmp(content_type, "application/json"', source)
+        self.assertIn('!IsJsonContentType(content_type)', source)
+        self.assertIn('bool IsJsonContentType(const char* value)', source)
+        self.assertIn('strncasecmp(value, kJsonMediaType, kJsonMediaTypeLength)', source)
+        self.assertIn("while (*value == ' ' || *value == '\\\\t') ++value;", source)
+        self.assertIn("return *value == '\\\\0' || *value == ';';", source)
         self.assertIn('415 Unsupported Media Type', source)
         self.assertIn('content_type_must_be_application_json', source)
         self.assertIn('return httpd_resp_sendstr(request, "{\\\"error\\\":\\\"content_type_must_be_application_json\\\"}");', source)
