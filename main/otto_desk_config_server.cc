@@ -135,7 +135,7 @@ esp_err_t SaveConfigHandler(httpd_req_t* request) {
          content_type[sizeof("application/json") - 1] != ' ')) {
         httpd_resp_set_status(request, "415 Unsupported Media Type");
         httpd_resp_set_type(request, "application/json");
-        return httpd_resp_sendstr(request, "{\\\"error\\\":\\\"content_type_must_be_application_json\\\"}");
+        return httpd_resp_sendstr(request, "{\"error\":\"content_type_must_be_application_json\"}");
     }
 
     if (request->content_len == 0 || request->content_len > OttoDeskConfigStore::kMaxConfigBytes) {
