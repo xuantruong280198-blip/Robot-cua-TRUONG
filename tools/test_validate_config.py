@@ -323,6 +323,21 @@ class RuntimeConfigDecodeContractTests(unittest.TestCase):
                     rf"bool {field} = true;",
                 )
 
+    def test_main_entrypoint_keeps_gpio_and_peripheral_activation_locked(self):
+        main_source = (ROOT / "main" / "main.cc").read_text(encoding="utf-8")
+        board_source = (ROOT / "main" / "boards" / "otto-desk" / "otto_desk.cc").read_text(encoding="utf-8")
+        forbidden_calls = (
+            "gpio_config(", "gpio_set_level(", "i2s_new_channel(",
+            "esp_lcd_new_panel(", "ledc_timer_config(", "ledc_channel_config(",
+        )
+        for call in forbidden_calls:
+            with self.subTest(call=call):
+                self.assertNotIn(call, main_source)
+                self.assertNotIn(call, board_source)
+        self.assertNotIn("#include <driver/gpio.h>", main_source)
+        self.assertIn("hardware activation remains locked", main_source)
+        self.assertIn("no GPIO or peripheral drivers are started", main_source)
+
     def test_runtime_config_defaults_cannot_activate_hardware(self):
         self.assertIn("bool hardware_activation_permitted = false;", self.header)
         for field in (
