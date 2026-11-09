@@ -12,11 +12,13 @@ This is a dedicated XiaoZhi board profile for the stationary Otto Desk AI projec
 - Otto full-screen display class now exists and uses the `otto-gif` asset collection; the board does not instantiate it until a verified runtime pin map is supplied
 - No display panel, I2S, servo, camera, onboard codec or I/O expander is initialized at boot
 
-## Waveshare carrier-board constraints
+## Confirmed board identity and pinout status
 
-The upstream Waveshare documentation identifies an 18-pin LCD interface and a CH32V003F4U6 I/O expander on this carrier. LCD reset/backlight and other board-control signals must not be treated as ordinary ESP32-S3 GPIOs without following the schematic and expander protocol. The vendor states that V1 and V1.1 use the same programs; the physical board revision should still be recorded for diagnostics.
+The user has confirmed the physical module as an ESP32-S3-CAM N16R8 with a 40-pin header, 16 MB flash and 8 MB PSRAM. The exact PCB revision, header pin order, and mapping of each header position to ESP32-S3 GPIO are not yet verified.
 
-References:
+The upstream Waveshare ESP32-S3-CAM-OVxxxx documentation and schematic are retained as comparison references only. They are **not** proof that this 40-pin module uses the same carrier layout, LCD connector, CH32V003 expander, camera routing, or onboard codec. In particular, do not apply the upstream 18-pin LCD or expander pin assignments to this board without matching the exact PCB and schematic.
+
+References for comparison only:
 - [Waveshare ESP32-S3-CAM-OVxxxx documentation](https://docs.waveshare.com/ESP32-S3-CAM-OVxxxx)
 - [Waveshare V1.1 schematic](https://files.waveshare.com/wiki/ESP32-S3-CAM-OVxxxx/ESP32-S3-CAM-OVxxxx_Rev1.1.pdf)
 
