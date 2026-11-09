@@ -412,9 +412,8 @@ bool Ota::Upgrade(const std::string& firmware_url, std::function<void(int progre
     http->Close();
     heap_caps_free(buffer);
 
-    if (!image_header_checked || update_handle == 0) {
+    if (!image_header_checked) {
         ESP_LOGE(TAG, "Firmware response ended before a valid image header was received");
-        if (update_handle != 0) esp_ota_abort(update_handle);
         return false;
     }
     if (total_read != content_length) {
