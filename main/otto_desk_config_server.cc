@@ -93,7 +93,7 @@ esp_err_t OttoDeskConfigServer::Start() {
     config.server_port = kPort;
     config.max_uri_handlers = 3;
     config.max_open_sockets = 3;
-    config.stack_size = 6144;
+    config.stack_size = 8192;
     config.lru_purge_enable = true;
 
     esp_err_t err = httpd_start(&server, &config);
@@ -103,9 +103,20 @@ esp_err_t OttoDeskConfigServer::Start() {
         return err;
     }
 
-    const httpd_uri_t root = {.uri = "/", .method = HTTP_GET, .handler = RootHandler, .user_ctx = nullptr};
-    const httpd_uri_t get_config = {.uri = "/api/config", .method = HTTP_GET, .handler = GetConfigHandler, .user_ctx = nullptr};
-    const httpd_uri_t save_config = {.uri = "/api/config", .method = HTTP_POST, .handler = SaveConfigHandler, .user_ctx = nullptr};
+    httpd_uri_t root = {};
+    root.uri = "/";
+    root.method = HTTP_GET;
+    root.handler = RootHandler;
+
+    httpd_uri_t get_config = {};
+    get_config.uri = "/api/config";
+    get_config.method = HTTP_GET;
+    get_config.handler = GetConfigHandler;
+
+    httpd_uri_t save_config = {};
+    save_config.uri = "/api/config";
+    save_config.method = HTTP_POST;
+    save_config.handler = SaveConfigHandler;
 
     if ((err = httpd_register_uri_handler(server, &root)) != ESP_OK ||
         (err = httpd_register_uri_handler(server, &get_config)) != ESP_OK ||
