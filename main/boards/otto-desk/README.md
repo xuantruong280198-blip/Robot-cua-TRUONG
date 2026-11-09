@@ -28,6 +28,12 @@ All physical GPIO assignments remain intentionally absent. The ST7789, INMP441, 
 
 The dedicated CI job combines the repository's shared ESP32-S3 defaults with `sdkconfig.otto-desk.defaults`. The shared defaults select 16 MB flash and the custom `partitions/v2/16m.csv` table. The Otto Desk workflow now asserts those generated sdkconfig values before compiling and records them in the build manifest. This is a configuration consistency check, not a physical flash test.
 
+## Latest source-build verification (2026-11-09)
+
+The latest Otto Desk CI run for commit `e292cd43b97e5efe0d9a53e09594725f8ee69a56` completed successfully (run [42554649426](https://github.com/xuantruong280198-blip/Robot-cua-TRUONG/actions/runs/42554649426)). Its build log explicitly records compilation of both `boards/otto-desk/otto_desk.cc` and `boards/otto-desk/otto_desk_display.cc`, generation of the default assets image, and completion of the ESP32-S3 build. The generic ESP32-S3 smoke build also passed (run [42554648791](https://github.com/xuantruong280198-blip/Robot-cua-TRUONG/actions/runs/42554648791)).
+
+The resulting artifact is still named `otto-desk-safe-scaffold-not-for-hardware-flashing`. The display class is compiled, but it is not instantiated by the board at runtime. The JSON validator still rejects assigned GPIOs and keeps every device disabled. This distinction is intentional: source compilation is verified; display operation on the physical ST7789 is not.
+
 ## Not a flashable Otto release
 
 This scaffold's dedicated ESP32-S3 board-selection build passed in GitHub Actions run `42547497724` (commit `faf3f032346a804888d5b30620ea568f39f2ca13`). The CI artifact is named `otto-desk-safe-scaffold-not-for-hardware-flashing`. This proves the profile compiles; it does not prove that the partition map and flash offsets are suitable for the physical N16R8 module, and it does not validate hardware. Do not flash this artifact. A flashable release still requires partition/flash-offset audit, merged-image verification, real display/audio/servo drivers, and hardware validation.
