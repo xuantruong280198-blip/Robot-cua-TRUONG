@@ -112,6 +112,19 @@ def main(config_path: pathlib.Path | None = None) -> None:
     if data.get("pir", {}).get("enabled") is not False:
         fail("PIR must remain disabled until wiring is verified")
 
+    policy = data.get("gpio_policy", {})
+    required_safety_flags = (
+        "allow_unassigned",
+        "reject_duplicate_assignments",
+        "reject_bootstrap_conflicts",
+        "reject_flash_psram_conflicts",
+        "reject_usb_uart_conflicts",
+        "require_board_pinout_validation",
+    )
+    for flag in required_safety_flags:
+        if policy.get(flag) is not True:
+            fail(f"gpio_policy.{flag} must remain true in the safe configuration")
+
     # Validate cross-field safety rules that JSON Schema alone does not
     # express clearly for this versioned hardware contract.
     servos = data.get("servos", {})
