@@ -21,6 +21,8 @@ public:
 private:
     gpio_num_t gpio_;
     ledc_channel_t channel_;
+    bool permitted_ = false;
     bool ready_ = false;
     bool timer_initialized_ = false;
+    ledc_timer_t timer_;
 };
