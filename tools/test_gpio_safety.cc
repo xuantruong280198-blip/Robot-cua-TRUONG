@@ -7,7 +7,7 @@ int main() {
     using otto_desk::IsSafeEsp32S3Gpio;
     assert(!IsSafeEsp32S3Gpio(-1));
     assert(!IsSafeEsp32S3Gpio(49));
-    for (int gpio : {0, 3, 19, 20, 26, 27, 28, 29, 30, 31, 32,
+    for (int gpio : {0, 3, 19, 20, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32,
                      33, 34, 35, 36, 37, 43, 44, 45, 46}) {
         assert(!IsSafeEsp32S3Gpio(gpio));
     }
