@@ -56,3 +56,26 @@ servo-driver calls and is not yet connected to physical outputs.
 Servo activation remains deliberately disabled until the exact 40-pin header
 pinout is verified and the external servo supply is confirmed. Do not connect
 servo power to the ESP32 3V3 rail.
+
+## Emotion-driven head pose planning
+
+The hardware-independent planner now maps the XiaoZhi tokens `listening`,
+`thinking`, `speaking`, `happy`, `sad`, `surprised` and `angry` to
+small relative pan/tilt offsets. Unknown or null tokens resolve to neutral.
+Every target is clamped against the configured per-axis limits. The planner
+is covered by host-side C++ tests in CI.
+
+This is the behavior layer only: it does not move a servo, infer bracket
+orientation, or replace calibration. In particular, the sign of the tilt
+offset depends on how the pan/tilt bracket is mounted and must be checked
+before any PWM output is enabled.
+
+## OTA safety checks
+
+The shared XiaoZhi OTA path now rejects firmware downloads larger than the
+inactive update partition, checks the application descriptor before starting
+flash writes, aborts an active OTA session after network read failures, and
+refuses to finish or select an image unless the received byte count exactly
+matches the declared content length. This is software-side validation; a
+release still needs a verified partition layout and a real-device rollback /
+recovery test.
