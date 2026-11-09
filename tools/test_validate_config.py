@@ -268,7 +268,8 @@ class OttoDeskDisplayContractTests(unittest.TestCase):
         )
 
     def test_otto_face_uses_full_panel_and_preserves_image_aspect_ratio(self):
-        self.assertIn('SetEmotion("staticstate")', self.source)
+        self.assertIn('SetEmotion("neutral")', self.source)
+        self.assertNotIn('SetEmotion("staticstate")', self.source)
         self.assertIn("lv_obj_set_size(emoji_box_, width_, height_)", self.source)
         self.assertIn("const uint32_t scale = std::max(scale_x, scale_y);", self.source)
         self.assertIn("lv_image_set_scale(emoji_image_", self.source)
