@@ -309,6 +309,19 @@ esp_err_t OttoDeskConfigStore::Decode(const std::string& json,
     config.pir_gpio = ReadOptionalInt(pir, "gpio");
     config.pir_enabled = ReadBool(pir, "enabled");
 
+    const cJSON* policy = Get(root, "gpio_policy");
+    config.gpio_policy.allow_unassigned = ReadBool(policy, "allow_unassigned");
+    config.gpio_policy.reject_duplicate_assignments =
+        ReadBool(policy, "reject_duplicate_assignments");
+    config.gpio_policy.reject_bootstrap_conflicts =
+        ReadBool(policy, "reject_bootstrap_conflicts");
+    config.gpio_policy.reject_flash_psram_conflicts =
+        ReadBool(policy, "reject_flash_psram_conflicts");
+    config.gpio_policy.reject_usb_uart_conflicts =
+        ReadBool(policy, "reject_usb_uart_conflicts");
+    config.gpio_policy.require_board_pinout_validation =
+        ReadBool(policy, "require_board_pinout_validation");
+
     // Fail closed: decoding configuration never grants permission to activate
     // hardware. A separate, reviewed board-pinout gate is required later.
     config.hardware_activation_permitted = false;
