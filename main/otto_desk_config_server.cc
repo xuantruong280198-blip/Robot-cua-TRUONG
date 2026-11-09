@@ -62,14 +62,14 @@ httpd_handle_t server = nullptr;
 bool IsJsonContentType(const char* value) {
     if (value == nullptr) return false;
 
-    while (*value == ' ' || *value == '\\t') ++value;
+    while (*value == ' ' || *value == '\t') ++value;
     constexpr char kJsonMediaType[] = "application/json";
     constexpr size_t kJsonMediaTypeLength = sizeof(kJsonMediaType) - 1;
     if (strncasecmp(value, kJsonMediaType, kJsonMediaTypeLength) != 0) return false;
 
     value += kJsonMediaTypeLength;
-    while (*value == ' ' || *value == '\\t') ++value;
-    return *value == '\\0' || *value == ';';
+    while (*value == ' ' || *value == '\t') ++value;
+    return *value == '\0' || *value == ';';
 }
 
 esp_err_t RootHandler(httpd_req_t* request) {
