@@ -57,7 +57,7 @@ class HardwareConfigValidationTests(unittest.TestCase):
     def test_config_api_embedded_first_run_default_matches_checked_in_schema(self):
         source = (ROOT / "main" / "otto_desk_config_server.cc").read_text(encoding="utf-8")
         match = re.search(
-            r'constexpr char kDefaultConfig\\[\\] = R"json\\((.*?)\\)json";',
+            r'constexpr char kDefaultConfig\[\] = R"json\((.*?)\)json";',
             source,
             re.DOTALL,
         )
