@@ -56,6 +56,10 @@ def main(config_path: pathlib.Path | None = None) -> None:
     board = require_object(data, "board", "board")
     if board.get("manufacturer") != "Waveshare":
         fail("board.manufacturer must be Waveshare")
+    if board.get("header_pin_count") != 40:
+        fail("board.header_pin_count must be 40 for the user-confirmed target board")
+    if board.get("header_pinout_verified") is not False:
+        fail("board.header_pinout_verified must remain false until the exact 40-pin PCB map is verified")
     if board.get("camera_enabled") is not False:
         fail("camera_enabled must remain false for this project")
     if board.get("onboard_codec_enabled") is not False:
