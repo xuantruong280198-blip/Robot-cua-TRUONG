@@ -11,5 +11,9 @@ public:
                     bool mirror_x = false, bool mirror_y = false, bool swap_xy = false);
 
     void SetupUI() override;
+    void SetEmotion(const char* emotion) override;
     void SetPreviewImage(std::unique_ptr<LvglImage> image) override;
+
+private:
+    void FitEmotionToScreen();
 };
