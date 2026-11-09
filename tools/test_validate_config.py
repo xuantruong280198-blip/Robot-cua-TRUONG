@@ -275,7 +275,10 @@ class OttoDeskDisplayContractTests(unittest.TestCase):
         self.assertIn("lv_image_set_scale(emoji_image_", self.source)
         self.assertIn("lv_obj_center(emoji_image_)", self.source)
         self.assertIn("void OttoDeskDisplay::SetEmotion(const char* emotion)", self.source)
-        self.assertIn("LcdDisplay::SetEmotion(emotion);", self.source)
+        self.assertIn('std::strcmp(resolved_emotion, "robot_2") == 0', self.source)
+        self.assertIn('std::strcmp(resolved_emotion, "staticstate") == 0', self.source)
+        self.assertIn('resolved_emotion = "neutral"', self.source)
+        self.assertIn("LcdDisplay::SetEmotion(resolved_emotion);", self.source)
 
     def test_otto_face_hides_legacy_chrome_without_assuming_optional_objects_exist(self):
         for object_name in (
