@@ -170,6 +170,22 @@ class HardwareConfigValidationTests(unittest.TestCase):
         self.assertNotEqual(code, 0)
         self.assertIn("camera_enabled must remain false", output)
 
+    def test_gpio_safety_policy_cannot_be_weakened(self):
+        for flag in (
+            "allow_unassigned",
+            "reject_duplicate_assignments",
+            "reject_bootstrap_conflicts",
+            "reject_flash_psram_conflicts",
+            "reject_usb_uart_conflicts",
+            "require_board_pinout_validation",
+        ):
+            with self.subTest(flag=flag):
+                config = copy.deepcopy(DEFAULT)
+                config["gpio_policy"][flag] = False
+                code, output = self.run_config(config)
+                self.assertNotEqual(code, 0)
+                self.assertIn(f"gpio_policy.{flag} must remain true", output)
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
