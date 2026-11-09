@@ -11,6 +11,10 @@ The imported XiaoZhi v2.5.0 source already contains an upstream board entry:
 
 This is useful as a reference, but it is **not yet a verified match** for this Otto build.
 
+## Confirmed physical header metadata
+
+The target board is recorded as an ESP32-S3-CAM N16R8 module with a 40-pin header, based on the user's direct hardware confirmation. The count is metadata only: it does not identify the pin order, board revision, onboard routing, or which header pins are safe GPIOs. The configuration therefore stores `header_pin_count: 40` and keeps `header_pinout_verified: false`. No GPIO assignment may be enabled from the header count alone.
+
 ## Why it cannot be selected unchanged
 
 The upstream profile configures a different peripheral arrangement:
