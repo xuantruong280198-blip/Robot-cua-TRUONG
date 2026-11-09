@@ -84,7 +84,7 @@ small{color:#cbd5e1}#status{white-space:pre-wrap}
 <p id="status">Chưa tải cấu hình.</p>
 <script>
 const box=document.getElementById('json'),status=document.getElementById('status');
-async function loadConfig(){status.textContent='Đang tải...';try{const r=await fetch('/api/config');const t=await r.text();if(!r.ok)throw Error(t);box.value=JSON.stringify(JSON.parse(t),null,2);status.textContent=r.status===204?'Đã tải cấu hình mặc định an toàn (chưa có cấu hình lưu).':'Đã tải cấu hình đã lưu.';}catch(e){status.textContent='Chưa có cấu hình lưu hoặc lỗi: '+e.message;}}
+async function loadConfig(){status.textContent='Đang tải...';try{const r=await fetch('/api/config');const t=await r.text();if(!r.ok)throw Error(t);box.value=JSON.stringify(JSON.parse(t),null,2);status.textContent=r.headers.get('X-Otto-Config-Source')==='default'?'Đã tải cấu hình mặc định an toàn (chưa có cấu hình lưu).':'Đã tải cấu hình đã lưu.';}catch(e){status.textContent='Chưa có cấu hình lưu hoặc lỗi: '+e.message;}}
 async function saveConfig(){status.textContent='Đang kiểm tra và lưu...';try{JSON.parse(box.value);const r=await fetch('/api/config',{method:'POST',headers:{'Content-Type':'application/json'},body:box.value});const t=await r.text();if(!r.ok)throw Error(t);status.textContent='Đã lưu JSON an toàn. Thiết bị ngoại vi vẫn đang tắt.';}catch(e){status.textContent='Không lưu được: '+e.message;}}
 async function importConfig(event){const file=event.target.files&&event.target.files[0];if(!file)return;if(file.size>3072){status.textContent='File vượt quá giới hạn 3072 byte.';event.target.value='';return;}try{const text=await file.text();JSON.parse(text);box.value=text;status.textContent='Đã nhập '+file.name+'. Nhấn Kiểm tra và lưu để firmware xác thực.';}catch(e){status.textContent='File JSON không hợp lệ: '+e.message;}event.target.value='';}
 function exportConfig(){try{JSON.parse(box.value);const blob=new Blob([box.value],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='otto-desk-config.json';a.click();URL.revokeObjectURL(url);status.textContent='Đã xuất otto-desk-config.json.';}catch(e){status.textContent='Không thể xuất: JSON chưa hợp lệ.';}}
@@ -101,6 +101,7 @@ esp_err_t GetConfigHandler(httpd_req_t* request) {
         // Every peripheral remains disabled and every GPIO remains null.
         httpd_resp_set_type(request, "application/json");
         httpd_resp_set_hdr(request, "Cache-Control", "no-store");
+        httpd_resp_set_hdr(request, "X-Otto-Config-Source", "default");
         return httpd_resp_sendstr(request, kDefaultConfig);
     }
     if (err != ESP_OK) {
