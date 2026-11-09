@@ -29,7 +29,22 @@ extern "C" void app_main(void)
     std::string otto_desk_config;
     const esp_err_t config_ret = OttoDeskConfigStore::Load(otto_desk_config);
     if (config_ret == ESP_OK) {
-        ESP_LOGI(TAG, "Validated saved Otto Desk configuration (%u bytes); runtime application is not wired yet",
+        OttoDeskRuntimeConfig runtime_config;
+        const esp_err_t decode_ret = OttoDeskConfigStore::Decode(otto_desk_config, runtime_config);
+        if (decode_ret == ESP_OK) {
+            ESP_LOGI(TAG,
+                     "Decoded Otto Desk config: display=%s mic=%s amp=%s pan=%s tilt=%s pir=%s; hardware activation remains locked",
+                     runtime_config.display_enabled ? "on" : "off",
+                     runtime_config.microphone_enabled ? "on" : "off",
+                     runtime_config.amplifier_enabled ? "on" : "off",
+                     runtime_config.pan.enabled ? "on" : "off",
+                     runtime_config.tilt.enabled ? "on" : "off",
+                     runtime_config.pir_enabled ? "on" : "off");
+        } else {
+            ESP_LOGW(TAG, "Could not decode validated Otto Desk configuration: %s",
+                     esp_err_to_name(decode_ret));
+        }
+        ESP_LOGI(TAG, "Validated saved Otto Desk configuration (%u bytes); no GPIO or peripheral drivers are started",
                  static_cast<unsigned>(otto_desk_config.size()));
     } else if (config_ret == ESP_ERR_NVS_NOT_FOUND) {
         ESP_LOGI(TAG, "No saved Otto Desk configuration; retaining current board defaults");
