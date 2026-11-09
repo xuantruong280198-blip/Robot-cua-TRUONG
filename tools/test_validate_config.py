@@ -258,6 +258,42 @@ class HardwareConfigValidationTests(unittest.TestCase):
                 self.assertTrue("integers" in output or "0 <= min_deg" in output, output)
 
 
+class OttoDeskDisplayContractTests(unittest.TestCase):
+    """Guard the Otto face layout and safe preview fallback."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.source = (ROOT / "main" / "boards" / "otto-desk" / "otto_desk_display.cc").read_text(
+            encoding="utf-8"
+        )
+
+    def test_otto_face_uses_full_panel_and_preserves_image_aspect_ratio(self):
+        self.assertIn('SetEmotion("staticstate")', self.source)
+        self.assertIn("lv_obj_set_size(emoji_box_, width_, height_)", self.source)
+        self.assertIn("const uint32_t scale = std::max(scale_x, scale_y);", self.source)
+        self.assertIn("lv_image_set_scale(emoji_image_", self.source)
+        self.assertIn("lv_obj_center(emoji_image_)", self.source)
+        self.assertIn("void OttoDeskDisplay::SetEmotion(const char* emotion)", self.source)
+        self.assertIn("LcdDisplay::SetEmotion(emotion);", self.source)
+
+    def test_otto_face_hides_legacy_chrome_without_assuming_optional_objects_exist(self):
+        for object_name in (
+            "top_bar_", "status_bar_", "content_", "side_bar_", "bottom_bar_",
+            "status_label_", "notification_label_", "network_label_", "mute_label_",
+            "battery_label_", "chat_message_label_",
+        ):
+            with self.subTest(object_name=object_name):
+                self.assertIn(object_name, self.source)
+        self.assertIn("if (object != nullptr)", self.source)
+        self.assertIn("if (emoji_box_ != nullptr)", self.source)
+
+    def test_preview_clear_restores_available_face_layer_safely(self):
+        self.assertIn("if (image == nullptr)", self.source)
+        self.assertIn("if (emoji_box_ != nullptr)", self.source)
+        self.assertIn("else if (gif_controller_ != nullptr)", self.source)
+        self.assertIn("else if (emoji_label_ != nullptr)", self.source)
+
+
 class RuntimeConfigDecodeContractTests(unittest.TestCase):
     """Guard the C++ decoder against drifting away from the JSON schema."""
 
