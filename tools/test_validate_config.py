@@ -463,5 +463,44 @@ class RuntimeConfigDecodeContractTests(unittest.TestCase):
                 self.assertRegex(self.header, rf"bool {field} = false;")
 
 
+class OtaSafetyRegressionTests(unittest.TestCase):
+    """Guard the firmware updater against incomplete or oversized images."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.source = (ROOT / "main" / "ota.cc").read_text(encoding="utf-8")
+        start = cls.source.index("bool Ota::Upgrade(")
+        end = cls.source.index("\\nbool Ota::StartUpgrade(", start)
+        cls.upgrade = cls.source[start:end]
+
+    def test_download_is_bounded_by_inactive_partition_size(self):
+        self.assertIn("content_length > update_partition->size", self.upgrade)
+
+    def test_image_descriptor_is_checked_before_ota_begin(self):
+        self.assertIn("new_app_info.magic_word != ESP_APP_DESC_MAGIC_WORD", self.upgrade)
+        self.assertLess(
+            self.upgrade.index("new_app_info.magic_word != ESP_APP_DESC_MAGIC_WORD"),
+            self.upgrade.index("esp_ota_begin("),
+        )
+
+    def test_truncated_or_headerless_images_are_never_selected(self):
+        self.assertIn("!image_header_checked || update_handle == 0", self.upgrade)
+        self.assertIn("total_read != content_length", self.upgrade)
+        self.assertLess(
+            self.upgrade.index("total_read != content_length"),
+            self.upgrade.index("esp_ota_end(update_handle)"),
+        )
+        self.assertLess(
+            self.upgrade.index("esp_ota_end(update_handle)"),
+            self.upgrade.index("esp_ota_set_boot_partition(update_partition)"),
+        )
+
+    def test_failed_reads_abort_an_started_ota_session(self):
+        self.assertGreaterEqual(
+            self.upgrade.count("if (image_header_checked) esp_ota_abort(update_handle);"),
+            2,
+        )
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)
