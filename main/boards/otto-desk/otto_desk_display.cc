@@ -61,7 +61,7 @@ void OttoDeskDisplay::SetupUI() {
     }
 
     // The Otto GIF collection is selected for the otto-desk board in main/CMakeLists.txt.
-    SetEmotion("staticstate");
+    SetEmotion("neutral");
 }
 
 void OttoDeskDisplay::SetEmotion(const char* emotion) {
