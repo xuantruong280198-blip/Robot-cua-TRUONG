@@ -2,6 +2,9 @@
 #include "audio/codecs/dummy_audio_codec.h"
 #include "otto_desk_config_server.h"
 
+#include <esp_err.h>
+#include <esp_log.h>
+
 // Safe bring-up scaffold only. Hardware drivers are intentionally not started
 // until the N16R8 header pin map and runtime GPIO configuration are verified.
 class OttoDeskBoard : public WifiBoard {
