@@ -19,7 +19,9 @@ constexpr char kDefaultConfig[] = R"json({
   "firmware_base": {"repository": "https://github.com/78/xiaozhi-esp32", "ref": "v2.5.0"},
   "board": {
     "manufacturer": "Waveshare",
-    "product_family": "ESP32-S3-CAM-OVxxxx",
+    "product_family": "ESP32-S3-CAM-N16R8",
+    "header_pin_count": 40,
+    "header_pinout_verified": false,
     "pcb_revision": null,
     "profile": "otto-waveshare-esp32-s3-cam",
     "upstream_reference_profile": "waveshare/esp32-s3-cam",
