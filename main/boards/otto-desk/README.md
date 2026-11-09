@@ -30,9 +30,9 @@ The dedicated CI job combines the repository's shared ESP32-S3 defaults with `sd
 
 ## Latest source-build verification (2026-11-09)
 
-The latest Otto Desk CI run for commit `e292cd43b97e5efe0d9a53e09594725f8ee69a56` completed successfully (run [42554649426](https://github.com/xuantruong280198-blip/Robot-cua-TRUONG/actions/runs/42554649426)). Its build log explicitly records compilation of both `boards/otto-desk/otto_desk.cc` and `boards/otto-desk/otto_desk_display.cc`, generation of the default assets image, and completion of the ESP32-S3 build. The generic ESP32-S3 smoke build also passed (run [42554648791](https://github.com/xuantruong280198-blip/Robot-cua-TRUONG/actions/runs/42554648791)).
+The latest verified source commit is `e3280cf63266ee2c8be85f1ae7064f39d7e484b6`. The Otto Desk board-profile compile passed in [run 42593198331](https://github.com/xuantruong280198-blip/Robot-cua-TRUONG/actions/runs/42593198331), including the configuration-page regression tests, ESP-IDF configuration, and the dedicated Otto Desk build. The generic ESP32-S3 smoke build also passed in [run 42593198437](https://github.com/xuantruong280198-blip/Robot-cua-TRUONG/actions/runs/42593198437).
 
-The resulting artifact is still named `otto-desk-safe-scaffold-not-for-hardware-flashing`. The display class is compiled, but it is not instantiated by the board at runtime. The JSON validator still rejects assigned GPIOs and keeps every device disabled. This distinction is intentional: source compilation is verified; display operation on the physical ST7789 is not.
+The latest change also separates empty config requests (HTTP 400) from oversized requests (HTTP 413) and fixes the JSON error-response string escaping. The resulting artifact remains named `otto-desk-safe-scaffold-not-for-hardware-flashing`. The display class is compiled, but it is not instantiated by the board at runtime. GPIO assignments remain unconfigured and all peripherals remain disabled. Source compilation is verified; operation on the physical ST7789, microphone, amplifier, and servos is not.
 
 ## Not a flashable Otto release
 
