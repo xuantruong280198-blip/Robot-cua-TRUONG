@@ -297,6 +297,23 @@ class OttoDeskDisplayContractTests(unittest.TestCase):
         self.assertIn("else if (gif_controller_ != nullptr)", self.source)
         self.assertIn("else if (emoji_label_ != nullptr)", self.source)
 
+    def test_xiaozhi_device_states_keep_emotion_names_asset_compatible(self):
+        application = (ROOT / "main" / "application.cc").read_text(encoding="utf-8")
+        listening = application.split("case kDeviceStateListening:", 1)[1].split(
+            "case kDeviceStateSpeaking:", 1
+        )[0]
+        speaking = application.split("case kDeviceStateSpeaking:", 1)[1].split(
+            "case kDeviceStateNotifying:", 1
+        )[0]
+
+        # The Otto 1.3+ collection has neutral and thinking, but no dedicated
+        # listening/speaking GIF. Listening therefore uses a real neutral asset;
+        # speaking keeps the emotion delivered by the LLM instead of inventing
+        # an unsupported status-to-emotion alias.
+        self.assertIn('display->SetEmotion("neutral")', listening)
+        self.assertIn('display->SetStatus(Lang::Strings::SPEAKING)', speaking)
+        self.assertNotIn("SetEmotion(", speaking)
+
 
 class RuntimeConfigDecodeContractTests(unittest.TestCase):
     """Guard the C++ decoder against drifting away from the JSON schema."""
