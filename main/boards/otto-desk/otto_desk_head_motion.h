@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cmath>
 #include <cstdint>
+#include <cstring>
 #include <limits>
 
 namespace otto_desk {
@@ -14,6 +15,12 @@ struct HeadAxisLimits {
     int center_deg = 90;
     int max_deg = 180;
     float speed_deg_per_sec = 0.0F;
+};
+
+
+struct HeadPoseOffset {
+    int pan_deg = 0;
+    int tilt_deg = 0;
 };
 
 class HeadMotionPlanner {
