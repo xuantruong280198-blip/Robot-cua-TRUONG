@@ -290,10 +290,12 @@ bool Ota::Upgrade(const std::string& firmware_url, std::function<void(int progre
     auto status_code = http->GetStatusCode();
     if (!status_code) {
         ESP_LOGE(TAG, "Failed to read HTTP status: %s", status_code.error().ToString().c_str());
+        http->Close();
         return false;
     }
     if (*status_code != 200) {
         ESP_LOGE(TAG, "Failed to get firmware, status code: %d", *status_code);
+        http->Close();
         return false;
     }
 
