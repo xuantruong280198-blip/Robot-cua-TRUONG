@@ -150,12 +150,12 @@ esp_err_t SaveConfigHandler(httpd_req_t* request) {
     if (request->content_len == 0) {
         httpd_resp_set_status(request, "400 Bad Request");
         httpd_resp_set_type(request, "application/json");
-        return httpd_resp_sendstr(request, "{\\"error\\":\\"config_body_must_not_be_empty\\"}");
+        return httpd_resp_sendstr(request, "{\"error\":\"config_body_must_not_be_empty\"}");
     }
     if (request->content_len > OttoDeskConfigStore::kMaxConfigBytes) {
         httpd_resp_set_status(request, "413 Payload Too Large");
         httpd_resp_set_type(request, "application/json");
-        return httpd_resp_sendstr(request, "{\\"error\\":\\"config_size_must_not_exceed_3072_bytes\\"}");
+        return httpd_resp_sendstr(request, "{\"error\":\"config_size_must_not_exceed_3072_bytes\"}");
     }
 
     std::string json;
