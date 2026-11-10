@@ -120,6 +120,22 @@ class HardwareConfigValidationTests(unittest.TestCase):
             self.assertNotEqual(result.returncode, 0)
             self.assertIn("between 1 and 3072 bytes", result.stderr)
 
+    def test_excessively_nested_json_is_rejected_before_parsing(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = pathlib.Path(directory) / "deep.json"
+            path.write_text('{"x":' + '[' * 33 + '0' + ']' * 33 + '}',
+                            encoding="utf-8")
+            result = subprocess.run(
+                [sys.executable, str(ROOT / "tools" / "validate_config.py"),
+                 "--config", str(path)],
+                capture_output=True, text=True, check=False,
+            )
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("nesting must not exceed 32 levels", result.stderr)
+
+    def test_brackets_inside_json_strings_do_not_count_as_nesting(self):
+        self.assertTrue(VALIDATOR._has_safe_json_nesting(b'{"note":"[[[{{{"}'))
+
     def test_non_object_json_root_is_rejected(self):
         with tempfile.TemporaryDirectory() as directory:
             path = pathlib.Path(directory) / "array.json"
