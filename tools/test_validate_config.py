@@ -549,6 +549,21 @@ class RuntimeConfigDecodeContractTests(unittest.TestCase):
         self.assertIn("hardware activation remains locked", main_source)
         self.assertIn("no GPIO or peripheral drivers are started", main_source)
 
+    def test_otto_display_emotions_drive_the_head_motion_sequence(self):
+        board = (ROOT / "main" / "boards" / "otto-desk" / "otto_desk.cc").read_text(
+            encoding="utf-8"
+        )
+        display = (ROOT / "main" / "boards" / "otto-desk" / "otto_desk_display.cc").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn("HeadMotionSequence", board)
+        self.assertIn("HeadMotionTask", board)
+        self.assertIn("SetHeadEmotion(emotion)", board)
+        self.assertIn("emotion_callback_(resolved_emotion)", display)
+        self.assertIn("PoseForEmotion", (ROOT / "main" / "boards" / "otto-desk" / "otto_desk_head_motion.h").read_text(
+            encoding="utf-8"
+        ))
+
     def test_runtime_config_defaults_cannot_activate_hardware(self):
         self.assertIn("bool hardware_activation_permitted = false;", self.header)
         for field in (

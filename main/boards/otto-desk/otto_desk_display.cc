@@ -77,7 +77,7 @@ void OttoDeskDisplay::SetEmotion(const char* emotion) {
 
     LcdDisplay::SetEmotion(resolved_emotion);
     FitEmotionToScreen();
-    if (emotion_callback_ != nullptr) {
+    if (emotion_callback_) {
         emotion_callback_(resolved_emotion);
     }
 }
