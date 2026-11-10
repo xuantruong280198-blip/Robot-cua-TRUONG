@@ -14,7 +14,34 @@ This is a dedicated XiaoZhi board profile for the stationary Otto Desk AI projec
 
 ## Confirmed board identity and pinout status
 
-The user has confirmed the physical module as an ESP32-S3-CAM N16R8 with a 40-pin header, 16 MB flash and 8 MB PSRAM. The exact PCB revision, header pin order, and mapping of each header position to ESP32-S3 GPIO are not yet verified.
+The user has confirmed the physical module from the supplied photo as an ESP32-S3-CAM N16R8 with a 40-pin header, 16 MB flash and 8 MB PSRAM. The physical header label order shown in that photo is recorded below and must not be asked for again or silently changed. This records the visible header labels/order; it does not by itself prove the carrier PCB trace routing, peripheral wiring, or electrical suitability of any GPIO.
+
+**User-confirmed 40-pin header label order (viewed from the same orientation as the supplied photo; top to bottom):**
+
+| Left column | Right column |
+|---|---|
+| 3V3 | TX |
+| EN | RX |
+| 4 | 1 |
+| 5 | 2 |
+| 6 | 42 |
+| 7 | 41 |
+| 15 | 40 |
+| 16 | 39 |
+| 17 | 38 |
+| 18 | 37 |
+| 8 | 36 |
+| 3 | 35 |
+| 46 | 0 |
+| 9 | 45 |
+| 10 | 48 |
+| 11 | 47 |
+| 12 | 21 |
+| 13 | 20 |
+| 14 | 19 |
+| 5V | GND |
+
+The board identity and visible 40-pin header order are confirmed from the user's photo. The separate firmware interlock `header_pinout_verified=false` remains a deliberate hardware-activation safety lock until the exact PCB routing and each connected peripheral's actual wiring are audited; it must not be described as meaning that the photo or header order was never supplied.
 
 The upstream Waveshare ESP32-S3-CAM-OVxxxx documentation and schematic are retained as comparison references only. They are **not** proof that this 40-pin module uses the same carrier layout, LCD connector, CH32V003 expander, camera routing, or onboard codec. In particular, do not apply the upstream 18-pin LCD or expander pin assignments to this board without matching the exact PCB and schematic.
 
