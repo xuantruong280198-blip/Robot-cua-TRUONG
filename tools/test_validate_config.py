@@ -421,11 +421,11 @@ class RuntimeConfigDecodeContractTests(unittest.TestCase):
         end = cls.source.index("\nesp_err_t OttoDeskConfigStore::Load(", start)
         cls.decode = cls.source[start:end]
 
-    def test_decode_validates_before_parsing_and_fails_closed(self):
+    def test_decode_validates_before_parsing_and_requires_explicit_routing_confirmation(self):
         self.assertLess(self.decode.index("ValidateSafeJson(json)"),
                         self.decode.index("cJSON_ParseWithLength"))
         self.assertIn("config = OttoDeskRuntimeConfig{};", self.decode)
-        self.assertIn("config.hardware_activation_permitted = false;", self.decode)
+        self.assertIn('cJSON_IsTrue(Get(board, "peripheral_routing_verified"))', self.decode)
         self.assertIn("if (err != ESP_OK) return err;", self.decode)
 
     def test_decoder_maps_every_default_schema_gpio_key(self):

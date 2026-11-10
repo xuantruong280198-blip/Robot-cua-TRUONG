@@ -34,7 +34,7 @@ class GpioConfigPageTests(unittest.TestCase):
 
     def test_assignments_explain_explicit_activation_interlock(self):
         self.assertIn("peripheral_routing_verified", SOURCE)
-        self.assertIn("thiết bị chỉ chạy khi đã xác nhận pinout", SOURCE)
+        self.assertIn("Thiết bị chỉ chạy khi đã xác nhận pinout", SOURCE)
 
 
 if __name__ == "__main__":
