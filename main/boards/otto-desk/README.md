@@ -24,7 +24,7 @@ References for comparison only:
 
 ## Hardware safety
 
-All physical GPIO assignments remain intentionally absent. The ST7789, INMP441, MAX98357A, pan/tilt servos and PIR must not be enabled until a verified pin map and runtime configuration application layer are in place. Servo power must use a regulated external supply with common ground.
+The default physical GPIO assignments remain absent. The configuration editor may retain candidate GPIOs as inactive drafts, but they are never applied. The ST7789, INMP441, MAX98357A, pan/tilt servos and PIR must not be enabled until a verified pin map and runtime configuration application layer are in place. Servo power must use a regulated external supply with common ground.
 
 ## Build configuration audit
 
