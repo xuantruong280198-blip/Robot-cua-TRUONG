@@ -11,6 +11,12 @@ int main() {
     assert(HasSafeJsonNesting("{\"text\":\"escaped quote: \\\" and brace {\"}"));
     assert(HasSafeJsonNesting("{\"a\":0}", 1));
     assert(!HasSafeJsonNesting("{\"a\":[0]}", 1));
+    std::string at_limit = "{\"x\":";
+    for (int i = 0; i < 32; ++i) at_limit.push_back('[');
+    at_limit.push_back('0');
+    for (int i = 0; i < 32; ++i) at_limit.push_back(']');
+    at_limit.push_back('}');
+    assert(HasSafeJsonNesting(at_limit));
     std::string too_deep = "{\"x\":";
     for (int i = 0; i < 33; ++i) too_deep.push_back('[');
     too_deep.push_back('0');
