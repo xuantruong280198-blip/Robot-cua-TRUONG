@@ -9,6 +9,7 @@
 #include "otto_desk_servo.h"
 #include "otto_desk_pir.h"
 #include "otto_desk_head_motion.h"
+#include "otto_desk_display_rotation.h"
 
 #include <driver/spi_master.h>
 #include <esp_err.h>
@@ -128,9 +129,10 @@ private:
             return;
         }
 
+        const auto rotation = otto_desk::GetDisplayRotation(config.display_rotation.value_or(0));
         display_ = std::make_unique<OttoDeskDisplay>(
             panel_io_, panel_, config.display_width, config.display_height,
-            0, 0, false, false, false,
+            0, 0, rotation.mirror_x, rotation.mirror_y, rotation.swap_xy,
             [this](const char* emotion) { SetHeadEmotion(emotion); });
         backlight_ = std::make_unique<PwmBacklight>(
             static_cast<gpio_num_t>(*config.display_backlight));

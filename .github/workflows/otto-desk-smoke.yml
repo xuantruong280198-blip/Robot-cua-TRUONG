@@ -60,6 +60,12 @@ jobs:
           c++ -std=c++17 -Wall -Wextra -Werror -Imain tools/test_ota_version.cc -o /tmp/otto-ota-version-tests
           /tmp/otto-ota-version-tests
 
+      - name: Compile and run ST7789 display rotation tests
+        shell: bash
+        run: |
+          c++ -std=c++17 -Wall -Wextra -Werror -Imain/boards/otto-desk tools/test_display_rotation.cc -o /tmp/otto-display-rotation-tests
+          /tmp/otto-display-rotation-tests
+
       - name: Compile and run hardware-independent head motion tests
         shell: bash
         run: |

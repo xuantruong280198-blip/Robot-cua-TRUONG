@@ -139,6 +139,10 @@ The generic ESP32-S3 workflow also passed on commit `49f562224f647f67db683aa0500
 These are reproducible CI/source-build results only. The Otto board still uses `DummyAudioCodec`; the display and external I2S, servo and PIR drivers are not started. No header GPIO assignment has been approved, and no physical-device test has been performed. The CI artifact must not be flashed as a finished robot firmware.
 
 
+## ST7789 orientation
+
+The display rotation field in the saved JSON is applied to the LVGL display transform for 0, 90, 180 and 270 degrees. Invalid values fall back to native orientation; the JSON validator independently rejects unsupported values.
+
 ## Servo mechanical travel limits
 
 The MG90S PWM driver now accepts per-axis minimum and maximum angles and clamps every requested position to that configured envelope before converting it to a pulse. Invalid mechanical limits fail closed and prevent driver initialization. The pure host-side servo test covers both limit clamping and pulse conversion. This improves the output guard but does not authorize PWM: the exact board pin map and external servo supply remain unverified, so the board still does not instantiate the servo driver.
