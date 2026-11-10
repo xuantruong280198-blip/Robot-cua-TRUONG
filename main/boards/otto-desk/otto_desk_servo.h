@@ -11,7 +11,8 @@
 class OttoDeskServoAxis {
 public:
     OttoDeskServoAxis(gpio_num_t gpio, ledc_channel_t channel,
-                      bool board_pinout_validated, bool external_power_verified);
+                      bool board_pinout_validated, bool external_power_verified,
+                      int min_angle_deg = 0, int max_angle_deg = 180);
     ~OttoDeskServoAxis();
 
     esp_err_t Initialize();
@@ -25,4 +26,6 @@ private:
     bool ready_ = false;
     bool timer_initialized_ = false;
     ledc_timer_t timer_;
+    int min_angle_deg_;
+    int max_angle_deg_;
 };
