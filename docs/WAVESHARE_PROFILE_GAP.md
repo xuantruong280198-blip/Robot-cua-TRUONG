@@ -1,51 +1,49 @@
 # Waveshare ESP32-S3-CAM N16R8: upstream profile gap
 
-## Finding
+## Verified vendor identity and limits
 
-The imported XiaoZhi v2.5.0 source already contains an upstream board entry:
+Waveshare's official product documentation identifies the ESP32-S3-CAM-OVxxxx family (OV5640 / OV3660 / GC2145 / GC0308) as an ESP32-S3R8 board with 16 MB flash and 8 MB PSRAM. It documents these onboard resources:
+
+- 24-pin DVP camera connector;
+- 18-pin SPI/QSPI LCD connector;
+- dual-microphone array;
+- ES8311 + ES7210 audio codec path and NS4150B speaker amplifier;
+- CH32V003F4U6 I/O expander;
+- TF card, battery connector and UART/I2C headers.
+
+Official reference: https://docs.waveshare.com/ESP32-S3-CAM-OVxxxx
+
+This documentation confirms the Waveshare product family, but **does not yet prove the exact 40-pin header order or revision of the board used in this Otto build**. The official page describes the LCD as an 18-pin interface; that is not the same thing as the external 40-pin header. Do not derive the 40-pin physical order from the module GPIO numbers or from the upstream XiaoZhi profile.
+
+## Upstream XiaoZhi profile is not a drop-in Otto pin map
+
+The imported XiaoZhi v2.5.0 source contains:
 
 - Kconfig symbol: `CONFIG_BOARD_TYPE_WAVESHARE_ESP32_S3_CAM_XXXX`
 - CMake board directory: `main/boards/waveshare/esp32-s3-cam`
-- Upstream profile: `main/boards/waveshare/esp32-s3-cam/config.h`
-- Upstream README names the ESP32-S3-CAM-OV5640 / OV3660 / GC2145 / GC0308 product family.
+- upstream profile: `main/boards/waveshare/esp32-s3-cam/config.h`
 
-This is useful as a reference, but it is **not yet a verified match** for this Otto build.
+That profile describes the Waveshare onboard peripherals, including its audio codec, CH32V003 expander and LCD connector. Otto uses a separate ST7789 240x240 display, INMP441 microphone and MAX98357A amplifier. Reusing the upstream profile unchanged could initialize hardware that Otto is not using or reserve GPIOs incorrectly.
 
-## Confirmed physical header metadata
+## Confirmed Otto target contract
 
-The target board is recorded as an ESP32-S3-CAM N16R8 module with a 40-pin header, based on the user's direct hardware confirmation. The count is metadata only: it does not identify the pin order, board revision, onboard routing, or which header pins are safe GPIOs. The configuration therefore stores `header_pin_count: 40` and keeps `header_pinout_verified: false`. No GPIO assignment may be enabled from the header count alone.
-
-## Why it cannot be selected unchanged
-
-The upstream profile configures a different peripheral arrangement:
-
-- I2S MCLK/BCLK/WS/DIN/DOUT on GPIO 10/11/12/13/14.
-- I2C on GPIO 7/8 and a CH32V003 custom I/O expander.
-- Display SPI on GPIO 1/2/3/5/6, plus I2C display signals.
-- Camera signal definitions are present.
-- Display size is selected from 2-inch, 2.8-inch, 3.5-inch, 1.83-inch options; the Otto target is a separate 240x240 ST7789 module.
-- Audio is configured as an onboard codec/reference-input arrangement, not the project's separate INMP441 + MAX98357A modules.
-
-Therefore, do not copy these pin assignments into the Otto JSON or firmware. In particular, the upstream profile's GPIO 12, 13, 14, 41, 42, 45, 46, 47 and 48 are not approved for Otto use merely because they appear in this file.
-
-## Otto target hardware contract
-
-- ESP32-S3-CAM N16R8; camera unused and must remain disabled.
-- ST7789 240x240 display.
-- INMP441 microphone.
-- MAX98357A I2S amplifier and external speaker.
-- Two 180-degree pan/tilt servos, powered from a separate regulated 5V supply; grounds must be common with ESP32.
+- ESP32-S3-CAM N16R8 target; 40-pin header form factor confirmed by the user.
+- Camera must remain disabled.
+- External ST7789 240x240 display.
+- External INMP441 microphone.
+- External MAX98357A I2S amplifier and speaker.
+- Two 180-degree pan/tilt servos.
 - HC-SR501 PIR sensor.
-- GPIO assignments remain unassigned until the exact board revision, connector mapping and schematic are matched.
+- Onboard codec, onboard microphone array and CH32V003 expander must remain disabled unless the user explicitly changes the hardware design.
+
+## GPIO activation gate
+
+The 40-pin count alone does not define the connector pin order, PCB revision, board-level routing or conflicts with onboard circuitry. Therefore the current JSON keeps `header_pinout_verified: false`, all peripheral GPIOs null, and hardware activation disabled.
+
+Do not copy the upstream profile's GPIO assignments into Otto configuration. Do not infer that a GPIO is safe merely because it appears in the ESP32-S3 datasheet or in another manufacturer's ESP32-S3-CAM pin table.
+
+Before enabling any hardware driver, the exact 40-pin header-to-GPIO mapping must be matched to the specific PCB documentation or a clear board photo showing its silkscreen and connector orientation. The firmware should then validate duplicate assignments, boot-strapping pins, flash/PSRAM reservations, USB/UART use and board-specific onboard routing.
 
 ## Integration decision
 
-Do not add a new Kconfig board selector or point the Otto target at the upstream `esp32-s3-cam` directory yet. First verify the exact Waveshare PCB revision and its pinout against the board in hand. Then create a dedicated Otto board profile that:
-
-1. disables camera support;
-2. uses the separate INMP441 and MAX98357A audio paths;
-3. initializes the 240x240 ST7789 panel;
-4. exposes the safe GPIO mapping to the Custom GPIO configuration layer;
-5. leaves servos and PIR disabled until their wiring is verified.
-
-This avoids a firmware that compiles for a similarly named board but drives the wrong pins or peripherals.
+Keep the Otto board as a dedicated profile rather than selecting the upstream Waveshare board directory unchanged. The software components (Otto face, I2S codec, servo planner/driver, PIR driver and JSON configuration service) can be compiled and tested independently, but physical GPIO activation remains fail-closed until the connector map is verified.
