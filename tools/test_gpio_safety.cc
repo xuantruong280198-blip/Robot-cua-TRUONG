@@ -14,5 +14,14 @@ int main() {
     for (int gpio : {1, 2, 4, 5, 18, 21, 38, 39, 40, 41, 42, 47, 48}) {
         assert(IsSafeEsp32S3Gpio(gpio));
     }
+
+    using otto_desk::IsValidI2sPinAssignment;
+    static_assert(IsValidI2sPinAssignment(4, 5, 6, 7, 8, 9, 16000, 24000));
+    static_assert(!IsValidI2sPinAssignment(4, 5, 6, 7, 8, 9, 0, 24000));
+    static_assert(!IsValidI2sPinAssignment(4, 5, 6, 7, 8, 9, 16000, -1));
+    static_assert(!IsValidI2sPinAssignment(4, 5, 6, 7, 8, 8, 16000, 24000));
+    static_assert(!IsValidI2sPinAssignment(4, 5, 6, 7, 8, 43, 16000, 24000));
+    static_assert(!IsValidI2sPinAssignment(4, 5, 6, 7, 8, 26, 16000, 24000));
+    assert(IsValidI2sPinAssignment(40, 41, 42, 38, 39, 47, 16000, 24000));
     return 0;
 }
