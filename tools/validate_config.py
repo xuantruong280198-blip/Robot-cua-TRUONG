@@ -180,7 +180,7 @@ def main(config_path: pathlib.Path | None = None) -> None:
     if pir.get("enabled") is True and pir.get("gpio") is None:
         fail("pir.gpio is required when PIR is enabled")
 
-    print("Hardware JSON validation passed (Waveshare target, safe unassigned defaults).")
+    print("Hardware JSON validation passed (Waveshare target, hardware-disabled GPIO drafts).")
 
 
 if __name__ == "__main__":
