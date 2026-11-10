@@ -64,8 +64,31 @@ OttoI2sAudioCodec::OttoI2sAudioCodec(
     tx_channel_config.dma_frame_num = AUDIO_CODEC_DMA_FRAME_NUM;
     tx_channel_config.auto_clear = true;
 
-    ESP_ERROR_CHECK(i2s_new_channel(&rx_channel_config, nullptr, &rx_handle_));
-    ESP_ERROR_CHECK(i2s_new_channel(&tx_channel_config, &tx_handle_, nullptr));
+    // Treat I2S setup as a transaction. A peripheral failure must not reboot
+    // the whole XiaoZhi application or leave the first channel allocated.
+    const auto rollback_channels = [this]() {
+        if (rx_handle_ != nullptr) {
+            i2s_del_channel(rx_handle_);
+            rx_handle_ = nullptr;
+        }
+        if (tx_handle_ != nullptr) {
+            i2s_del_channel(tx_handle_);
+            tx_handle_ = nullptr;
+        }
+    };
+
+    esp_err_t err = i2s_new_channel(&rx_channel_config, nullptr, &rx_handle_);
+    if (err != ESP_OK) {
+        ESP_LOGE(kTag, "I2S RX channel allocation failed: %s", esp_err_to_name(err));
+        rollback_channels();
+        return;
+    }
+    err = i2s_new_channel(&tx_channel_config, &tx_handle_, nullptr);
+    if (err != ESP_OK) {
+        ESP_LOGE(kTag, "I2S TX channel allocation failed: %s", esp_err_to_name(err));
+        rollback_channels();
+        return;
+    }
 
     // INMP441 emits 24-bit samples in a 32-bit I2S slot. Convert to int16
     // in Read(); the amplifier receives the framework's 16-bit PCM stream.
@@ -86,7 +109,12 @@ OttoI2sAudioCodec::OttoI2sAudioCodec(
             },
         },
     };
-    ESP_ERROR_CHECK(i2s_channel_init_std_mode(rx_handle_, &mic_config));
+    err = i2s_channel_init_std_mode(rx_handle_, &mic_config);
+    if (err != ESP_OK) {
+        ESP_LOGE(kTag, "I2S microphone initialization failed: %s", esp_err_to_name(err));
+        rollback_channels();
+        return;
+    }
 
     i2s_std_config_t amp_config = {
         .clk_cfg = I2S_STD_CLK_DEFAULT_CONFIG(static_cast<uint32_t>(output_sample_rate_)),
@@ -105,7 +133,12 @@ OttoI2sAudioCodec::OttoI2sAudioCodec(
             },
         },
     };
-    ESP_ERROR_CHECK(i2s_channel_init_std_mode(tx_handle_, &amp_config));
+    err = i2s_channel_init_std_mode(tx_handle_, &amp_config);
+    if (err != ESP_OK) {
+        ESP_LOGE(kTag, "I2S amplifier initialization failed: %s", esp_err_to_name(err));
+        rollback_channels();
+        return;
+    }
 
     ESP_LOGI(kTag, "I2S input/output channels initialized (mic=%dHz, amp=%dHz)",
              input_sample_rate_, output_sample_rate_);
