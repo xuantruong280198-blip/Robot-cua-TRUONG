@@ -48,6 +48,12 @@ jobs:
         run: |
           python -m unittest tools/test_validate_config.py tools/test_config_page.py -v
 
+      - name: Compile and run OTA version comparison tests
+        shell: bash
+        run: |
+          c++ -std=c++17 -Wall -Wextra -Werror -Imain tools/test_ota_version.cc -o /tmp/otto-ota-version-tests
+          /tmp/otto-ota-version-tests
+
       - name: Compile and run hardware-independent head motion tests
         shell: bash
         run: |
