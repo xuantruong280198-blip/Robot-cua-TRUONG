@@ -142,7 +142,7 @@ private:
 
         if (config.pan.enabled && config.pan.gpio) {
             pan_servo_ = std::make_unique<OttoDeskServoAxis>(
-                static_cast<gpio_num_t>(*config.pan.gpio), LEDC_CHANNEL_0,
+                static_cast<gpio_num_t>(*config.pan.gpio), LEDC_CHANNEL_2,
                 config.hardware_activation_permitted, config.servo_external_power_verified,
                 config.pan.min_deg, config.pan.max_deg);
             esp_err_t err = pan_servo_->Initialize();
@@ -155,7 +155,7 @@ private:
 
         if (config.tilt.enabled && config.tilt.gpio) {
             tilt_servo_ = std::make_unique<OttoDeskServoAxis>(
-                static_cast<gpio_num_t>(*config.tilt.gpio), LEDC_CHANNEL_1,
+                static_cast<gpio_num_t>(*config.tilt.gpio), LEDC_CHANNEL_3,
                 config.hardware_activation_permitted, config.servo_external_power_verified,
                 config.tilt.min_deg, config.tilt.max_deg);
             esp_err_t err = tilt_servo_->Initialize();

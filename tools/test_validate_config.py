@@ -549,6 +549,17 @@ class RuntimeConfigDecodeContractTests(unittest.TestCase):
         self.assertIn("hardware activation remains locked", main_source)
         self.assertIn("no GPIO or peripheral drivers are started", main_source)
 
+    def test_servo_ledc_channels_do_not_conflict_with_backlight(self):
+        board = (ROOT / "main" / "boards" / "otto-desk" / "otto_desk.cc").read_text(
+            encoding="utf-8"
+        )
+        backlight = (ROOT / "main" / "boards" / "common" / "backlight.cc").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn("config.pan.gpio), LEDC_CHANNEL_2", board)
+        self.assertIn("config.tilt.gpio), LEDC_CHANNEL_3", board)
+        self.assertIn(".channel = LEDC_CHANNEL_0", backlight)
+
     def test_otto_display_emotions_drive_the_head_motion_sequence(self):
         board = (ROOT / "main" / "boards" / "otto-desk" / "otto_desk.cc").read_text(
             encoding="utf-8"
