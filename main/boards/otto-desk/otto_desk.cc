@@ -18,7 +18,7 @@
 
 namespace {
 constexpr char kTag[] = "OttoDeskBoard";
-constexpr int kDisplaySpiHost = SPI3_HOST;
+constexpr spi_host_device_t kDisplaySpiHost = SPI3_HOST;
 constexpr int kDisplaySpiMode = 3;
 constexpr uint32_t kDisplayPixelClockHz = 40 * 1000 * 1000;
 constexpr int kAudioInputSampleRate = 16000;
