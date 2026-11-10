@@ -205,15 +205,13 @@ class HardwareConfigValidationTests(unittest.TestCase):
                     output,
                 )
 
-    def test_unblocked_gpio_still_requires_verified_header_mapping(self):
+    def test_unblocked_gpio_can_be_saved_as_inactive_draft(self):
         config = copy.deepcopy(DEFAULT)
         config["display"]["gpio"]["sclk"] = 4
         code, output = self.run_config(config)
-        self.assertNotEqual(code, 0)
-        self.assertIn(
-            "must be null until the exact header mapping is verified",
-            output,
-        )
+        self.assertEqual(code, 0, output)
+        self.assertIs(config["board"]["header_pinout_verified"], False)
+        self.assertIs(config["display"]["enabled"], False)
 
     def test_boolean_is_not_accepted_as_gpio_number(self):
         config = copy.deepcopy(DEFAULT)
@@ -238,7 +236,7 @@ class HardwareConfigValidationTests(unittest.TestCase):
         config["servos"]["pan"]["gpio"] = 4
         code, output = self.run_config(config)
         self.assertNotEqual(code, 0)
-        self.assertIn("must be null until the exact header mapping is verified", output)
+        self.assertIn("servo pan must remain disabled until wiring is verified", output)
 
     def test_camera_must_remain_disabled(self):
         config = copy.deepcopy(DEFAULT)
