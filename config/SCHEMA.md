@@ -4,7 +4,8 @@ The canonical starter configuration is `default.json`. Its machine-readable Draf
 
 ## Safety defaults
 
-- All GPIO fields are `null` until the exact Waveshare board revision and schematic are checked.
+- The user-supplied photo confirms the Waveshare ESP32-S3-CAM N16R8 40-pin header labels and their physical order. This is recorded as `board.header_labels_confirmed=true`.
+- Peripheral signal routing from the module/PCB to each header pad is a separate check and remains `board.peripheral_routing_verified=false`; GPIO fields stay `null` until those routes and peripheral connections are audited.
 - Camera is permanently disabled for this project.
 - Display, microphone, amplifier, PIR and servo drivers start disabled.
 - Pan and tilt angle values are software targets only; they do not imply safe mechanical travel.
@@ -30,7 +31,7 @@ Before assigning a pin:
 - `pir`: HC-SR501 event input.
 - `gpio_policy`: validation requirements.
 
-This schema is a project configuration contract, not yet a runtime firmware integration. The firmware adapter and local web editor must be implemented and tested before claiming live GPIO reconfiguration.
+This schema is a project configuration contract. Bounded NVS storage, HTTP JSON endpoints, and the local browser editor are implemented. Runtime application of the saved GPIO configuration to display, audio, servo, and PIR drivers is not yet integrated; saving or importing a draft does not activate hardware.
 
 ## Validate an imported JSON file
 
@@ -40,4 +41,4 @@ The host-side validator accepts an arbitrary JSON path, so a configuration expor
 python tools/validate_config.py --config /path/to/otto-config.json
 ```
 
-The command applies the current conservative hardware policy: GPIOs remain unassigned, camera and onboard peripherals stay disabled, and servos/PIR cannot be enabled before their wiring is verified. A passing result means the file satisfies this host-side policy; it does **not** mean the ESP32 firmware can import it or apply GPIO changes at runtime. Runtime NVS storage, HTTP endpoints and the browser editor are still pending.
+The command applies the current conservative hardware policy: GPIO drafts may be stored but do not activate hardware; camera and onboard peripherals stay disabled; servos/PIR cannot be enabled before their wiring and power are verified. A passing result means the file satisfies the host-side policy. NVS storage, HTTP endpoints and the browser editor exist, but runtime GPIO activation is still pending.
