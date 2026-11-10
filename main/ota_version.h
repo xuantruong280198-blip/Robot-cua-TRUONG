@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <limits>
 #include <string_view>
+#include <utility>
 #include <vector>
 
 namespace ota_version {
@@ -13,10 +14,11 @@ namespace ota_version {
 inline bool Parse(std::string_view text, std::vector<uint32_t>& parts) {
     parts.clear();
     if (text.empty() || text.size() > 64) return false;
+    std::vector<uint32_t> parsed;
 
     size_t start = 0;
     while (start < text.size()) {
-        if (parts.size() >= 8) return false;
+        if (parsed.size() >= 8) return false;
         const size_t end = text.find('.', start);
         const size_t stop = end == std::string_view::npos ? text.size() : end;
         if (stop == start) return false;
@@ -31,12 +33,14 @@ inline bool Parse(std::string_view text, std::vector<uint32_t>& parts) {
             }
             value = value * 10U + digit;
         }
-        parts.push_back(value);
+        parsed.push_back(value);
         if (end == std::string_view::npos) break;
         start = end + 1;
         if (start == text.size()) return false;
     }
-    return !parts.empty();
+    if (parsed.empty()) return false;
+    parts = std::move(parsed);
+    return true;
 }
 
 // Missing trailing components are zero: 1.2 and 1.2.0 are equivalent.
