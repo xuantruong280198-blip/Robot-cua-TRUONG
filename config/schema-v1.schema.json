@@ -71,7 +71,7 @@
           ]
         },
         "profile": {
-          "const": "otto-waveshare-esp32-s3-cam"
+          "const": "otto-esp32-s3-cam-40pin"
         },
         "upstream_reference_profile": {
           "const": "waveshare/esp32-s3-cam"
