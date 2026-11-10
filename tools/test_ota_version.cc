@@ -13,9 +13,11 @@ int main() {
     assert((parts == std::vector<uint32_t>{1, 2, 3}));
     assert(!ota_version::Parse("", parts));
     assert(!ota_version::Parse("1..2", parts));
+    assert(parts.empty());
     assert(!ota_version::Parse("1.2.", parts));
     assert(!ota_version::Parse("v1.2.3", parts));
     assert(!ota_version::Parse("1.2-beta", parts));
+    assert(parts.empty());
     assert(!ota_version::Parse("4294967296", parts));
     assert(!ota_version::Parse("1.2.3.4.5.6.7.8.9", parts));
     assert(!ota_version::Parse("12345678901234567890123456789012345678901234567890123456789012345", parts));
