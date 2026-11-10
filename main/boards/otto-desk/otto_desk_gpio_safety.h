@@ -16,4 +16,21 @@ constexpr bool IsSafeEsp32S3Gpio(int gpio) {
     return true;
 }
 
+// Validate the six independent I2S signals before allocating driver resources.
+// The mic and amplifier use separate I2S controllers in this implementation,
+// so their clock/data pins must all be distinct.
+constexpr bool IsValidI2sPinAssignment(int mic_ws, int mic_sck, int mic_sd,
+                                       int amp_bclk, int amp_lrclk, int amp_din,
+                                       int input_sample_rate, int output_sample_rate) {
+    const int pins[] = {mic_ws, mic_sck, mic_sd, amp_bclk, amp_lrclk, amp_din};
+    if (input_sample_rate <= 0 || output_sample_rate <= 0) return false;
+    for (int i = 0; i < 6; ++i) {
+        if (!IsSafeEsp32S3Gpio(pins[i])) return false;
+        for (int j = 0; j < i; ++j) {
+            if (pins[i] == pins[j]) return false;
+        }
+    }
+    return true;
+}
+
 }  // namespace otto_desk
