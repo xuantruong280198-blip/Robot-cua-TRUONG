@@ -6,7 +6,7 @@
 #include <esp_log.h>
 
 // Safe bring-up scaffold only. Hardware drivers are intentionally not started
-// until the N16R8 header pin map and runtime GPIO configuration are verified.
+// until peripheral signal-to-GPIO wiring and runtime configuration are audited.
 class OttoDeskBoard : public WifiBoard {
 public:
     AudioCodec* GetAudioCodec() override {
