@@ -160,6 +160,8 @@ def main(config_path: pathlib.Path | None = None) -> None:
     )
     if any(enabled_peripherals) and routing_verified is not True:
         fail("board.peripheral_routing_verified must be true before enabling peripherals")
+    if (microphone.get("enabled") is True) != (amplifier.get("enabled") is True):
+        fail("INMP441 and MAX98357A must be enabled together for duplex I2S audio")
 
     if servos.get("external_power_verified") not in (True, False):
         fail("servo external_power_verified must be a boolean")

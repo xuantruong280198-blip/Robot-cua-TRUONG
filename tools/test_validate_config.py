@@ -200,6 +200,14 @@ class HardwareConfigValidationTests(unittest.TestCase):
                 self.assertNotEqual(code, 0)
                 self.assertIn(f"{label} requires every GPIO", output)
 
+    def test_microphone_and_amplifier_must_be_enabled_together(self):
+        config = copy.deepcopy(DEFAULT)
+        config["board"]["peripheral_routing_verified"] = True
+        config["audio"]["microphone"]["enabled"] = True
+        code, output = self.run_config(config)
+        self.assertNotEqual(code, 0)
+        self.assertIn("must be enabled together", output)
+
     def test_duplicate_gpio_is_rejected(self):
         config = copy.deepcopy(DEFAULT)
         config["display"]["gpio"]["sclk"] = 5

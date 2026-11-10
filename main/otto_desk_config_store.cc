@@ -255,6 +255,7 @@ bool IsSafeConfig(const cJSON* root) {
     const cJSON* amplifier = Get(audio, "amplifier");
     const cJSON* amp_i2s = Get(amplifier, "i2s");
     const cJSON* impedance = Get(amplifier, "speaker_impedance_ohm");
+    if (ReadBool(microphone, "enabled") != ReadBool(amplifier, "enabled")) return false;
     if (!HasExactKeys(amplifier, {"type", "i2s", "enabled", "speaker_impedance_ohm"}) ||
         !IsString(amplifier, "type", "max98357a") ||
         (!routing_verified && !IsFalse(amplifier, "enabled")) ||
@@ -268,6 +269,7 @@ bool IsSafeConfig(const cJSON* root) {
     const cJSON* servos = Get(root, "servos");
     const bool external_power_verified = cJSON_IsTrue(Get(servos, "external_power_verified"));
     if (!HasExactKeys(servos, {"pan", "tilt", "external_power_verified"}) ||
+        !cJSON_IsBool(Get(servos, "external_power_verified")) ||
         !IsSafeServo(Get(servos, "pan"), routing_verified && external_power_verified) ||
         !IsSafeServo(Get(servos, "tilt"), routing_verified && external_power_verified) ||
         (!routing_verified && external_power_verified)) return false;
