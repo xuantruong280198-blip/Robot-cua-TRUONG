@@ -44,6 +44,9 @@ private:
     std::unique_ptr<OttoDeskPirSensor> pir_sensor_;
     std::unique_ptr<otto_desk::HeadMotionSequence> head_motion_;
     std::mutex head_motion_mutex_;
+    std::string head_emotion_ = "neutral";
+    bool speaking_nod_phase_ = false;
+    uint32_t speaking_nod_elapsed_ms_ = 0;
     TaskHandle_t head_motion_task_ = nullptr;
     TaskHandle_t pir_task_ = nullptr;
     esp_lcd_panel_io_handle_t panel_io_ = nullptr;
@@ -170,7 +173,10 @@ private:
 
     void SetHeadEmotion(const char* emotion) {
         std::lock_guard<std::mutex> lock(head_motion_mutex_);
-        if (head_motion_ != nullptr) head_motion_->SetEmotion(emotion);
+        head_emotion_ = emotion != nullptr ? emotion : "neutral";
+        speaking_nod_phase_ = false;
+        speaking_nod_elapsed_ms_ = 0;
+        if (head_motion_ != nullptr) head_motion_->SetEmotion(head_emotion_.c_str());
     }
 
     void AdvanceHeadMotion(uint32_t elapsed_ms) {
@@ -178,6 +184,15 @@ private:
         {
             std::lock_guard<std::mutex> lock(head_motion_mutex_);
             if (head_motion_ == nullptr) return;
+            if (head_emotion_ == "speaking") {
+                speaking_nod_elapsed_ms_ += elapsed_ms;
+                if (speaking_nod_elapsed_ms_ >= 700) {
+                    speaking_nod_elapsed_ms_ = 0;
+                    speaking_nod_phase_ = !speaking_nod_phase_;
+                    head_motion_->SetEmotion(
+                        speaking_nod_phase_ ? "speaking" : "neutral");
+                }
+            }
             frame = head_motion_->Advance(elapsed_ms);
         }
         if (pan_servo_ != nullptr && pan_servo_->IsReady()) {
