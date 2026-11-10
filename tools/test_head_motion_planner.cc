@@ -88,6 +88,29 @@ int main() {
     Check(null_emotion.pan_deg == 90 && null_emotion.tilt_deg == 90,
           "null emotion falls back to neutral");
 
+
+    // Stateful emotion sequence supports smooth movement and mid-flight retargeting.
+    otto_desk::HeadMotionSequence sequence(pan, tilt);
+    Check(sequence.IsValid(), "valid motion sequence accepted");
+    sequence.SetEmotion("sad");
+    auto frame = sequence.Current();
+    Check(frame.moving, "emotion request starts motion");
+    frame = sequence.Advance(100);
+    Check(frame.moving && frame.tilt_deg > 90.0F && frame.tilt_deg < 100.0F,
+          "tilt moves smoothly before target");
+    sequence.SetEmotion("neutral");
+    Check(sequence.Current().moving, "new emotion retargets current pose");
+    frame = sequence.Advance(5000);
+    Check(!frame.moving && std::fabs(frame.pan_deg - 90.0F) < 0.001F &&
+              std::fabs(frame.tilt_deg - 90.0F) < 0.001F,
+          "sequence arrives exactly at neutral pose");
+    otto_desk::HeadMotionSequence invalid_sequence(
+        {90, 90, 90, 50.0F}, tilt);
+    Check(!invalid_sequence.IsValid(), "invalid axis disables sequence");
+    frame = invalid_sequence.Advance(1000);
+    Check(!frame.moving && frame.pan_deg == 90.0F && frame.tilt_deg == 90.0F,
+          "invalid sequence fails closed");
+
     if (failures != 0) {
         std::fprintf(stderr, "%d head motion test(s) failed\n", failures);
         return 1;

@@ -112,3 +112,12 @@ These are reproducible CI/source-build results only. The Otto board still uses `
 ## Servo mechanical travel limits
 
 The MG90S PWM driver now accepts per-axis minimum and maximum angles and clamps every requested position to that configured envelope before converting it to a pulse. Invalid mechanical limits fail closed and prevent driver initialization. The pure host-side servo test covers both limit clamping and pulse conversion. This improves the output guard but does not authorize PWM: the exact board pin map and external servo supply remain unverified, so the board still does not instantiate the servo driver.
+
+
+## Stateful emotion-to-motion sequence
+
+`HeadMotionSequence` carries the current pan/tilt pose between emotion
+changes. It supports ease-out movement using each axis's configured speed,
+retargeting during motion, exact target arrival, and fail-closed behavior for
+invalid axis limits. A future board task can advance the sequence and forward
+poses to the guarded PWM drivers. The sequence itself never enables GPIO.

@@ -99,4 +99,96 @@ public:
     }
 };
 
+
+// Stateful, hardware-independent two-axis motion sequence. A board task calls
+// Advance() periodically and forwards the resulting pose to guarded drivers.
+// This class never touches GPIO, PWM, or servo power.
+struct HeadMotionFrame {
+    float pan_deg = 90.0F;
+    float tilt_deg = 90.0F;
+    bool moving = false;
+};
+
+class HeadMotionSequence {
+public:
+    HeadMotionSequence(HeadAxisLimits pan, HeadAxisLimits tilt)
+        : pan_limits_(pan), tilt_limits_(tilt) {
+        valid_ = HeadMotionPlanner::IsValid(pan_limits_) &&
+                 HeadMotionPlanner::IsValid(tilt_limits_);
+        if (valid_) {
+            pan_ = pan_target_ = static_cast<float>(pan.center_deg);
+            tilt_ = tilt_target_ = static_cast<float>(tilt.center_deg);
+        }
+    }
+
+    bool IsValid() const { return valid_; }
+
+    void SetEmotion(const char* emotion) {
+        if (!valid_) return;
+        const HeadPoseOffset target =
+            HeadMotionPlanner::TargetForEmotion(emotion, pan_limits_, tilt_limits_);
+        pan_start_ = pan_;
+        tilt_start_ = tilt_;
+        pan_target_ = static_cast<float>(target.pan_deg);
+        tilt_target_ = static_cast<float>(target.tilt_deg);
+        pan_duration_ms_ = HeadMotionPlanner::DurationMs(
+            static_cast<int>(std::lround(pan_start_)), target.pan_deg, pan_limits_);
+        tilt_duration_ms_ = HeadMotionPlanner::DurationMs(
+            static_cast<int>(std::lround(tilt_start_)), target.tilt_deg, tilt_limits_);
+        duration_ms_ = std::max(pan_duration_ms_, tilt_duration_ms_);
+        elapsed_ms_ = 0;
+        if (duration_ms_ == 0) {
+            pan_ = pan_target_;
+            tilt_ = tilt_target_;
+        }
+    }
+
+    HeadMotionFrame Advance(uint32_t elapsed_ms) {
+        if (!valid_) return {90.0F, 90.0F, false};
+        if (duration_ms_ == 0 || elapsed_ms == 0) return Current();
+        const uint64_t next = static_cast<uint64_t>(elapsed_ms_) + elapsed_ms;
+        elapsed_ms_ = static_cast<uint32_t>(
+            std::min<uint64_t>(next, duration_ms_));
+        pan_ = InterpolateAxis(pan_start_, pan_target_, elapsed_ms_,
+                               pan_duration_ms_);
+        tilt_ = InterpolateAxis(tilt_start_, tilt_target_, elapsed_ms_,
+                                tilt_duration_ms_);
+        if (elapsed_ms_ >= duration_ms_) {
+            pan_ = pan_target_;
+            tilt_ = tilt_target_;
+        }
+        return Current();
+    }
+
+    HeadMotionFrame Current() const {
+        return {pan_, tilt_, valid_ && duration_ms_ != 0 &&
+                                  elapsed_ms_ < duration_ms_};
+    }
+
+private:
+    static float InterpolateAxis(float from, float to, uint32_t elapsed,
+                                 uint32_t duration) {
+        if (duration == 0 || elapsed >= duration) return to;
+        const float t = static_cast<float>(elapsed) /
+                        static_cast<float>(duration);
+        const float inverse = 1.0F - t;
+        const float eased = 1.0F - inverse * inverse * inverse;
+        return from + (to - from) * eased;
+    }
+
+    HeadAxisLimits pan_limits_;
+    HeadAxisLimits tilt_limits_;
+    float pan_ = 90.0F;
+    float tilt_ = 90.0F;
+    float pan_start_ = 90.0F;
+    float tilt_start_ = 90.0F;
+    float pan_target_ = 90.0F;
+    float tilt_target_ = 90.0F;
+    uint32_t pan_duration_ms_ = 0;
+    uint32_t tilt_duration_ms_ = 0;
+    uint32_t duration_ms_ = 0;
+    uint32_t elapsed_ms_ = 0;
+    bool valid_ = false;
+};
+
 }  // namespace otto_desk
