@@ -1,5 +1,6 @@
 #include "otto_i2s_audio_codec.h"
 #include "otto_i2s_audio_math.h"
+#include "boards/otto-desk/otto_desk_gpio_safety.h"
 
 #include <driver/i2s_std.h>
 #include <esp_log.h>
@@ -19,6 +20,26 @@ OttoI2sAudioCodec::OttoI2sAudioCodec(
     int input_sample_rate, int output_sample_rate,
     gpio_num_t mic_ws, gpio_num_t mic_sck, gpio_num_t mic_sd,
     gpio_num_t amp_bclk, gpio_num_t amp_lrclk, gpio_num_t amp_din) {
+    // Fail closed before allocating I2S resources. This is an extra driver
+    // guard; it does not replace verification of the carrier-board pin map.
+    const gpio_num_t pins[] = {mic_ws, mic_sck, mic_sd, amp_bclk, amp_lrclk, amp_din};
+    for (size_t i = 0; i < sizeof(pins) / sizeof(pins[0]); ++i) {
+        if (!otto_desk::IsSafeEsp32S3Gpio(static_cast<int>(pins[i]))) {
+            ESP_LOGE(kTag, "Refusing I2S init: unsafe GPIO %d", static_cast<int>(pins[i]));
+            return;
+        }
+        for (size_t j = 0; j < i; ++j) {
+            if (pins[i] == pins[j]) {
+                ESP_LOGE(kTag, "Refusing I2S init: GPIO %d is duplicated", static_cast<int>(pins[i]));
+                return;
+            }
+        }
+    }
+    if (input_sample_rate <= 0 || output_sample_rate <= 0) {
+        ESP_LOGE(kTag, "Refusing I2S init: sample rates must be positive");
+        return;
+    }
+
     input_sample_rate_ = input_sample_rate;
     output_sample_rate_ = output_sample_rate;
     input_channels_ = 1;
@@ -100,6 +121,10 @@ OttoI2sAudioCodec::~OttoI2sAudioCodec() {
 
 void OttoI2sAudioCodec::EnableInput(bool enable) {
     if (enable == input_enabled_) return;
+    if (rx_handle_ == nullptr) {
+        ESP_LOGE(kTag, "Cannot enable microphone: I2S RX is not initialized");
+        return;
+    }
     if (enable) {
         ESP_ERROR_CHECK(i2s_channel_enable(rx_handle_));
         input_channel_ready_ = true;
@@ -112,6 +137,10 @@ void OttoI2sAudioCodec::EnableInput(bool enable) {
 
 void OttoI2sAudioCodec::EnableOutput(bool enable) {
     if (enable == output_enabled_) return;
+    if (tx_handle_ == nullptr) {
+        ESP_LOGE(kTag, "Cannot enable amplifier: I2S TX is not initialized");
+        return;
+    }
     if (enable) {
         ESP_ERROR_CHECK(i2s_channel_enable(tx_handle_));
         output_channel_ready_ = true;
@@ -127,7 +156,7 @@ void OttoI2sAudioCodec::SetOutputVolume(int volume) {
 }
 
 int OttoI2sAudioCodec::Read(int16_t* dest, int samples) {
-    if (!input_enabled_ || dest == nullptr || samples <= 0) return 0;
+    if (!input_enabled_ || rx_handle_ == nullptr || dest == nullptr || samples <= 0) return 0;
 
     std::array<int32_t, AUDIO_CODEC_DMA_FRAME_NUM> raw{};
     int remaining = samples;
@@ -159,7 +188,7 @@ int OttoI2sAudioCodec::Read(int16_t* dest, int samples) {
 }
 
 int OttoI2sAudioCodec::Write(const int16_t* data, int samples) {
-    if (!output_enabled_ || data == nullptr || samples <= 0) return 0;
+    if (!output_enabled_ || tx_handle_ == nullptr || data == nullptr || samples <= 0) return 0;
 
     std::array<int16_t, AUDIO_CODEC_DMA_FRAME_NUM> scaled{};
     int written = 0;
