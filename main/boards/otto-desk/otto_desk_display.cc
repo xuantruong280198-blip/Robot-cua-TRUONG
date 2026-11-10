@@ -164,6 +164,26 @@ void OttoDeskDisplay::SetPreviewImage(std::unique_ptr<LvglImage> image) {
         }
     }
     lv_obj_remove_flag(preview_image_, LV_OBJ_FLAG_HIDDEN);
-    esp_timer_stop(preview_timer_);
-    ESP_ERROR_CHECK(esp_timer_start_once(preview_timer_, PREVIEW_IMAGE_DURATION_MS * 1000));
+    if (preview_timer_ != nullptr) {
+        esp_timer_stop(preview_timer_);
+    }
+    const esp_err_t timer_err = preview_timer_ != nullptr
+        ? esp_timer_start_once(preview_timer_, PREVIEW_IMAGE_DURATION_MS * 1000)
+        : ESP_ERR_INVALID_STATE;
+    if (timer_err != ESP_OK) {
+        // Do not leave a preview permanently covering the animated face when
+        // the one-shot timer could not be armed. Hide the LVGL object before
+        // releasing its cached image buffer.
+        ESP_LOGE(TAG, "Could not arm preview timeout: %s", esp_err_to_name(timer_err));
+        lv_obj_add_flag(preview_image_, LV_OBJ_FLAG_HIDDEN);
+        preview_image_cached_.reset();
+        if (emoji_box_ != nullptr) {
+            lv_obj_remove_flag(emoji_box_, LV_OBJ_FLAG_HIDDEN);
+        } else if (gif_controller_ != nullptr) {
+            lv_obj_remove_flag(emoji_image_, LV_OBJ_FLAG_HIDDEN);
+            gif_controller_->Start();
+        } else if (emoji_label_ != nullptr) {
+            lv_obj_remove_flag(emoji_label_, LV_OBJ_FLAG_HIDDEN);
+        }
+    }
 }
