@@ -41,6 +41,26 @@ def _reject_duplicate_keys(pairs):
     return result
 
 
+def _has_safe_json_nesting(raw: bytes, max_depth: int = 32) -> bool:
+    """Bound parser recursion while ignoring brackets inside JSON strings."""
+    depth = 0
+    in_string = False
+    escaped = False
+    for byte in raw:
+        if in_string:
+            if escaped: escaped = False
+            elif byte == 92: escaped = True
+            elif byte == 34: in_string = False
+            continue
+        if byte == 34: in_string = True
+        elif byte in (123, 91):
+            depth += 1
+            if depth > max_depth: return False
+        elif byte in (125, 93):
+            depth -= 1
+            if depth < 0: return False
+    return depth == 0 and not in_string
+
 def main(config_path: pathlib.Path | None = None) -> None:
     """Validate a supplied configuration file (defaults to the checked-in safe config)."""
     if config_path is None:
@@ -49,6 +69,8 @@ def main(config_path: pathlib.Path | None = None) -> None:
         raw = config_path.read_bytes()
         if not raw or len(raw) > 3072:
             fail("configuration file must be between 1 and 3072 bytes")
+        if not _has_safe_json_nesting(raw):
+            fail("configuration JSON nesting must not exceed 32 levels")
         data = json.loads(raw.decode("utf-8"), object_pairs_hook=_reject_duplicate_keys)
     except (OSError, UnicodeDecodeError, json.JSONDecodeError, ValueError) as exc:
         fail(f"cannot read valid JSON from {config_path}: {exc}")
