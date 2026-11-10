@@ -21,6 +21,11 @@ void Check(bool condition, const char* name) {
 }  // namespace
 
 int main() {
+    Check(std::strcmp(otto_desk::SpeakingNodEmotion(true), "neutral") == 0,
+          "first speaking nod phase relaxes toward neutral");
+    Check(std::strcmp(otto_desk::SpeakingNodEmotion(false), "speaking") == 0,
+          "second speaking nod phase returns to speaking pose");
+
     const HeadAxisLimits normal{20, 90, 160, 70.0F};
     Check(HeadMotionPlanner::IsValid(normal), "valid limits accepted");
     Check(!HeadMotionPlanner::IsValid({20, 20, 160, 70.0F}),

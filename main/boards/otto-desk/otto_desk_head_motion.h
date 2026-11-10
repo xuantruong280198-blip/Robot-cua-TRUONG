@@ -18,6 +18,12 @@ struct HeadAxisLimits {
 };
 
 
+// The phase is toggled before this helper is called. Start the first 700 ms
+// speaking interval by relaxing to neutral, then alternate back to speaking.
+constexpr const char* SpeakingNodEmotion(bool phase) {
+    return phase ? "neutral" : "speaking";
+}
+
 struct HeadPoseOffset {
     int pan_deg = 0;
     int tilt_deg = 0;

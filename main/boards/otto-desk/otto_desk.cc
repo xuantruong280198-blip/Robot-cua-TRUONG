@@ -192,7 +192,7 @@ private:
                     speaking_nod_elapsed_ms_ = 0;
                     speaking_nod_phase_ = !speaking_nod_phase_;
                     head_motion_->SetEmotion(
-                        speaking_nod_phase_ ? "speaking" : "neutral");
+                        otto_desk::SpeakingNodEmotion(speaking_nod_phase_));
                 }
             }
             frame = head_motion_->Advance(elapsed_ms);
