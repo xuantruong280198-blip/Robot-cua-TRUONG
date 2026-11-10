@@ -1,5 +1,4 @@
 #include "wifi_board.h"
-#include "config.h"
 #include "audio/audio_codec.h"
 #include "audio/codecs/dummy_audio_codec.h"
 #include "audio/codecs/otto_i2s_audio_codec.h"
