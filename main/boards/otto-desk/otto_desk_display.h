@@ -15,6 +15,7 @@ public:
 
     void SetupUI() override;
     void SetEmotion(const char* emotion) override;
+    void SetStatus(const char* status) override;
     void SetPreviewImage(std::unique_ptr<LvglImage> image) override;
 
 private:

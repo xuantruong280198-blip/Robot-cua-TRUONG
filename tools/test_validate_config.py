@@ -596,6 +596,9 @@ class RuntimeConfigDecodeContractTests(unittest.TestCase):
         self.assertIn("HeadMotionTask", board)
         self.assertIn("SetHeadEmotion(emotion)", board)
         self.assertIn("emotion_callback_(resolved_emotion)", display)
+        self.assertIn("void OttoDeskDisplay::SetStatus(const char* status)", display)
+        self.assertIn('emotion_callback_("speaking")', display)
+        self.assertIn('emotion_callback_("listening")', display)
         self.assertIn("PoseForEmotion", (ROOT / "main" / "boards" / "otto-desk" / "otto_desk_head_motion.h").read_text(
             encoding="utf-8"
         ))

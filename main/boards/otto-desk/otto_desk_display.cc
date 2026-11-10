@@ -9,6 +9,7 @@
 
 #include "display/lvgl_display/lvgl_image.h"
 #include "display/lvgl_display/lvgl_theme.h"
+#include "assets/lang_config.h"
 
 #define TAG "OttoDeskDisplay"
 
@@ -80,6 +81,19 @@ void OttoDeskDisplay::SetEmotion(const char* emotion) {
     FitEmotionToScreen();
     if (emotion_callback_) {
         emotion_callback_(resolved_emotion);
+    }
+}
+
+void OttoDeskDisplay::SetStatus(const char* status) {
+    LcdDisplay::SetStatus(status);
+    if (!emotion_callback_ || status == nullptr) return;
+
+    if (std::strcmp(status, Lang::Strings::SPEAKING) == 0) {
+        emotion_callback_("speaking");
+    } else if (std::strcmp(status, Lang::Strings::LISTENING) == 0) {
+        emotion_callback_("listening");
+    } else if (std::strcmp(status, Lang::Strings::STANDBY) == 0) {
+        emotion_callback_("neutral");
     }
 }
 
