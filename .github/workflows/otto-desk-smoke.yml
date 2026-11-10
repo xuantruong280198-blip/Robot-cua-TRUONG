@@ -1,4 +1,4 @@
-name: Otto Desk board profile compile test
+name: Otto Desk N16R8 firmware build
 
 on:
   push:
@@ -32,7 +32,7 @@ permissions:
 
 jobs:
   compile-otto-desk:
-    name: Compile Otto Desk safe board scaffold (ESP32-S3)
+    name: Compile Otto Desk firmware (ESP32-S3 N16R8)
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -101,32 +101,42 @@ jobs:
           grep -Fqx "CONFIG_PARTITION_TABLE_CUSTOM=y" sdkconfig
           grep -Fqx 'CONFIG_PARTITION_TABLE_CUSTOM_FILENAME="partitions/v2/16m.csv"' sdkconfig
 
-      - name: Compile Otto Desk scaffold
+      - name: Compile Otto Desk firmware
         shell: bash
         run: |
           idf.py build
+
+      - name: Create merged flash image
+        shell: bash
+        run: |
+          idf.py merge-bin -o build/otto-desk-merged.bin
+          test -s build/otto-desk-merged.bin
 
       - name: Write build identity manifest
         shell: bash
         run: |
           {
-            echo "artifact=otto-desk-safe-scaffold-not-for-hardware-flashing"
+            echo "artifact=otto-desk-n16r8-provisioning-firmware"
+            echo "merged_image=otto-desk-merged.bin"
+            echo "flash_offset=0x0"
             echo "target=esp32s3"
             echo "board_selection=CONFIG_BOARD_TYPE_OTTO_DESK"
             echo "flash_size=16MB"
             echo "partition_table=partitions/v2/16m.csv"
+            echo "runtime_activation=explicit_json_opt_in"
             echo "hardware_validation=not-performed"
-            echo "gpio_assignments=unconfigured"
+            echo "gpio_assignments=unconfigured_by_default"
             echo "commit=${GITHUB_SHA}"
           } > build/BUILD-MANIFEST.txt
 
-      - name: Upload Otto Desk scaffold build
+      - name: Upload Otto Desk firmware image
         uses: actions/upload-artifact@v4
         with:
-          name: otto-desk-safe-scaffold-not-for-hardware-flashing
+          name: otto-desk-n16r8-provisioning-firmware
           if-no-files-found: error
           retention-days: 14
           path: |
+            build/otto-desk-merged.bin
             build/*.bin
             build/*.elf
             build/flasher_args.json
