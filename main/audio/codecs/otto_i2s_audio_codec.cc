@@ -22,7 +22,7 @@ OttoI2sAudioCodec::OttoI2sAudioCodec(
     gpio_num_t amp_bclk, gpio_num_t amp_lrclk, gpio_num_t amp_din,
     bool board_pinout_validated) {
     if (!board_pinout_validated) {
-        ESP_LOGE(kTag, "Refusing I2S init: carrier-board pinout is not verified");
+        ESP_LOGE(kTag, "Refusing I2S init: peripheral signal routing is not audited");
         return;
     }
     // Fail closed before allocating I2S resources. This is an extra driver
