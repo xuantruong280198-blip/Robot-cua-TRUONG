@@ -32,9 +32,9 @@ class GpioConfigPageTests(unittest.TestCase):
         self.assertIn("const config=JSON.parse(box.value)", SOURCE)
         self.assertIn("const config=JSON.parse(text)", SOURCE)
 
-    def test_assignments_are_always_labelled_draft_and_inactive(self):
-        self.assertIn("Chưa kích hoạt · bản nháp", SOURCE)
-        self.assertIn("GPIO chỉ là bản nháp; thiết bị ngoại vi vẫn đang tắt.", SOURCE)
+    def test_assignments_explain_explicit_activation_interlock(self):
+        self.assertIn("peripheral_routing_verified", SOURCE)
+        self.assertIn("thiết bị chỉ chạy khi đã xác nhận pinout", SOURCE)
 
 
 if __name__ == "__main__":

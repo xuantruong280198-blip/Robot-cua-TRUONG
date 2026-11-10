@@ -84,8 +84,7 @@ class HardwareConfigValidationTests(unittest.TestCase):
         config = copy.deepcopy(DEFAULT)
         config["board"]["peripheral_routing_verified"] = True
         code, output = self.run_config(config)
-        self.assertNotEqual(code, 0)
-        self.assertIn("peripheral_routing_verified must remain false", output)
+        self.assertEqual(code, 0, output)
 
     def test_safe_default_passes(self):
         code, output = self.run_config(copy.deepcopy(DEFAULT))
@@ -176,14 +175,14 @@ class HardwareConfigValidationTests(unittest.TestCase):
         self.assertNotEqual(code, 0)
         self.assertIn("min_deg < center_deg < max_deg", output)
 
-    def test_safe_default_rejects_enabling_unverified_servo(self):
+    def test_unverified_routing_rejects_any_peripheral_activation(self):
         config = copy.deepcopy(DEFAULT)
-        config["servos"]["pan"]["enabled"] = True
+        config["display"]["enabled"] = True
         code, output = self.run_config(config)
         self.assertNotEqual(code, 0)
-        self.assertIn("must remain disabled until wiring is verified", output)
+        self.assertIn("peripheral_routing_verified must be true", output)
 
-    def test_display_and_external_audio_must_remain_disabled(self):
+    def test_display_and_external_audio_require_routing_confirmation_and_gpio(self):
         cases = (
             ("display", "enabled", "display.enabled"),
             ("audio.microphone", "enabled", "audio.microphone.enabled"),
@@ -195,10 +194,11 @@ class HardwareConfigValidationTests(unittest.TestCase):
                 target = config
                 for part in section.split("."):
                     target = target[part]
+                config["board"]["peripheral_routing_verified"] = True
                 target[key] = True
                 code, output = self.run_config(config)
                 self.assertNotEqual(code, 0)
-                self.assertIn(f"{label} must remain false", output)
+                self.assertIn(f"{label} requires every GPIO", output)
 
     def test_duplicate_gpio_is_rejected(self):
         config = copy.deepcopy(DEFAULT)
@@ -270,7 +270,7 @@ class HardwareConfigValidationTests(unittest.TestCase):
         config["servos"]["pan"]["gpio"] = 4
         code, output = self.run_config(config)
         self.assertNotEqual(code, 0)
-        self.assertIn("servo external_power_verified must remain false until verified", output)
+        self.assertIn("peripheral_routing_verified must be true", output)
 
     def test_camera_must_remain_disabled(self):
         config = copy.deepcopy(DEFAULT)

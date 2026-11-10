@@ -93,8 +93,9 @@ def main(config_path: pathlib.Path | None = None) -> None:
         fail("board.header_pin_count must be 40 for the user-confirmed target board")
     if board.get("header_labels_confirmed") is not True:
         fail("board.header_labels_confirmed must remain true because the supplied 40-pin header photo was confirmed")
-    if board.get("peripheral_routing_verified") is not False:
-        fail("board.peripheral_routing_verified must remain false until peripheral signal routing is audited")
+    routing_verified = board.get("peripheral_routing_verified")
+    if not isinstance(routing_verified, bool):
+        fail("board.peripheral_routing_verified must be a boolean confirmation")
     if board.get("camera_enabled") is not False:
         fail("camera_enabled must remain false for this project")
     if board.get("onboard_codec_enabled") is not False:
@@ -147,28 +148,25 @@ def main(config_path: pathlib.Path | None = None) -> None:
             fail(f"GPIO {gpio} is assigned more than once: {seen[gpio]} and {path}")
         seen[gpio] = path
 
-    # This firmware is still a safe scaffold: every physical peripheral must
-    # remain disabled even when a candidate GPIO draft has been entered.
-    # Keep this aligned with OttoDeskConfigStore::IsSafeConfig().
-    for label, enabled in (
-        ("display.enabled", display.get("enabled")),
-        ("audio.microphone.enabled", microphone.get("enabled")),
-        ("audio.amplifier.enabled", amplifier.get("enabled")),
+    # Peripheral activation is opt-in: default JSON stays disabled. Enabling
+    # any output requires the explicit board-routing confirmation.
+    enabled_peripherals = (
+        display.get("enabled") is True,
+        microphone.get("enabled") is True,
+        amplifier.get("enabled") is True,
+        pan.get("enabled") is True,
+        tilt.get("enabled") is True,
+        pir.get("enabled") is True,
+    )
+    if any(enabled_peripherals) and routing_verified is not True:
+        fail("board.peripheral_routing_verified must be true before enabling peripherals")
+
+    if servos.get("external_power_verified") not in (True, False):
+        fail("servo external_power_verified must be a boolean")
+    if any((pan.get("enabled") is True, tilt.get("enabled") is True)) and (
+        servos.get("external_power_verified") is not True
     ):
-        if enabled is not False:
-            fail(f"{label} must remain false until runtime drivers and the verified board pinout are ready")
-
-    # GPIO values may be saved as inactive draft assignments. The visible
-    # header labels/order are confirmed; peripheral routing is not yet audited,
-    # so candidate values are never applied to physical pins.
-
-    if servos.get("external_power_verified") is not False:
-        fail("servo external_power_verified must remain false until verified")
-    for name in ("pan", "tilt"):
-        if servos.get(name, {}).get("enabled") is not False:
-            fail(f"servo {name} must remain disabled until wiring is verified")
-    if data.get("pir", {}).get("enabled") is not False:
-        fail("PIR must remain disabled until wiring is verified")
+        fail("external servo power must be verified before enabling either servo")
 
     required_safety_flags = (
         "allow_unassigned",
@@ -199,8 +197,7 @@ def main(config_path: pathlib.Path | None = None) -> None:
             if servo.get("gpio") is None:
                 fail(f"servos.{name}.gpio is required when that servo is enabled")
 
-    if any_servo_enabled and servos.get("external_power_verified") is not True:
-        fail("external servo power must be verified before enabling either servo")
+
 
     required_pin_groups = [
         ("display.enabled", display.get("enabled"), display_gpio),
@@ -214,7 +211,7 @@ def main(config_path: pathlib.Path | None = None) -> None:
     if pir.get("enabled") is True and pir.get("gpio") is None:
         fail("pir.gpio is required when PIR is enabled")
 
-    print("Hardware JSON validation passed (Waveshare target, hardware-disabled GPIO drafts).")
+    print("Hardware JSON validation passed (Waveshare target, opt-in peripheral activation).")
 
 
 if __name__ == "__main__":
