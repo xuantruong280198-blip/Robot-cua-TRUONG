@@ -106,7 +106,7 @@ jobs:
               grep -Fqx "CONFIG_PARTITION_TABLE_CUSTOM=y" sdkconfig &&
               grep -Fqx '\''CONFIG_PARTITION_TABLE_CUSTOM_FILENAME="partitions/v2/16m.csv"'\'' sdkconfig &&
               idf.py build &&
-              idf.py merge-bin -o build/otto-desk-merged.bin &&
+              idf.py merge-bin -o otto-desk-merged.bin &&
               test -s build/otto-desk-merged.bin &&
               chmod -R a+rwX build
             '
