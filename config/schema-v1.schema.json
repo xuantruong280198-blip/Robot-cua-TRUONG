@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/xuantruong280198-blip/Robot-cua-TRUONG/blob/main/config/schema-v1.schema.json",
   "title": "Otto Desk hardware configuration",
-  "description": "Version 1 configuration contract for the N16R8 40-pin-header target. Header count is metadata only; GPIO assignments remain null until the exact external header mapping is verified.",
+  "description": "Version 1 configuration contract for the N16R8 40-pin-header target. The visible header labels/order are confirmed from the user's photo; peripheral signal routing remains unverified and hardware activation stays disabled.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -55,7 +55,8 @@
         "onboard_codec_enabled",
         "onboard_io_expander_enabled",
         "header_pin_count",
-        "header_pinout_verified"
+        "header_labels_confirmed",
+        "peripheral_routing_verified"
       ],
       "properties": {
         "manufacturer": {
@@ -97,7 +98,10 @@
         "header_pin_count": {
           "const": 40
         },
-        "header_pinout_verified": {
+        "header_labels_confirmed": {
+          "const": true
+        },
+        "peripheral_routing_verified": {
           "const": false
         }
       }
