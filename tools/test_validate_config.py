@@ -202,7 +202,7 @@ class HardwareConfigValidationTests(unittest.TestCase):
                     config["audio"]["microphone"]["enabled"] = True
                 code, output = self.run_config(config)
                 self.assertNotEqual(code, 0)
-                self.assertIn(f"{label} requires every GPIO", output)
+                self.assertIn("requires every GPIO in its pin group", output)
 
     def test_microphone_and_amplifier_must_be_enabled_together(self):
         config = copy.deepcopy(DEFAULT)
