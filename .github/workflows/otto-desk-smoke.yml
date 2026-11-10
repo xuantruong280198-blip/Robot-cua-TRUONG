@@ -48,6 +48,12 @@ jobs:
         run: |
           python -m unittest tools/test_validate_config.py tools/test_config_page.py -v
 
+      - name: Compile and run JSON nesting guard tests
+        shell: bash
+        run: |
+          c++ -std=c++17 -Wall -Wextra -Werror -Imain tools/test_json_nesting.cc -o /tmp/otto-json-nesting-tests
+          /tmp/otto-json-nesting-tests
+
       - name: Compile and run OTA version comparison tests
         shell: bash
         run: |
