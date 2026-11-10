@@ -7,6 +7,7 @@
 #include "otto_desk_config_store.h"
 #include "otto_desk_servo.h"
 #include "otto_desk_pir.h"
+#include "otto_desk_head_motion.h"
 
 #include <driver/spi_master.h>
 #include <esp_err.h>
@@ -17,6 +18,11 @@
 
 #include <memory>
 #include <string>
+#include <mutex>
+#include <cmath>
+
+#include <freertos/FreeRTOS.h>
+#include <freertos/task.h>
 
 namespace {
 constexpr char kTag[] = "OttoDeskBoard";
@@ -35,6 +41,9 @@ private:
     std::unique_ptr<OttoDeskServoAxis> pan_servo_;
     std::unique_ptr<OttoDeskServoAxis> tilt_servo_;
     std::unique_ptr<OttoDeskPirSensor> pir_sensor_;
+    std::unique_ptr<otto_desk::HeadMotionSequence> head_motion_;
+    std::mutex head_motion_mutex_;
+    TaskHandle_t head_motion_task_ = nullptr;
     esp_lcd_panel_io_handle_t panel_io_ = nullptr;
     esp_lcd_panel_handle_t panel_ = nullptr;
 
@@ -115,7 +124,9 @@ private:
         }
 
         display_ = std::make_unique<OttoDeskDisplay>(
-            panel_io_, panel_, config.display_width, config.display_height);
+            panel_io_, panel_, config.display_width, config.display_height,
+            0, 0, false, false, false,
+            [this](const char* emotion) { SetHeadEmotion(emotion); });
         backlight_ = std::make_unique<PwmBacklight>(
             static_cast<gpio_num_t>(*config.display_backlight));
         backlight_->RestoreBrightness();
@@ -151,6 +162,64 @@ private:
                 ESP_LOGE(kTag, "TILT servo initialization failed: %s", esp_err_to_name(err));
                 tilt_servo_.reset();
             }
+        }
+        StartHeadMotion(config);
+    }
+
+    void SetHeadEmotion(const char* emotion) {
+        std::lock_guard<std::mutex> lock(head_motion_mutex_);
+        if (head_motion_ != nullptr) head_motion_->SetEmotion(emotion);
+    }
+
+    void AdvanceHeadMotion(uint32_t elapsed_ms) {
+        otto_desk::HeadMotionFrame frame;
+        {
+            std::lock_guard<std::mutex> lock(head_motion_mutex_);
+            if (head_motion_ == nullptr) return;
+            frame = head_motion_->Advance(elapsed_ms);
+        }
+        if (pan_servo_ != nullptr && pan_servo_->IsReady()) {
+            pan_servo_->SetAngle(static_cast<int>(std::lround(frame.pan_deg)));
+        }
+        if (tilt_servo_ != nullptr && tilt_servo_->IsReady()) {
+            tilt_servo_->SetAngle(static_cast<int>(std::lround(frame.tilt_deg)));
+        }
+    }
+
+    static void HeadMotionTask(void* context) {
+        auto* self = static_cast<OttoDeskBoard*>(context);
+        constexpr uint32_t kFrameMs = 20;
+        while (true) {
+            self->AdvanceHeadMotion(kFrameMs);
+            vTaskDelay(pdMS_TO_TICKS(kFrameMs));
+        }
+    }
+
+    void StartHeadMotion(const OttoDeskRuntimeConfig& config) {
+        if ((pan_servo_ == nullptr || !pan_servo_->IsReady()) &&
+            (tilt_servo_ == nullptr || !tilt_servo_->IsReady())) return;
+
+        const otto_desk::HeadAxisLimits pan_limits = config.pan.enabled
+            ? otto_desk::HeadAxisLimits{config.pan.min_deg, config.pan.center_deg,
+                                        config.pan.max_deg, config.pan.speed_deg_per_sec}
+            : otto_desk::HeadAxisLimits{0, 90, 180, 0.0F};
+        const otto_desk::HeadAxisLimits tilt_limits = config.tilt.enabled
+            ? otto_desk::HeadAxisLimits{config.tilt.min_deg, config.tilt.center_deg,
+                                        config.tilt.max_deg, config.tilt.speed_deg_per_sec}
+            : otto_desk::HeadAxisLimits{0, 90, 180, 0.0F};
+        head_motion_ = std::make_unique<otto_desk::HeadMotionSequence>(
+            pan_limits, tilt_limits);
+        if (!head_motion_->IsValid()) {
+            head_motion_.reset();
+            ESP_LOGE(kTag, "Head motion limits rejected");
+            return;
+        }
+        const BaseType_t result = xTaskCreate(
+            HeadMotionTask, "otto_head", 4096, this, 4, &head_motion_task_);
+        if (result != pdPASS) {
+            head_motion_task_ = nullptr;
+            head_motion_.reset();
+            ESP_LOGE(kTag, "Could not start head motion task");
         }
     }
 

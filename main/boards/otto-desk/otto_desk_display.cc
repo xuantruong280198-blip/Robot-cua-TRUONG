@@ -14,9 +14,9 @@
 OttoDeskDisplay::OttoDeskDisplay(esp_lcd_panel_io_handle_t panel_io,
                                  esp_lcd_panel_handle_t panel, int width, int height,
                                  int offset_x, int offset_y, bool mirror_x, bool mirror_y,
-                                 bool swap_xy)
+                                 bool swap_xy, std::function<void(const char*)> emotion_callback)
     : SpiLcdDisplay(panel_io, panel, width, height, offset_x, offset_y, mirror_x, mirror_y,
-                    swap_xy) {}
+                    swap_xy), emotion_callback_(std::move(emotion_callback)) {}
 
 void OttoDeskDisplay::SetupUI() {
     if (setup_ui_called_) {
@@ -77,6 +77,9 @@ void OttoDeskDisplay::SetEmotion(const char* emotion) {
 
     LcdDisplay::SetEmotion(resolved_emotion);
     FitEmotionToScreen();
+    if (emotion_callback_ != nullptr) {
+        emotion_callback_(resolved_emotion);
+    }
 }
 
 void OttoDeskDisplay::FitEmotionToScreen() {
