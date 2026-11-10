@@ -236,7 +236,7 @@ class HardwareConfigValidationTests(unittest.TestCase):
         config["servos"]["pan"]["gpio"] = 4
         code, output = self.run_config(config)
         self.assertNotEqual(code, 0)
-        self.assertIn("servo pan must remain disabled until wiring is verified", output)
+        self.assertIn("servo external_power_verified must remain false until verified", output)
 
     def test_camera_must_remain_disabled(self):
         config = copy.deepcopy(DEFAULT)
