@@ -1,16 +1,15 @@
 #pragma once
 
-#include <cstddef>
 #include <string>
 
 namespace otto_desk {
 
-// Reject excessive or structurally unbalanced container depth before invoking
-// a recursive JSON parser. Braces inside quoted strings are ignored; JSON
-// syntax and matching bracket types are checked by the JSON parser afterward.
+// Reject excessive or mismatched container nesting before invoking a
+// recursive JSON parser. Braces inside quoted strings are ignored.
 inline bool HasSafeJsonNesting(const std::string& json,
                                std::size_t max_depth = 32) {
-    std::size_t depth = 0;
+    std::string expected_closers;
+    expected_closers.reserve(json.size() < max_depth ? json.size() : max_depth);
     bool in_string = false;
     bool escaped = false;
 
@@ -29,15 +28,17 @@ inline bool HasSafeJsonNesting(const std::string& json,
         if (ch == '"') {
             in_string = true;
         } else if (ch == '{' || ch == '[') {
-            if (depth == max_depth) return false;
-            ++depth;
+            if (expected_closers.size() >= max_depth) return false;
+            expected_closers.push_back(ch == '{' ? '}' : ']');
         } else if (ch == '}' || ch == ']') {
-            if (depth == 0) return false;
-            --depth;
+            if (expected_closers.empty() || expected_closers.back() != ch) {
+                return false;
+            }
+            expected_closers.pop_back();
         }
     }
 
-    return depth == 0 && !in_string && !escaped;
+    return expected_closers.empty() && !in_string;
 }
 
 }  // namespace otto_desk
