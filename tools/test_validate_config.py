@@ -196,6 +196,10 @@ class HardwareConfigValidationTests(unittest.TestCase):
                     target = target[part]
                 config["board"]["peripheral_routing_verified"] = True
                 target[key] = True
+                if section == "audio.microphone":
+                    config["audio"]["amplifier"]["enabled"] = True
+                elif section == "audio.amplifier":
+                    config["audio"]["microphone"]["enabled"] = True
                 code, output = self.run_config(config)
                 self.assertNotEqual(code, 0)
                 self.assertIn(f"{label} requires every GPIO", output)
