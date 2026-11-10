@@ -7,10 +7,11 @@ This is a dedicated XiaoZhi board profile for the stationary Otto Desk AI projec
 - Dedicated Kconfig selector: `CONFIG_BOARD_TYPE_OTTO_DESK`
 - Dedicated CMake board directory: `otto-desk`
 - Wi-Fi lifecycle inherited from `WifiBoard`
-- Dummy audio codec only, so application startup does not initialize unknown I2S pins
-- No camera, no onboard codec, no CH32V003 expander, no battery logic, no walking/limb servos
-- Otto full-screen display class now exists and uses the `otto-gif` asset collection; the board does not instantiate it until a verified runtime pin map is supplied
-- No display panel, I2S, servo, camera, onboard codec or I/O expander is initialized at boot
+- Dummy audio codec remains the fallback; the external INMP441 + MAX98357A codec initializes only when both audio devices are enabled and the explicit routing interlock is confirmed
+- ST7789 and Otto full-screen display initialize from the saved JSON only when the display is enabled and all required GPIOs are present
+- MG90S PAN/TILT PWM drivers initialize at their configured center positions only when enabled, routing is confirmed, and external servo power is explicitly confirmed
+- HC-SR501 input initializes only when enabled with a valid GPIO; PIR event handling is not yet connected to XiaoZhi wake/sleep behavior
+- No camera, onboard codec, CH32V003 expander, battery logic, or walking/limb servos
 
 ## Confirmed board identity and pinout status
 
@@ -51,7 +52,7 @@ References for comparison only:
 
 ## Hardware safety
 
-The default physical GPIO assignments remain absent. The configuration editor may retain candidate GPIOs as inactive drafts, but they are never applied. The ST7789, INMP441, MAX98357A, pan/tilt servos and PIR must not be enabled until a verified pin map and runtime configuration application layer are in place. Servo power must use a regulated external supply with common ground.
+The checked-in default JSON keeps every peripheral disabled and every GPIO unassigned. The configuration editor accepts a saved configuration only after GPIO range, denylist, and duplicate-assignment checks. Setting `board.peripheral_routing_verified=true` is an explicit operator acknowledgement that the exact physical signal routing has been checked; it is not inferred from the visible header labels. Each enabled device must have its required GPIOs. INMP441 and MAX98357A must be enabled together. Servo activation additionally requires `servos.external_power_verified=true`; power the MG90S servos from a regulated external supply and share ground with the ESP32. Saved configuration is applied after reboot.
 
 ## Build configuration audit
 
@@ -59,9 +60,9 @@ The dedicated CI job combines the repository's shared ESP32-S3 defaults with `sd
 
 ## Latest source-build verification (2026-11-09)
 
-The latest verified source commit is `e3280cf63266ee2c8be85f1ae7064f39d7e484b6`. The Otto Desk board-profile compile passed in [run 42593198331](https://github.com/xuantruong280198-blip/Robot-cua-TRUONG/actions/runs/42593198331), including the configuration-page regression tests, ESP-IDF configuration, and the dedicated Otto Desk build. The generic ESP32-S3 smoke build also passed in [run 42593198437](https://github.com/xuantruong280198-blip/Robot-cua-TRUONG/actions/runs/42593198437).
+The most recent verified source build is tracked by the current GitHub Actions runs; this section is updated after the new opt-in runtime path finishes compilation.
 
-The latest change also separates empty config requests (HTTP 400) from oversized requests (HTTP 413) and fixes the JSON error-response string escaping. The resulting artifact remains named `otto-desk-safe-scaffold-not-for-hardware-flashing`. The display class is compiled, but it is not instantiated by the board at runtime. GPIO assignments remain unconfigured and all peripherals remain disabled. Source compilation is verified; operation on the physical ST7789, microphone, amplifier, and servos is not.
+The config API reports whether the saved routing acknowledgement permits runtime activation and states that changes apply after reboot. The display/audio/servo/PIR initialization paths are compiled into the Otto board profile. The head emotion planner is not yet connected to the servo PWM outputs, and PIR detection is not yet connected to application behavior. CI compilation does not replace a real-device test of the ST7789, I2S audio, servo direction/limits, or PIR signal.
 
 ## Not a flashable Otto release
 
