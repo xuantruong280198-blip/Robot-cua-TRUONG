@@ -123,6 +123,25 @@ bool IsBoundedInteger(const cJSON* object, const char* key,
            value->valueint >= minimum && value->valueint <= maximum;
 }
 
+// Bound parser recursion even for hostile but small JSON.
+bool HasSafeJsonNesting(const std::string& json) {
+    constexpr int kMaxDepth = 32;
+    int depth = 0;
+    bool in_string = false;
+    bool escaped = false;
+    for (const char ch : json) {
+        if (in_string) {
+            if (escaped) escaped = false;
+            else if (ch == static_cast<char>(92)) escaped = true;
+            else if (ch == static_cast<char>(34)) in_string = false;
+            continue;
+        }
+        if (ch == static_cast<char>(34)) in_string = true;
+        else if (ch == '{' || ch == '[') { if (++depth > kMaxDepth) return false; }
+        else if (ch == '}' || ch == ']') { if (--depth < 0) return false; }
+    }
+    return depth == 0 && !in_string;
+}
 bool HasNoDuplicateKeys(const cJSON* object) {
     if (!cJSON_IsObject(object) && !cJSON_IsArray(object)) return true;
     for (const cJSON* item = object->child; item != nullptr; item = item->next) {
@@ -280,6 +299,7 @@ bool IsSafeConfig(const cJSON* root) {
 
 esp_err_t OttoDeskConfigStore::ValidateSafeJson(const std::string& json) {
     if (json.empty() || json.size() > kMaxConfigBytes) return ESP_ERR_INVALID_SIZE;
+    if (!HasSafeJsonNesting(json)) return ESP_ERR_INVALID_ARG;
 
     const char* parse_end = nullptr;
     cJSON* root = cJSON_ParseWithLengthOpts(
