@@ -564,6 +564,15 @@ class RuntimeConfigDecodeContractTests(unittest.TestCase):
             encoding="utf-8"
         ))
 
+    def test_pir_motion_starts_listening_only_from_idle_after_warmup(self):
+        board = (ROOT / "main" / "boards" / "otto-desk" / "otto_desk.cc").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn("vTaskDelay(pdMS_TO_TICKS(30000))", board)
+        self.assertIn("state == kDeviceStateIdle", board)
+        self.assertIn("Application::GetInstance().StartListening()", board)
+        self.assertIn("kTriggerCooldown = pdMS_TO_TICKS(15000)", board)
+
     def test_runtime_config_defaults_cannot_activate_hardware(self):
         self.assertIn("bool hardware_activation_permitted = false;", self.header)
         for field in (
