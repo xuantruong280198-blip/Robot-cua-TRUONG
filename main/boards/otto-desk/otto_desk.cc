@@ -5,6 +5,8 @@
 #include "otto_desk_display.h"
 #include "otto_desk_config_server.h"
 #include "otto_desk_config_store.h"
+#include "otto_desk_servo.h"
+#include "otto_desk_pir.h"
 
 #include <driver/spi_master.h>
 #include <esp_err.h>
@@ -30,6 +32,9 @@ private:
     std::unique_ptr<AudioCodec> audio_codec_;
     std::unique_ptr<OttoDeskDisplay> display_;
     std::unique_ptr<PwmBacklight> backlight_;
+    std::unique_ptr<OttoDeskServoAxis> pan_servo_;
+    std::unique_ptr<OttoDeskServoAxis> tilt_servo_;
+    std::unique_ptr<OttoDeskPirSensor> pir_sensor_;
     esp_lcd_panel_io_handle_t panel_io_ = nullptr;
     esp_lcd_panel_handle_t panel_ = nullptr;
 
@@ -117,6 +122,53 @@ private:
         ESP_LOGI(kTag, "Otto ST7789 display initialized from validated runtime config");
     }
 
+    void InitializeConfiguredServos(const OttoDeskRuntimeConfig& config) {
+        if (!config.hardware_activation_permitted || !config.servo_external_power_verified) {
+            return;
+        }
+
+        if (config.pan.enabled && config.pan.gpio) {
+            pan_servo_ = std::make_unique<OttoDeskServoAxis>(
+                static_cast<gpio_num_t>(*config.pan.gpio), LEDC_CHANNEL_0,
+                config.hardware_activation_permitted, config.servo_external_power_verified,
+                config.pan.min_deg, config.pan.max_deg);
+            esp_err_t err = pan_servo_->Initialize();
+            if (err == ESP_OK) err = pan_servo_->SetAngle(config.pan.center_deg);
+            if (err != ESP_OK) {
+                ESP_LOGE(kTag, "PAN servo initialization failed: %s", esp_err_to_name(err));
+                pan_servo_.reset();
+            }
+        }
+
+        if (config.tilt.enabled && config.tilt.gpio) {
+            tilt_servo_ = std::make_unique<OttoDeskServoAxis>(
+                static_cast<gpio_num_t>(*config.tilt.gpio), LEDC_CHANNEL_1,
+                config.hardware_activation_permitted, config.servo_external_power_verified,
+                config.tilt.min_deg, config.tilt.max_deg);
+            esp_err_t err = tilt_servo_->Initialize();
+            if (err == ESP_OK) err = tilt_servo_->SetAngle(config.tilt.center_deg);
+            if (err != ESP_OK) {
+                ESP_LOGE(kTag, "TILT servo initialization failed: %s", esp_err_to_name(err));
+                tilt_servo_.reset();
+            }
+        }
+    }
+
+    void InitializeConfiguredPir(const OttoDeskRuntimeConfig& config) {
+        if (!config.hardware_activation_permitted || !config.pir_enabled || !config.pir_gpio) {
+            return;
+        }
+        pir_sensor_ = std::make_unique<OttoDeskPirSensor>(
+            static_cast<gpio_num_t>(*config.pir_gpio), config.hardware_activation_permitted);
+        const esp_err_t err = pir_sensor_->Initialize();
+        if (err != ESP_OK) {
+            ESP_LOGE(kTag, "PIR initialization failed: %s", esp_err_to_name(err));
+            pir_sensor_.reset();
+            return;
+        }
+        ESP_LOGI(kTag, "HC-SR501 motion input initialized");
+    }
+
     void InitializeConfiguredAudio(const OttoDeskRuntimeConfig& config) {
         if (!config.hardware_activation_permitted ||
             !config.microphone_enabled || !config.amplifier_enabled ||
@@ -155,6 +207,8 @@ public:
         }
         InitializeConfiguredDisplay(config);
         InitializeConfiguredAudio(config);
+        InitializeConfiguredServos(config);
+        InitializeConfiguredPir(config);
     }
 
     AudioCodec* GetAudioCodec() override {
