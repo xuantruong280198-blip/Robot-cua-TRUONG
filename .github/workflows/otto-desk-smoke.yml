@@ -38,10 +38,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install ESP-IDF v6.0.2
-        uses: espressif/install-esp-idf-action@v1
-        with:
-          version: "v6.0.2"
+      - name: Pull pinned ESP-IDF v6.0.2 build image
+        shell: bash
+        run: |
+          docker pull espressif/idf:v6.0.2
 
       - name: Run complete hardware JSON and config-page regression tests
         shell: bash
@@ -91,26 +91,25 @@ jobs:
             -o /tmp/otto-gpio-safety-tests
           /tmp/otto-gpio-safety-tests
 
-      - name: Configure ESP-IDF and select Otto Desk
+      - name: Configure, build, and merge Otto Desk firmware
         shell: bash
         run: |
-          idf.py set-target esp32s3
-          idf.py -D SDKCONFIG_DEFAULTS="sdkconfig.defaults;sdkconfig.otto-desk.defaults" reconfigure
-          grep -Fqx "CONFIG_BOARD_TYPE_OTTO_DESK=y" sdkconfig
-          grep -Fqx "CONFIG_ESPTOOLPY_FLASHSIZE_16MB=y" sdkconfig
-          grep -Fqx "CONFIG_PARTITION_TABLE_CUSTOM=y" sdkconfig
-          grep -Fqx 'CONFIG_PARTITION_TABLE_CUSTOM_FILENAME="partitions/v2/16m.csv"' sdkconfig
-
-      - name: Compile Otto Desk firmware
-        shell: bash
-        run: |
-          idf.py build
-
-      - name: Create merged flash image
-        shell: bash
-        run: |
-          idf.py merge-bin -o build/otto-desk-merged.bin
-          test -s build/otto-desk-merged.bin
+          docker run --rm \
+            -v "${GITHUB_WORKSPACE}:/project" \
+            -w /project \
+            -e IDF_GIT_SAFE_DIR=/project \
+            espressif/idf:v6.0.2 bash -lc '
+              idf.py set-target esp32s3 &&
+              idf.py -D SDKCONFIG_DEFAULTS="sdkconfig.defaults;sdkconfig.otto-desk.defaults" reconfigure &&
+              grep -Fqx "CONFIG_BOARD_TYPE_OTTO_DESK=y" sdkconfig &&
+              grep -Fqx "CONFIG_ESPTOOLPY_FLASHSIZE_16MB=y" sdkconfig &&
+              grep -Fqx "CONFIG_PARTITION_TABLE_CUSTOM=y" sdkconfig &&
+              grep -Fqx '\''CONFIG_PARTITION_TABLE_CUSTOM_FILENAME="partitions/v2/16m.csv"'\'' sdkconfig &&
+              idf.py build &&
+              idf.py merge-bin -o build/otto-desk-merged.bin &&
+              test -s build/otto-desk-merged.bin &&
+              chmod -R a+rwX build
+            '
 
       - name: Write build identity manifest
         shell: bash
