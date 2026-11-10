@@ -345,6 +345,18 @@ class OttoDeskDisplayContractTests(unittest.TestCase):
         self.assertIn("else if (gif_controller_ != nullptr)", self.source)
         self.assertIn("else if (emoji_label_ != nullptr)", self.source)
 
+    def test_invalid_preview_is_rejected_before_cached_image_is_replaced(self):
+        start = self.source.index("void OttoDeskDisplay::SetPreviewImage(")
+        end = self.source.index("\n}", start) + 2
+        preview = self.source[start:end]
+        validate = preview.index("const auto* image_desc = image->image_dsc();")
+        move_owner = preview.index("preview_image_cached_ = std::move(image);")
+        invalid_return = preview.index('ESP_LOGE(TAG, "Preview image has invalid dimensions");')
+        self.assertLess(validate, move_owner)
+        self.assertLess(invalid_return, move_owner)
+        self.assertNotIn("preview_image_cached_.reset();", preview[:move_owner])
+        self.assertIn("lv_image_set_src(preview_image_, image_desc);", preview)
+
     def test_xiaozhi_device_states_keep_emotion_names_asset_compatible(self):
         application = (ROOT / "main" / "application.cc").read_text(encoding="utf-8")
         listening = application.split("case kDeviceStateListening:", 1)[1].split(
