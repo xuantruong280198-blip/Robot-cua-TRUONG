@@ -27,21 +27,11 @@ OttoI2sAudioCodec::OttoI2sAudioCodec(
     }
     // Fail closed before allocating I2S resources. This is an extra driver
     // guard; it does not replace verification of the carrier-board pin map.
-    const gpio_num_t pins[] = {mic_ws, mic_sck, mic_sd, amp_bclk, amp_lrclk, amp_din};
-    for (size_t i = 0; i < sizeof(pins) / sizeof(pins[0]); ++i) {
-        if (!otto_desk::IsSafeEsp32S3Gpio(static_cast<int>(pins[i]))) {
-            ESP_LOGE(kTag, "Refusing I2S init: unsafe GPIO %d", static_cast<int>(pins[i]));
-            return;
-        }
-        for (size_t j = 0; j < i; ++j) {
-            if (pins[i] == pins[j]) {
-                ESP_LOGE(kTag, "Refusing I2S init: GPIO %d is duplicated", static_cast<int>(pins[i]));
-                return;
-            }
-        }
-    }
-    if (input_sample_rate <= 0 || output_sample_rate <= 0) {
-        ESP_LOGE(kTag, "Refusing I2S init: sample rates must be positive");
+    if (!otto_desk::IsValidI2sPinAssignment(
+            static_cast<int>(mic_ws), static_cast<int>(mic_sck), static_cast<int>(mic_sd),
+            static_cast<int>(amp_bclk), static_cast<int>(amp_lrclk), static_cast<int>(amp_din),
+            input_sample_rate, output_sample_rate)) {
+        ESP_LOGE(kTag, "Refusing I2S init: invalid GPIO assignment or sample rate");
         return;
     }
 
