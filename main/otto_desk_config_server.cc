@@ -131,7 +131,7 @@ button{padding:10px 16px;margin:8px 8px 8px 0;border:0;border-radius:7px;font-we
 small{color:#cbd5e1}#status{white-space:pre-wrap}
 </style>
 <h2>Otto Desk AI - Cấu hình an toàn</h2>
-<p>API này chỉ hoạt động trong chế độ Wi-Fi cấu hình. Nhập GPIO theo đúng dây đã đấu. Mặc định mọi thiết bị đều tắt. Chỉ đặt board.peripheral_routing_verified=true sau khi đã đối chiếu pinout thực tế; servo còn yêu cầu servos.external_power_verified=true. Thiết bị chỉ chạy khi đã xác nhận pinout và bật đúng mục trong JSON.</p>
+<p>API này chỉ hoạt động trong chế độ Wi-Fi cấu hình. Nhập GPIO theo đúng dây đã đấu. Mặc định mọi thiết bị đều tắt. Chỉ đặt board.peripheral_routing_verified=true sau khi đã đối chiếu pinout thực tế; servo còn yêu cầu servos.external_power_verified=true. Thiết bị chỉ chạy khi đã xác nhận pinout và bật đúng mục trong JSON. Bảng dưới đây là danh sách tín hiệu, không phải sơ đồ chân đã xác minh.</p>
 <section style="overflow-x:auto;margin:16px 0"><table style="width:100%;border-collapse:collapse;background:#1f2937"><thead><tr><th style="text-align:left;padding:9px">Thiết bị</th><th style="text-align:left;padding:9px">Tín hiệu</th><th style="text-align:left;padding:9px">GPIO</th><th style="text-align:left;padding:9px">Trạng thái</th></tr></thead><tbody>
 <tr><td>ST7789</td><td>SCLK</td><td data-gpio-path="display.gpio.sclk">Chưa gán</td><td data-gpio-state>Đang tắt</td></tr>
 <tr><td>ST7789</td><td>MOSI</td><td data-gpio-path="display.gpio.mosi">Chưa gán</td><td data-gpio-state>Chưa kích hoạt · bản nháp</td></tr>
