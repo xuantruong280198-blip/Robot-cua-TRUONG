@@ -4,6 +4,7 @@
 #include <esp_log.h>
 
 #include <algorithm>
+#include <utility>
 #include <cstring>
 
 #include "display/lvgl_display/lvgl_image.h"

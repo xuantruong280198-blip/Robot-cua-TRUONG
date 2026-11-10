@@ -134,20 +134,20 @@ small{color:#cbd5e1}#status{white-space:pre-wrap}
 <p>API này chỉ hoạt động trong chế độ Wi-Fi cấu hình. Nhập GPIO theo đúng dây đã đấu. Mặc định mọi thiết bị đều tắt. Chỉ đặt board.peripheral_routing_verified=true sau khi đã đối chiếu pinout thực tế; servo còn yêu cầu servos.external_power_verified=true. Thiết bị chỉ chạy khi đã xác nhận pinout và bật đúng mục trong JSON. Bảng dưới đây là danh sách tín hiệu, không phải sơ đồ chân đã xác minh.</p>
 <section style="overflow-x:auto;margin:16px 0"><table style="width:100%;border-collapse:collapse;background:#1f2937"><thead><tr><th style="text-align:left;padding:9px">Thiết bị</th><th style="text-align:left;padding:9px">Tín hiệu</th><th style="text-align:left;padding:9px">GPIO</th><th style="text-align:left;padding:9px">Trạng thái</th></tr></thead><tbody>
 <tr><td>ST7789</td><td>SCLK</td><td data-gpio-path="display.gpio.sclk">Chưa gán</td><td data-gpio-state>Đang tắt</td></tr>
-<tr><td>ST7789</td><td>MOSI</td><td data-gpio-path="display.gpio.mosi">Chưa gán</td><td data-gpio-state>Chưa kích hoạt · bản nháp</td></tr>
-<tr><td>ST7789</td><td>CS</td><td data-gpio-path="display.gpio.cs">Chưa gán</td><td data-gpio-state>Chưa kích hoạt · bản nháp</td></tr>
-<tr><td>ST7789</td><td>DC</td><td data-gpio-path="display.gpio.dc">Chưa gán</td><td data-gpio-state>Chưa kích hoạt · bản nháp</td></tr>
-<tr><td>ST7789</td><td>RESET</td><td data-gpio-path="display.gpio.reset">Chưa gán</td><td data-gpio-state>Chưa kích hoạt · bản nháp</td></tr>
-<tr><td>ST7789</td><td>BACKLIGHT</td><td data-gpio-path="display.gpio.backlight">Chưa gán</td><td data-gpio-state>Chưa kích hoạt · bản nháp</td></tr>
-<tr><td>INMP441</td><td>WS</td><td data-gpio-path="audio.microphone.i2s.ws">Chưa gán</td><td data-gpio-state>Chưa kích hoạt · bản nháp</td></tr>
-<tr><td>INMP441</td><td>SCK</td><td data-gpio-path="audio.microphone.i2s.sck">Chưa gán</td><td data-gpio-state>Chưa kích hoạt · bản nháp</td></tr>
-<tr><td>INMP441</td><td>SD</td><td data-gpio-path="audio.microphone.i2s.sd">Chưa gán</td><td data-gpio-state>Chưa kích hoạt · bản nháp</td></tr>
-<tr><td>MAX98357A</td><td>DIN</td><td data-gpio-path="audio.amplifier.i2s.din">Chưa gán</td><td data-gpio-state>Chưa kích hoạt · bản nháp</td></tr>
-<tr><td>MAX98357A</td><td>BCLK</td><td data-gpio-path="audio.amplifier.i2s.bclk">Chưa gán</td><td data-gpio-state>Chưa kích hoạt · bản nháp</td></tr>
-<tr><td>MAX98357A</td><td>LRCLK</td><td data-gpio-path="audio.amplifier.i2s.lrclk">Chưa gán</td><td data-gpio-state>Chưa kích hoạt · bản nháp</td></tr>
-<tr><td>Servo đầu ngang</td><td>PAN signal</td><td data-gpio-path="servos.pan.gpio">Chưa gán</td><td data-gpio-state>Chưa kích hoạt · bản nháp</td></tr>
-<tr><td>Servo đầu dọc</td><td>TILT signal</td><td data-gpio-path="servos.tilt.gpio">Chưa gán</td><td data-gpio-state>Chưa kích hoạt · bản nháp</td></tr>
-<tr><td>PIR HC-SR501</td><td>OUT</td><td data-gpio-path="pir.gpio">Chưa gán</td><td data-gpio-state>Chưa kích hoạt · bản nháp</td></tr>
+<tr><td>ST7789</td><td>MOSI</td><td data-gpio-path="display.gpio.mosi">Chưa gán</td><td data-gpio-state>Đang tắt · chưa xác nhận pinout</td></tr>
+<tr><td>ST7789</td><td>CS</td><td data-gpio-path="display.gpio.cs">Chưa gán</td><td data-gpio-state>Đang tắt · chưa xác nhận pinout</td></tr>
+<tr><td>ST7789</td><td>DC</td><td data-gpio-path="display.gpio.dc">Chưa gán</td><td data-gpio-state>Đang tắt · chưa xác nhận pinout</td></tr>
+<tr><td>ST7789</td><td>RESET</td><td data-gpio-path="display.gpio.reset">Chưa gán</td><td data-gpio-state>Đang tắt · chưa xác nhận pinout</td></tr>
+<tr><td>ST7789</td><td>BACKLIGHT</td><td data-gpio-path="display.gpio.backlight">Chưa gán</td><td data-gpio-state>Đang tắt · chưa xác nhận pinout</td></tr>
+<tr><td>INMP441</td><td>WS</td><td data-gpio-path="audio.microphone.i2s.ws">Chưa gán</td><td data-gpio-state>Đang tắt · chưa xác nhận pinout</td></tr>
+<tr><td>INMP441</td><td>SCK</td><td data-gpio-path="audio.microphone.i2s.sck">Chưa gán</td><td data-gpio-state>Đang tắt · chưa xác nhận pinout</td></tr>
+<tr><td>INMP441</td><td>SD</td><td data-gpio-path="audio.microphone.i2s.sd">Chưa gán</td><td data-gpio-state>Đang tắt · chưa xác nhận pinout</td></tr>
+<tr><td>MAX98357A</td><td>DIN</td><td data-gpio-path="audio.amplifier.i2s.din">Chưa gán</td><td data-gpio-state>Đang tắt · chưa xác nhận pinout</td></tr>
+<tr><td>MAX98357A</td><td>BCLK</td><td data-gpio-path="audio.amplifier.i2s.bclk">Chưa gán</td><td data-gpio-state>Đang tắt · chưa xác nhận pinout</td></tr>
+<tr><td>MAX98357A</td><td>LRCLK</td><td data-gpio-path="audio.amplifier.i2s.lrclk">Chưa gán</td><td data-gpio-state>Đang tắt · chưa xác nhận pinout</td></tr>
+<tr><td>Servo đầu ngang</td><td>PAN signal</td><td data-gpio-path="servos.pan.gpio">Chưa gán</td><td data-gpio-state>Đang tắt · chưa xác nhận pinout</td></tr>
+<tr><td>Servo đầu dọc</td><td>TILT signal</td><td data-gpio-path="servos.tilt.gpio">Chưa gán</td><td data-gpio-state>Đang tắt · chưa xác nhận pinout</td></tr>
+<tr><td>PIR HC-SR501</td><td>OUT</td><td data-gpio-path="pir.gpio">Chưa gán</td><td data-gpio-state>Đang tắt · chưa xác nhận pinout</td></tr>
 </tbody></table></section>
 <p><strong>Phần cứng đang khóa an toàn:</strong> màn hình, mic, ampli, hai servo và PIR đều chưa được firmware kích hoạt. Chỉ mở khóa sau khi xác minh pinout thực tế; servo còn cần xác nhận nguồn ngoài riêng.</p>
 <textarea id="json" spellcheck="false" placeholder="Dán nội dung config/default.json tại đây..."></textarea><br>

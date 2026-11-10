@@ -229,7 +229,8 @@ private:
         auto* self = static_cast<OttoDeskBoard*>(context);
         // HC-SR501 needs a stabilization interval after power-up.
         vTaskDelay(pdMS_TO_TICKS(30000));
-        bool previous_motion = false;
+        bool previous_motion = self->pir_sensor_ != nullptr &&
+                               self->pir_sensor_->IsMotionDetected();
         TickType_t last_trigger = 0;
         constexpr TickType_t kTriggerCooldown = pdMS_TO_TICKS(15000);
         while (true) {
