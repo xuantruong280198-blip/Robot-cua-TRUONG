@@ -209,7 +209,7 @@ bool IsSafeConfig(const cJSON* root) {
         !IsNumber(board, "header_pin_count", 40) ||
         !IsFalse(board, "header_pinout_verified") ||
         !IsNullableString(board, "pcb_revision") ||
-        !IsString(board, "profile", "otto-waveshare-esp32-s3-cam") ||
+        !IsString(board, "profile", "otto-esp32-s3-cam-40pin") ||
         !IsString(board, "upstream_reference_profile", "waveshare/esp32-s3-cam") ||
         !IsString(board, "chip", "esp32s3") ||
         !IsNumber(board, "flash_mb", 16) || !IsNumber(board, "psram_mb", 8) ||
