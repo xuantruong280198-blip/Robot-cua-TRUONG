@@ -24,7 +24,7 @@ constexpr char kDefaultConfig[] = R"json({
     "manufacturer": "Waveshare",
     "product_family": "ESP32-S3-CAM-N16R8",
     "pcb_revision": null,
-    "profile": "otto-waveshare-esp32-s3-cam",
+    "profile": "otto-esp32-s3-cam-40pin",
     "upstream_reference_profile": "waveshare/esp32-s3-cam",
     "chip": "esp32s3",
     "flash_mb": 16,
