@@ -107,3 +107,8 @@ The dedicated Otto Desk workflow passed on commit `19fd9e2a5b4074f74f76e2e0db600
 The generic ESP32-S3 workflow also passed on commit `49f562224f647f67db683aa0500fefe6f24204b4` in [run 42675686330](https://github.com/xuantruong280198-blip/Robot-cua-TRUONG/actions/runs/42675686330).
 
 These are reproducible CI/source-build results only. The Otto board still uses `DummyAudioCodec`; the display and external I2S, servo and PIR drivers are not started. No header GPIO assignment has been approved, and no physical-device test has been performed. The CI artifact must not be flashed as a finished robot firmware.
+
+
+## Servo mechanical travel limits
+
+The MG90S PWM driver now accepts per-axis minimum and maximum angles and clamps every requested position to that configured envelope before converting it to a pulse. Invalid mechanical limits fail closed and prevent driver initialization. The pure host-side servo test covers both limit clamping and pulse conversion. This improves the output guard but does not authorize PWM: the exact board pin map and external servo supply remain unverified, so the board still does not instantiate the servo driver.
