@@ -148,6 +148,18 @@ def main(config_path: pathlib.Path | None = None) -> None:
             fail(f"GPIO {gpio} is assigned more than once: {seen[gpio]} and {path}")
         seen[gpio] = path
 
+    # All enable switches must be JSON booleans; strings and numbers are rejected.
+    for label, enabled in (
+        ("display.enabled", display.get("enabled")),
+        ("audio.microphone.enabled", microphone.get("enabled")),
+        ("audio.amplifier.enabled", amplifier.get("enabled")),
+        ("servos.pan.enabled", pan.get("enabled")),
+        ("servos.tilt.enabled", tilt.get("enabled")),
+        ("pir.enabled", pir.get("enabled")),
+    ):
+        if not isinstance(enabled, bool):
+            fail(f"{label} must be a boolean")
+
     # Peripheral activation is opt-in: default JSON stays disabled. Enabling
     # any output requires the explicit board-routing confirmation.
     enabled_peripherals = (

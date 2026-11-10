@@ -204,6 +204,24 @@ class HardwareConfigValidationTests(unittest.TestCase):
                 self.assertNotEqual(code, 0)
                 self.assertIn("requires every GPIO in its pin group", output)
 
+    def test_enable_flags_must_be_json_booleans(self):
+        mutations = (
+            ("display", "enabled", "yes"),
+            ("audio.microphone", "enabled", 1),
+            ("servos.pan", "enabled", "true"),
+            ("pir", "enabled", None),
+        )
+        for section, key, invalid in mutations:
+            with self.subTest(section=section):
+                config = copy.deepcopy(DEFAULT)
+                target = config
+                for part in section.split("."):
+                    target = target[part]
+                target[key] = invalid
+                code, output = self.run_config(config)
+                self.assertNotEqual(code, 0)
+                self.assertIn("must be a boolean", output)
+
     def test_microphone_and_amplifier_must_be_enabled_together(self):
         config = copy.deepcopy(DEFAULT)
         config["board"]["peripheral_routing_verified"] = True

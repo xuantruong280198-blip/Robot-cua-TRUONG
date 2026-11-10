@@ -177,6 +177,7 @@ bool IsSafeServo(const cJSON* servo, bool allow_enabled) {
     return HasExactKeys(servo, {"gpio", "min_deg", "center_deg", "max_deg",
                                 "speed_deg_per_sec", "enabled"}) &&
            IsSafeNullableGpio(servo, "gpio") &&
+           cJSON_IsBool(Get(servo, "enabled")) &&
            (!enabled || (allow_enabled && cJSON_IsNumber(gpio))) &&
            IsBoundedInteger(servo, "min_deg", 0, 180) &&
            IsBoundedInteger(servo, "center_deg", 0, 180) &&
@@ -227,6 +228,7 @@ bool IsSafeConfig(const cJSON* root) {
     if (!HasExactKeys(display, {"type", "width", "height", "rotation", "gpio", "enabled"}) ||
         !IsString(display, "type", "st7789") ||
         !IsNumber(display, "width", 240) || !IsNumber(display, "height", 240) ||
+        !cJSON_IsBool(Get(display, "enabled")) ||
         !(IsNull(display, "rotation") || IsNumber(display, "rotation", 0) ||
           IsNumber(display, "rotation", 90) || IsNumber(display, "rotation", 180) ||
           IsNumber(display, "rotation", 270)) ||
@@ -246,6 +248,7 @@ bool IsSafeConfig(const cJSON* root) {
     const cJSON* mic_i2s = Get(microphone, "i2s");
     if (!HasExactKeys(microphone, {"type", "i2s", "enabled"}) ||
         !IsString(microphone, "type", "inmp441") ||
+        !cJSON_IsBool(Get(microphone, "enabled")) ||
         (!routing_verified && !IsFalse(microphone, "enabled")) ||
         !HasSafeGpioKeys(mic_i2s, {"ws", "sck", "sd"}) ||
         (ReadBool(microphone, "enabled") &&
@@ -258,6 +261,7 @@ bool IsSafeConfig(const cJSON* root) {
     if (ReadBool(microphone, "enabled") != ReadBool(amplifier, "enabled")) return false;
     if (!HasExactKeys(amplifier, {"type", "i2s", "enabled", "speaker_impedance_ohm"}) ||
         !IsString(amplifier, "type", "max98357a") ||
+        !cJSON_IsBool(Get(amplifier, "enabled")) ||
         (!routing_verified && !IsFalse(amplifier, "enabled")) ||
         !HasSafeGpioKeys(amp_i2s, {"din", "bclk", "lrclk"}) ||
         (ReadBool(amplifier, "enabled") &&
@@ -277,6 +281,7 @@ bool IsSafeConfig(const cJSON* root) {
     const cJSON* pir = Get(root, "pir");
     if (!HasExactKeys(pir, {"type", "gpio", "enabled"}) ||
         !IsString(pir, "type", "hc-sr501") ||
+        !cJSON_IsBool(Get(pir, "enabled")) ||
         !IsSafeNullableGpio(pir, "gpio") ||
         (!routing_verified && !IsFalse(pir, "enabled")) ||
         (ReadBool(pir, "enabled") && !cJSON_IsNumber(Get(pir, "gpio")))) return false;
