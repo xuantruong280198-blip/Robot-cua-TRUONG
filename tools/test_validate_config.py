@@ -160,12 +160,22 @@ class HardwareConfigValidationTests(unittest.TestCase):
         self.assertNotEqual(code, 0)
         self.assertIn("must remain disabled until wiring is verified", output)
 
-    def test_enabled_display_requires_all_pins(self):
-        config = copy.deepcopy(DEFAULT)
-        config["display"]["enabled"] = True
-        code, output = self.run_config(config)
-        self.assertNotEqual(code, 0)
-        self.assertIn("requires every GPIO", output)
+    def test_display_and_external_audio_must_remain_disabled(self):
+        cases = (
+            ("display", "enabled", "display.enabled"),
+            ("audio.microphone", "enabled", "audio.microphone.enabled"),
+            ("audio.amplifier", "enabled", "audio.amplifier.enabled"),
+        )
+        for section, key, label in cases:
+            with self.subTest(device=label):
+                config = copy.deepcopy(DEFAULT)
+                target = config
+                for part in section.split("."):
+                    target = target[part]
+                target[key] = True
+                code, output = self.run_config(config)
+                self.assertNotEqual(code, 0)
+                self.assertIn(f"{label} must remain false", output)
 
     def test_duplicate_gpio_is_rejected(self):
         config = copy.deepcopy(DEFAULT)
