@@ -126,11 +126,27 @@ void OttoDeskDisplay::SetPreviewImage(std::unique_ptr<LvglImage> image) {
 
     preview_image_cached_ = std::move(image);
     const auto* image_desc = preview_image_cached_->image_dsc();
+    if (image_desc == nullptr || image_desc->header.w == 0 || image_desc->header.h == 0) {
+        ESP_LOGE(TAG, "Preview image has invalid dimensions");
+        preview_image_cached_.reset();
+        return;
+    }
+
     lv_image_set_src(preview_image_, image_desc);
     lv_image_set_rotation(preview_image_, 0);
-    if (image_desc->header.w > 0 && image_desc->header.h > 0) {
-        lv_image_set_scale(preview_image_, 256 * width_ / image_desc->header.w);
-    }
+
+    // Cover the complete panel in both axes while preserving the image ratio.
+    // LVGL uses 256 as 1x; calculate in 64-bit to avoid overflow on large assets.
+    const uint64_t scale_x =
+        (UINT64_C(256) * static_cast<uint64_t>(width_) + image_desc->header.w - 1U) /
+        image_desc->header.w;
+    const uint64_t scale_y =
+        (UINT64_C(256) * static_cast<uint64_t>(height_) + image_desc->header.h - 1U) /
+        image_desc->header.h;
+    const uint64_t scale = std::max(scale_x, scale_y);
+    lv_image_set_scale(preview_image_, static_cast<uint16_t>(
+        std::min<uint64_t>(scale, UINT16_MAX)));
+    lv_obj_center(preview_image_);
 
     if (gif_controller_ != nullptr) {
         gif_controller_->Stop();
