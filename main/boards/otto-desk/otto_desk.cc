@@ -21,6 +21,8 @@ constexpr char kTag[] = "OttoDeskBoard";
 constexpr int kDisplaySpiHost = SPI3_HOST;
 constexpr int kDisplaySpiMode = 3;
 constexpr uint32_t kDisplayPixelClockHz = 40 * 1000 * 1000;
+constexpr int kAudioInputSampleRate = 16000;
+constexpr int kAudioOutputSampleRate = 24000;
 }
 
 class OttoDeskBoard : public WifiBoard {
@@ -124,7 +126,7 @@ private:
         }
 
         auto codec = std::make_unique<OttoI2sAudioCodec>(
-            AUDIO_INPUT_SAMPLE_RATE, AUDIO_OUTPUT_SAMPLE_RATE,
+            kAudioInputSampleRate, kAudioOutputSampleRate,
             static_cast<gpio_num_t>(*config.microphone_ws),
             static_cast<gpio_num_t>(*config.microphone_sck),
             static_cast<gpio_num_t>(*config.microphone_sd),
