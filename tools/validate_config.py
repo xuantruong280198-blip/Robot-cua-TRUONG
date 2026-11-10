@@ -123,10 +123,20 @@ def main(config_path: pathlib.Path | None = None) -> None:
             fail(f"GPIO {gpio} is assigned more than once: {seen[gpio]} and {path}")
         seen[gpio] = path
 
-    # GPIO values may be saved as inactive draft assignments. The exact
-    # carrier header map is still unverified and all hardware enable flags
-    # remain false, so these values are never applied to physical pins.
+    # This firmware is still a safe scaffold: every physical peripheral must
+    # remain disabled even when a candidate GPIO draft has been entered.
+    # Keep this aligned with OttoDeskConfigStore::IsSafeConfig().
+    for label, enabled in (
+        ("display.enabled", display.get("enabled")),
+        ("audio.microphone.enabled", microphone.get("enabled")),
+        ("audio.amplifier.enabled", amplifier.get("enabled")),
+    ):
+        if enabled is not False:
+            fail(f"{label} must remain false until runtime drivers and the verified board pinout are ready")
 
+    # GPIO values may be saved as inactive draft assignments. The exact
+    # carrier header map is still unverified and these values are never
+    # applied to physical pins.
 
     if servos.get("external_power_verified") is not False:
         fail("servo external_power_verified must remain false until verified")
