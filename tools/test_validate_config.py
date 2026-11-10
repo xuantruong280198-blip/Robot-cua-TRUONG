@@ -54,6 +54,17 @@ class HardwareConfigValidationTests(unittest.TestCase):
         )
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
 
+    def test_configuration_page_reports_each_device_enable_state(self):
+        source = (ROOT / "main" / "otto_desk_config_server.cc").read_text(encoding="utf-8")
+        self.assertIn("data-enabled-path=\\"display.enabled\\"", source)
+        self.assertIn("data-enabled-path=\\"audio.microphone.enabled\\"", source)
+        self.assertIn("data-enabled-path=\\"audio.amplifier.enabled\\"", source)
+        self.assertIn("data-enabled-path=\\"servos.pan.enabled\\" data-servo-power=\\"true\\"", source)
+        self.assertIn("data-enabled-path=\\"servos.tilt.enabled\\" data-servo-power=\\"true\\"", source)
+        self.assertIn("data-enabled-path=\\"pir.enabled\\"", source)
+        self.assertIn("chưa xác nhận nguồn servo", source)
+        self.assertIn("chờ khởi động lại", source)
+
     def test_config_api_embedded_first_run_default_matches_checked_in_schema(self):
         source = (ROOT / "main" / "otto_desk_config_server.cc").read_text(encoding="utf-8")
         match = re.search(
