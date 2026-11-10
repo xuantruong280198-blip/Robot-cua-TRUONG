@@ -147,8 +147,8 @@ public:
         OttoDeskRuntimeConfig config;
         if (!LoadRuntimeConfig(config)) return;
 
-        // Decode currently hard-locks this permission to false. Draft GPIOs
-        // alone cannot open the carrier-routing gate or start physical drivers.
+        // JSON remains inactive by default. The operator must explicitly set
+        // board.peripheral_routing_verified=true after wiring/pinout review.
         if (!config.hardware_activation_permitted) {
             ESP_LOGI(kTag, "Peripheral activation interlock is closed; no GPIO drivers started");
             return;

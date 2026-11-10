@@ -171,10 +171,13 @@ OttoDeskServoConfig ReadServo(const cJSON* servo) {
     return result;
 }
 
-bool IsSafeServo(const cJSON* servo) {
+bool IsSafeServo(const cJSON* servo, bool allow_enabled) {
+    const bool enabled = ReadBool(servo, "enabled");
+    const cJSON* gpio = Get(servo, "gpio");
     return HasExactKeys(servo, {"gpio", "min_deg", "center_deg", "max_deg",
                                 "speed_deg_per_sec", "enabled"}) &&
-           IsSafeNullableGpio(servo, "gpio") && IsFalse(servo, "enabled") &&
+           IsSafeNullableGpio(servo, "gpio") &&
+           (!enabled || (allow_enabled && cJSON_IsNumber(gpio))) &&
            IsBoundedInteger(servo, "min_deg", 0, 180) &&
            IsBoundedInteger(servo, "center_deg", 0, 180) &&
            IsBoundedInteger(servo, "max_deg", 0, 180) &&
@@ -200,6 +203,7 @@ bool IsSafeConfig(const cJSON* root) {
         !IsString(firmware, "ref", "v2.5.0")) return false;
 
     const cJSON* board = Get(root, "board");
+    const bool routing_verified = cJSON_IsTrue(Get(board, "peripheral_routing_verified"));
     if (!HasExactKeys(board, {"manufacturer", "product_family", "pcb_revision", "profile",
                               "upstream_reference_profile", "chip", "flash_mb", "psram_mb",
                               "camera_enabled", "onboard_codec_enabled",
@@ -209,7 +213,7 @@ bool IsSafeConfig(const cJSON* root) {
         !IsString(board, "product_family", "ESP32-S3-CAM-N16R8") ||
         !IsNumber(board, "header_pin_count", 40) ||
         !cJSON_IsTrue(Get(board, "header_labels_confirmed")) ||
-        !IsFalse(board, "peripheral_routing_verified") ||
+        !cJSON_IsBool(Get(board, "peripheral_routing_verified")) ||
         !IsNullableString(board, "pcb_revision") ||
         !IsString(board, "profile", "otto-esp32-s3-cam-40pin") ||
         !IsString(board, "upstream_reference_profile", "waveshare/esp32-s3-cam") ||
@@ -226,9 +230,15 @@ bool IsSafeConfig(const cJSON* root) {
         !(IsNull(display, "rotation") || IsNumber(display, "rotation", 0) ||
           IsNumber(display, "rotation", 90) || IsNumber(display, "rotation", 180) ||
           IsNumber(display, "rotation", 270)) ||
-        !IsFalse(display, "enabled") ||
+        (!routing_verified && !IsFalse(display, "enabled")) ||
         !HasSafeGpioKeys(Get(display, "gpio"),
                      {"sclk", "mosi", "cs", "dc", "reset", "backlight"})) return false;
+    if (ReadBool(display, "enabled")) {
+        const cJSON* pins = Get(display, "gpio");
+        if (!cJSON_IsNumber(Get(pins, "sclk")) || !cJSON_IsNumber(Get(pins, "mosi")) ||
+            !cJSON_IsNumber(Get(pins, "dc")) || !cJSON_IsNumber(Get(pins, "reset")) ||
+            !cJSON_IsNumber(Get(pins, "backlight"))) return false;
+    }
 
     const cJSON* audio = Get(root, "audio");
     if (!HasExactKeys(audio, {"microphone", "amplifier"})) return false;
@@ -236,29 +246,38 @@ bool IsSafeConfig(const cJSON* root) {
     const cJSON* mic_i2s = Get(microphone, "i2s");
     if (!HasExactKeys(microphone, {"type", "i2s", "enabled"}) ||
         !IsString(microphone, "type", "inmp441") ||
-        !IsFalse(microphone, "enabled") ||
-        !HasSafeGpioKeys(mic_i2s, {"ws", "sck", "sd"})) return false;
+        (!routing_verified && !IsFalse(microphone, "enabled")) ||
+        !HasSafeGpioKeys(mic_i2s, {"ws", "sck", "sd"}) ||
+        (ReadBool(microphone, "enabled") &&
+         (!cJSON_IsNumber(Get(mic_i2s, "ws")) || !cJSON_IsNumber(Get(mic_i2s, "sck")) ||
+          !cJSON_IsNumber(Get(mic_i2s, "sd"))))) return false;
 
     const cJSON* amplifier = Get(audio, "amplifier");
     const cJSON* amp_i2s = Get(amplifier, "i2s");
     const cJSON* impedance = Get(amplifier, "speaker_impedance_ohm");
     if (!HasExactKeys(amplifier, {"type", "i2s", "enabled", "speaker_impedance_ohm"}) ||
         !IsString(amplifier, "type", "max98357a") ||
-        !IsFalse(amplifier, "enabled") ||
+        (!routing_verified && !IsFalse(amplifier, "enabled")) ||
         !HasSafeGpioKeys(amp_i2s, {"din", "bclk", "lrclk"}) ||
+        (ReadBool(amplifier, "enabled") &&
+         (!cJSON_IsNumber(Get(amp_i2s, "din")) || !cJSON_IsNumber(Get(amp_i2s, "bclk")) ||
+          !cJSON_IsNumber(Get(amp_i2s, "lrclk")))) ||
         !(cJSON_IsNull(impedance) ||
           (cJSON_IsNumber(impedance) && impedance->valuedouble > 0))) return false;
 
     const cJSON* servos = Get(root, "servos");
+    const bool external_power_verified = cJSON_IsTrue(Get(servos, "external_power_verified"));
     if (!HasExactKeys(servos, {"pan", "tilt", "external_power_verified"}) ||
-        !IsSafeServo(Get(servos, "pan")) ||
-        !IsSafeServo(Get(servos, "tilt")) ||
-        !IsFalse(servos, "external_power_verified")) return false;
+        !IsSafeServo(Get(servos, "pan"), routing_verified && external_power_verified) ||
+        !IsSafeServo(Get(servos, "tilt"), routing_verified && external_power_verified) ||
+        (!routing_verified && external_power_verified)) return false;
 
     const cJSON* pir = Get(root, "pir");
     if (!HasExactKeys(pir, {"type", "gpio", "enabled"}) ||
         !IsString(pir, "type", "hc-sr501") ||
-        !IsSafeNullableGpio(pir, "gpio") || !IsFalse(pir, "enabled")) return false;
+        !IsSafeNullableGpio(pir, "gpio") ||
+        (!routing_verified && !IsFalse(pir, "enabled")) ||
+        (ReadBool(pir, "enabled") && !cJSON_IsNumber(Get(pir, "gpio")))) return false;
 
     const cJSON* policy = Get(root, "gpio_policy");
     if (!HasExactKeys(policy, {"allow_unassigned", "reject_duplicate_assignments",
@@ -368,9 +387,11 @@ esp_err_t OttoDeskConfigStore::Decode(const std::string& json,
     config.gpio_policy.require_board_pinout_validation =
         ReadBool(policy, "require_board_pinout_validation");
 
-    // Fail closed: decoding configuration never grants permission to activate
-    // hardware. A separate, reviewed board-pinout gate is required later.
-    config.hardware_activation_permitted = false;
+    // Hardware remains off by default. Activation requires the explicit
+    // board-routing acknowledgement plus complete, unique, safe GPIO entries.
+    const cJSON* board = Get(root, "board");
+    config.hardware_activation_permitted =
+        cJSON_IsTrue(Get(board, "peripheral_routing_verified"));
     cJSON_Delete(root);
     return ESP_OK;
 }
