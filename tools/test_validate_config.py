@@ -513,9 +513,10 @@ class RuntimeConfigDecodeContractTests(unittest.TestCase):
         self.assertIn('content_type_must_be_application_json', source)
         self.assertIn('return httpd_resp_sendstr(request, "{\\\"error\\\":\\\"content_type_must_be_application_json\\\"}");', source)
 
-    def test_config_api_never_reports_hardware_activation(self):
+    def test_config_api_reports_activation_and_reboot_requirement(self):
         source = (ROOT / "main" / "otto_desk_config_server.cc").read_text(encoding="utf-8")
-        self.assertIn("\\\"hardware_activation\\\":false", source)
+        self.assertIn('decoded.hardware_activation_permitted ? "true" : "false"', source)
+        self.assertIn('\\\"apply_after_reboot\\\":true', source)
         self.assertIn("kMaxConfigBytes", source)
         self.assertIn("OttoDeskConfigStore::Save(json)", source)
         self.assertIn("Cache-Control", source)
