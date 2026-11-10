@@ -164,10 +164,18 @@ void OttoI2sAudioCodec::EnableInput(bool enable) {
         return;
     }
     if (enable) {
-        ESP_ERROR_CHECK(i2s_channel_enable(rx_handle_));
+        const esp_err_t err = i2s_channel_enable(rx_handle_);
+        if (err != ESP_OK) {
+            ESP_LOGE(kTag, "Microphone enable failed: %s", esp_err_to_name(err));
+            return;
+        }
         input_channel_ready_ = true;
     } else if (input_channel_ready_) {
-        ESP_ERROR_CHECK(i2s_channel_disable(rx_handle_));
+        const esp_err_t err = i2s_channel_disable(rx_handle_);
+        if (err != ESP_OK) {
+            ESP_LOGE(kTag, "Microphone disable failed: %s", esp_err_to_name(err));
+            return;
+        }
         input_channel_ready_ = false;
     }
     AudioCodec::EnableInput(enable);
@@ -180,10 +188,18 @@ void OttoI2sAudioCodec::EnableOutput(bool enable) {
         return;
     }
     if (enable) {
-        ESP_ERROR_CHECK(i2s_channel_enable(tx_handle_));
+        const esp_err_t err = i2s_channel_enable(tx_handle_);
+        if (err != ESP_OK) {
+            ESP_LOGE(kTag, "Amplifier enable failed: %s", esp_err_to_name(err));
+            return;
+        }
         output_channel_ready_ = true;
     } else if (output_channel_ready_) {
-        ESP_ERROR_CHECK(i2s_channel_disable(tx_handle_));
+        const esp_err_t err = i2s_channel_disable(tx_handle_);
+        if (err != ESP_OK) {
+            ESP_LOGE(kTag, "Amplifier disable failed: %s", esp_err_to_name(err));
+            return;
+        }
         output_channel_ready_ = false;
     }
     AudioCodec::EnableOutput(enable);
