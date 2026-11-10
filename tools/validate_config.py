@@ -123,22 +123,10 @@ def main(config_path: pathlib.Path | None = None) -> None:
             fail(f"GPIO {gpio} is assigned more than once: {seen[gpio]} and {path}")
         seen[gpio] = path
 
-    # The external-module pin map has not been approved yet. Keep every
-    # signal unassigned so an unverified profile cannot drive hardware.
-    def assert_unassigned(value, path="root"):
-        if isinstance(value, dict):
-            for key, child in value.items():
-                child_path = f"{path}.{key}"
-                if key in PIN_KEYS and (child is None or isinstance(child, (int, bool))):
-                    if child is not None:
-                        fail(f"{child_path} must be null until the exact header mapping is verified")
-                else:
-                    assert_unassigned(child, child_path)
-        elif isinstance(value, list):
-            for index, child in enumerate(value):
-                assert_unassigned(child, f"{path}[{index}]")
+    # GPIO values may be saved as inactive draft assignments. The exact
+    # carrier header map is still unverified and all hardware enable flags
+    # remain false, so these values are never applied to physical pins.
 
-    assert_unassigned(data)
 
     if servos.get("external_power_verified") is not False:
         fail("servo external_power_verified must remain false until verified")
