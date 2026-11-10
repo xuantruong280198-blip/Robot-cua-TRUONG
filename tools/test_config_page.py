@@ -1,0 +1,41 @@
+#!/usr/bin/env python3
+"""Regression checks for the embedded Otto Desk GPIO draft table."""
+from pathlib import Path
+import unittest
+
+SOURCE = Path("main/otto_desk_config_server.cc").read_text(encoding="utf-8")
+
+GPIO_PATHS = (
+    "display.gpio.sclk", "display.gpio.mosi", "display.gpio.cs",
+    "display.gpio.dc", "display.gpio.reset", "display.gpio.backlight",
+    "audio.microphone.i2s.ws", "audio.microphone.i2s.sck",
+    "audio.microphone.i2s.sd", "audio.amplifier.i2s.din",
+    "audio.amplifier.i2s.bclk", "audio.amplifier.i2s.lrclk",
+    "servos.pan.gpio", "servos.tilt.gpio", "pir.gpio",
+)
+
+
+class GpioConfigPageTests(unittest.TestCase):
+    def test_every_signal_has_a_json_binding(self):
+        for path in GPIO_PATHS:
+            with self.subTest(path=path):
+                self.assertIn(f'data-gpio-path="{path}"', SOURCE)
+
+    def test_table_reads_nested_json_values(self):
+        self.assertIn("function configValue(config,path)", SOURCE)
+        self.assertIn("function renderGpioTable(config)", SOURCE)
+        self.assertIn("'GPIO '+value:'Chưa gán'", SOURCE)
+
+    def test_load_save_and_import_refresh_the_table(self):
+        self.assertGreaterEqual(SOURCE.count("renderGpioTable(config)"), 3)
+        self.assertIn("const config=JSON.parse(t)", SOURCE)
+        self.assertIn("const config=JSON.parse(box.value)", SOURCE)
+        self.assertIn("const config=JSON.parse(text)", SOURCE)
+
+    def test_assignments_are_always_labelled_draft_and_inactive(self):
+        self.assertIn("Chưa kích hoạt · bản nháp", SOURCE)
+        self.assertIn("GPIO chỉ là bản nháp; thiết bị ngoại vi vẫn đang tắt.", SOURCE)
+
+
+if __name__ == "__main__":
+    unittest.main(verbosity=2)
