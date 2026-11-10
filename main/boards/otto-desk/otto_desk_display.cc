@@ -185,5 +185,8 @@ void OttoDeskDisplay::SetPreviewImage(std::unique_ptr<LvglImage> image) {
         } else if (emoji_label_ != nullptr) {
             lv_obj_remove_flag(emoji_label_, LV_OBJ_FLAG_HIDDEN);
         }
+        if (gif_controller_ != nullptr) {
+            gif_controller_->Start();
+        }
     }
 }
