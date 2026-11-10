@@ -130,23 +130,23 @@ button{padding:10px 16px;margin:8px 8px 8px 0;border:0;border-radius:7px;font-we
 small{color:#cbd5e1}#status{white-space:pre-wrap}
 </style>
 <h2>Otto Desk AI - Cấu hình an toàn</h2>
-<p>API này chỉ hoạt động trong chế độ Wi-Fi cấu hình. Firmware hiện chỉ chấp nhận JSON có toàn bộ thiết bị và GPIO ở trạng thái tắt/chưa gán. Bảng dưới đây là danh sách tín hiệu cần cấu hình, không phải sơ đồ chân đã xác minh.</p>
+<p>API này chỉ hoạt động trong chế độ Wi-Fi cấu hình. Có thể lưu GPIO dưới dạng bản nháp sau khi kiểm tra giới hạn ESP32-S3 và trùng chân. Bản nháp KHÔNG kích hoạt phần cứng: mọi thiết bị phải để tắt, sơ đồ chân header 40 chân vẫn chưa được xác minh. Bảng dưới đây là danh sách tín hiệu, không phải sơ đồ chân đã xác minh; giá trị đang lưu nằm trong JSON.</p>
 <section style="overflow-x:auto;margin:16px 0"><table style="width:100%;border-collapse:collapse;background:#1f2937"><thead><tr><th style="text-align:left;padding:9px">Thiết bị</th><th style="text-align:left;padding:9px">Tín hiệu</th><th style="text-align:left;padding:9px">GPIO</th><th style="text-align:left;padding:9px">Trạng thái</th></tr></thead><tbody>
-<tr><td>ST7789</td><td>SCLK</td><td>—</td><td>Chưa gán · khóa an toàn</td></tr>
-<tr><td>ST7789</td><td>MOSI</td><td>—</td><td>Chưa gán · khóa an toàn</td></tr>
-<tr><td>ST7789</td><td>CS</td><td>—</td><td>Chưa gán · khóa an toàn</td></tr>
-<tr><td>ST7789</td><td>DC</td><td>—</td><td>Chưa gán · khóa an toàn</td></tr>
-<tr><td>ST7789</td><td>RESET</td><td>—</td><td>Chưa gán · khóa an toàn</td></tr>
-<tr><td>ST7789</td><td>BACKLIGHT</td><td>—</td><td>Chưa gán · khóa an toàn</td></tr>
-<tr><td>INMP441</td><td>WS</td><td>—</td><td>Chưa gán · khóa an toàn</td></tr>
-<tr><td>INMP441</td><td>SCK</td><td>—</td><td>Chưa gán · khóa an toàn</td></tr>
-<tr><td>INMP441</td><td>SD</td><td>—</td><td>Chưa gán · khóa an toàn</td></tr>
-<tr><td>MAX98357A</td><td>DIN</td><td>—</td><td>Chưa gán · khóa an toàn</td></tr>
-<tr><td>MAX98357A</td><td>BCLK</td><td>—</td><td>Chưa gán · khóa an toàn</td></tr>
-<tr><td>MAX98357A</td><td>LRCLK</td><td>—</td><td>Chưa gán · khóa an toàn</td></tr>
-<tr><td>Servo đầu ngang</td><td>PAN signal</td><td>—</td><td>Chưa gán · khóa an toàn</td></tr>
-<tr><td>Servo đầu dọc</td><td>TILT signal</td><td>—</td><td>Chưa gán · khóa an toàn</td></tr>
-<tr><td>PIR HC-SR501</td><td>OUT</td><td>—</td><td>Chưa gán · khóa an toàn</td></tr>
+<tr><td>ST7789</td><td>SCLK</td><td>—</td><td>Chưa kích hoạt · bản nháp</td></tr>
+<tr><td>ST7789</td><td>MOSI</td><td>—</td><td>Chưa kích hoạt · bản nháp</td></tr>
+<tr><td>ST7789</td><td>CS</td><td>—</td><td>Chưa kích hoạt · bản nháp</td></tr>
+<tr><td>ST7789</td><td>DC</td><td>—</td><td>Chưa kích hoạt · bản nháp</td></tr>
+<tr><td>ST7789</td><td>RESET</td><td>—</td><td>Chưa kích hoạt · bản nháp</td></tr>
+<tr><td>ST7789</td><td>BACKLIGHT</td><td>—</td><td>Chưa kích hoạt · bản nháp</td></tr>
+<tr><td>INMP441</td><td>WS</td><td>—</td><td>Chưa kích hoạt · bản nháp</td></tr>
+<tr><td>INMP441</td><td>SCK</td><td>—</td><td>Chưa kích hoạt · bản nháp</td></tr>
+<tr><td>INMP441</td><td>SD</td><td>—</td><td>Chưa kích hoạt · bản nháp</td></tr>
+<tr><td>MAX98357A</td><td>DIN</td><td>—</td><td>Chưa kích hoạt · bản nháp</td></tr>
+<tr><td>MAX98357A</td><td>BCLK</td><td>—</td><td>Chưa kích hoạt · bản nháp</td></tr>
+<tr><td>MAX98357A</td><td>LRCLK</td><td>—</td><td>Chưa kích hoạt · bản nháp</td></tr>
+<tr><td>Servo đầu ngang</td><td>PAN signal</td><td>—</td><td>Chưa kích hoạt · bản nháp</td></tr>
+<tr><td>Servo đầu dọc</td><td>TILT signal</td><td>—</td><td>Chưa kích hoạt · bản nháp</td></tr>
+<tr><td>PIR HC-SR501</td><td>OUT</td><td>—</td><td>Chưa kích hoạt · bản nháp</td></tr>
 </tbody></table></section>
 <p><strong>Phần cứng đang khóa an toàn:</strong> màn hình, mic, ampli, hai servo và PIR đều chưa được firmware kích hoạt. Chỉ mở khóa sau khi xác minh pinout đúng revision và kiểm tra nguồn servo.</p>
 <textarea id="json" spellcheck="false" placeholder="Dán nội dung config/default.json tại đây..."></textarea><br>
