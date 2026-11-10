@@ -14,6 +14,8 @@ on:
       - "config/**"
       - "tools/validate_config.py"
       - "tools/test_validate_config.py"
+      - "tools/test_config_page.py"
+      - "main/otto_desk_config_server.cc"
       - ".github/workflows/config-validation.yml"
   workflow_dispatch:
 
