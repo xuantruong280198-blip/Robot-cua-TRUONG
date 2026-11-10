@@ -130,28 +130,60 @@ matches the declared content length. This is software-side validation; a
 release still needs a verified partition layout and a real-device rollback /
 recovery test.
 
-## Latest CI verification (2026-11-10)
+## Latest CI verification (2026-11-11)
 
-The dedicated Otto Desk workflow passed on commit `19fd9e2a5b4074f74f76e2e0db600e865f173ca8` in [run 42675679927](https://github.com/xuantruong280198-blip/Robot-cua-TRUONG/actions/runs/42675679927). The run completed all host-side JSON/config-page, head-motion and GPIO-safety tests, selected the Otto Desk ESP32-S3 profile, and compiled the firmware with ESP-IDF v6.0.2. The generated ESP32-S3 image is 0x1FFE10 bytes; the configured app partition has 0x1F01F0 bytes free. The artifact is `otto-desk-safe-scaffold-not-for-hardware-flashing` (artifact ID 13701081112).
+The dedicated Otto Desk ESP32-S3 N16R8 workflow passed on commit
+`4038690ba37c88a5bb89a3a07b8db8d671fb09b5` in
+[run 42919978051](https://github.com/xuantruong280198-blip/Robot-cua-TRUONG/actions/runs/42919978051).
+The build includes the host-side JSON/config-page, GPIO-safety, I2S conversion,
+servo pulse, head-motion, OTA-version, and ST7789 rotation tests, followed by
+the ESP-IDF v6.0.2 Otto Desk profile build and merged-image packaging. The
+provisioning artifact is `otto-desk-n16r8-provisioning-firmware`
+(artifact ID 13811761500).
 
-The generic ESP32-S3 workflow also passed on commit `49f562224f647f67db683aa0500fefe6f24204b4` in [run 42675686330](https://github.com/xuantruong280198-blip/Robot-cua-TRUONG/actions/runs/42675686330).
+The generic ESP32-S3 smoke workflow also passed on the same commit in
+[run 42919977777](https://github.com/xuantruong280198-blip/Robot-cua-TRUONG/actions/runs/42919977777).
 
-These are reproducible CI/source-build results only. The Otto board still uses `DummyAudioCodec`; the display and external I2S, servo and PIR drivers are not started. No header GPIO assignment has been approved, and no physical-device test has been performed. The CI artifact must not be flashed as a finished robot firmware.
-
+These results prove that the current source compiles and its host-side checks
+pass. They do **not** prove that the display, I2S audio, servos, or PIR work on
+the physical module. The firmware keeps all peripherals disabled by default;
+the runtime drivers start only after the saved JSON explicitly acknowledges
+the board's peripheral routing, with a separate external-power confirmation
+for the servos. No physical GPIO routing has been certified and no device test
+has been performed. **Do not flash this provisioning artifact as a finished
+robot release.**
 
 ## ST7789 orientation
 
-The display rotation field in the saved JSON is applied to the LVGL display transform for 0, 90, 180 and 270 degrees. Invalid values fall back to native orientation; the JSON validator independently rejects unsupported values.
+The validated `display.rotation` field is applied to the LVGL display
+transform for 0, 90, 180, and 270 degrees. A dedicated host-side test covers
+all four orientations and the invalid-value fallback.
 
-## Servo mechanical travel limits
+## Servo motion and safety
 
-The MG90S PWM driver now accepts per-axis minimum and maximum angles and clamps every requested position to that configured envelope before converting it to a pulse. Invalid mechanical limits fail closed and prevent driver initialization. The pure host-side servo test covers both limit clamping and pulse conversion. This improves the output guard but does not authorize PWM: the exact board pin map and external servo supply remain unverified, so the board still does not instantiate the servo driver.
+The MG90S PWM drivers enforce configured per-axis minimum and maximum angles
+and convert bounded angles to 50 Hz PWM pulses. The board connects the
+stateful emotion-to-motion planner to the two servo axes through a 20 ms task.
+Emotion targets include listening, thinking, speaking, happy, sad, surprised,
+and angry; all targets are clamped to each axis's configured limits. Servo
+initialization remains gated by the routing acknowledgement and a separate
+external-power confirmation. Use a regulated external servo supply with a
+shared ground; never power the servos from the ESP32 3V3 rail.
 
+## Audio and PIR runtime
 
-## Stateful emotion-to-motion sequence
+The external INMP441 + MAX98357A I2S codec is selected only when both devices
+are enabled and all six signal GPIOs pass validation. It uses independent I2S
+RX/TX ports and retains the XiaoZhi dummy codec as a safe fallback if setup
+fails. The HC-SR501 polling task waits 30 seconds after startup, then reacts
+to a rising motion edge only while XiaoZhi is idle, with a 15-second cooldown.
+Both paths are compiled and guarded, but require real-device signal and audio
+testing before being considered validated.
 
-`HeadMotionSequence` carries the current pan/tilt pose between emotion
-changes. It supports ease-out movement using each axis's configured speed,
-retargeting during motion, exact target arrival, and fail-closed behavior for
-invalid axis limits. A future board task can advance the sequence and forward
-poses to the guarded PWM drivers. The sequence itself never enables GPIO.
+## Release gate
+
+Before calling this a flashable release, the project still needs a physical
+carrier-board signal-routing audit, confirmed GPIO assignments for every
+connected peripheral, verification of the 16 MB partition/flash-offset layout
+against the actual module, and device-level tests for display, microphone,
+speaker, servo direction/travel, PIR behavior, OTA, and rollback/recovery.
