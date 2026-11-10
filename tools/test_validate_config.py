@@ -504,7 +504,7 @@ class RuntimeConfigDecodeContractTests(unittest.TestCase):
         ):
             with self.subTest(signal=signal):
                 self.assertIn(signal, source)
-        self.assertIn("Chưa kích hoạt · bản nháp", source)
+        self.assertIn("Đang tắt · chưa xác nhận pinout", source)
         self.assertIn("không phải sơ đồ chân đã xác minh", source)
 
     def test_config_post_requires_json_content_type(self):
