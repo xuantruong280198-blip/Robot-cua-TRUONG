@@ -64,7 +64,7 @@ struct OttoDeskRuntimeConfig {
 
 // Bounded NVS storage for the Otto Desk JSON configuration.
 // This layer deliberately accepts only the conservative, hardware-disabled
-// configuration until a board-specific pin map and runtime drivers are ready.
+// configuration until peripheral signal assignments and runtime drivers are reviewed.
 class OttoDeskConfigStore {
 public:
     static constexpr size_t kMaxConfigBytes = 3072;
