@@ -158,7 +158,7 @@ const box=document.getElementById('json'),status=document.getElementById('status
 function configValue(config,path){return path.split('.').reduce((value,key)=>value&&typeof value==='object'?value[key]:undefined,config);}
 function renderGpioTable(config){document.querySelectorAll('[data-gpio-path]').forEach(cell=>{const value=configValue(config,cell.dataset.gpioPath);cell.textContent=Number.isInteger(value)?'GPIO '+value:'Chưa gán';});const verified=config.board&&config.board.peripheral_routing_verified===true;document.querySelectorAll('[data-gpio-state]').forEach(cell=>{cell.textContent=verified?'Pinout đã xác nhận · trạng thái theo JSON':'Đang tắt · chưa xác nhận pinout';});}
 async function loadConfig(){status.textContent='Đang tải...';try{const r=await fetch('/api/config');const t=await r.text();if(!r.ok)throw Error(t);const config=JSON.parse(t);box.value=JSON.stringify(config,null,2);renderGpioTable(config);status.textContent=r.headers.get('X-Otto-Config-Source')==='default'?'Đã tải cấu hình mặc định an toàn (chưa có cấu hình lưu).':'Đã tải cấu hình đã lưu.';}catch(e){status.textContent='Chưa có cấu hình lưu hoặc lỗi: '+e.message;}}
-async function saveConfig(){status.textContent='Đang kiểm tra và lưu...';try{const config=JSON.parse(box.value);const r=await fetch('/api/config',{method:'POST',headers:{'Content-Type':'application/json'},body:box.value});const t=await r.text();if(!r.ok)throw Error(t);renderGpioTable(config);status.textContent='Đã lưu JSON an toàn. Thiết bị chỉ chạy khi đã xác nhận pinout và bật đúng mục trong JSON.';}catch(e){status.textContent='Không lưu được: '+e.message;}}
+async function saveConfig(){status.textContent='Đang kiểm tra và lưu...';try{const config=JSON.parse(box.value);const r=await fetch('/api/config',{method:'POST',headers:{'Content-Type':'application/json'},body:box.value});const t=await r.text();if(!r.ok)throw Error(t);renderGpioTable(config);status.textContent='Đã lưu JSON. Khởi động lại thiết bị để áp dụng cấu hình phần cứng.';}catch(e){status.textContent='Không lưu được: '+e.message;}}
 async function importConfig(event){const file=event.target.files&&event.target.files[0];if(!file)return;if(file.size>3072){status.textContent='File vượt quá giới hạn 3072 byte.';event.target.value='';return;}try{const text=await file.text();const config=JSON.parse(text);box.value=text;renderGpioTable(config);status.textContent='Đã nhập '+file.name+'. Giá trị hiển thị chỉ là bản nháp; nhấn Kiểm tra và lưu để firmware xác thực.';}catch(e){status.textContent='File JSON không hợp lệ: '+e.message;}event.target.value='';}
 function exportConfig(){try{JSON.parse(box.value);const blob=new Blob([box.value],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='otto-desk-config.json';a.click();URL.revokeObjectURL(url);status.textContent='Đã xuất otto-desk-config.json.';}catch(e){status.textContent='Không thể xuất: JSON chưa hợp lệ.';}}
 </script></html>)html";
@@ -231,8 +231,18 @@ esp_err_t SaveConfigHandler(httpd_req_t* request) {
         return httpd_resp_send(request, response.c_str(), response.size());
     }
 
+    OttoDeskRuntimeConfig decoded;
+    const esp_err_t decode_err = OttoDeskConfigStore::Decode(json, decoded);
+    if (decode_err != ESP_OK) {
+        httpd_resp_set_status(request, "500 Internal Server Error");
+        httpd_resp_set_type(request, "application/json");
+        return httpd_resp_sendstr(request, "{\"error\":\"saved_config_decode_failed\"}");
+    }
+    const std::string response = std::string("{\"ok\":true,\"hardware_activation\":") +
+        (decoded.hardware_activation_permitted ? "true" : "false") +
+        ",\"apply_after_reboot\":true}";
     httpd_resp_set_type(request, "application/json");
-    return httpd_resp_sendstr(request, "{\"ok\":true,\"hardware_activation\":false}");
+    return httpd_resp_send(request, response.c_str(), response.size());
 }
 }  // namespace
 
