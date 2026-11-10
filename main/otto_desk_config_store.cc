@@ -1,4 +1,5 @@
 #include "otto_desk_config_store.h"
+#include "boards/otto-desk/otto_desk_gpio_safety.h"
 
 #include <cJSON.h>
 #include <nvs.h>
@@ -62,10 +63,46 @@ bool IsNull(const cJSON* object, const char* key) {
     return cJSON_IsNull(Get(object, key));
 }
 
-bool HasNullKeys(const cJSON* object, std::initializer_list<const char*> keys) {
+bool IsSafeNullableGpio(const cJSON* object, const char* key) {
+    const cJSON* value = Get(object, key);
+    if (cJSON_IsNull(value)) return true;
+    return cJSON_IsNumber(value) &&
+           value->valuedouble == static_cast<double>(value->valueint) &&
+           otto_desk::IsSafeEsp32S3Gpio(value->valueint);
+}
+
+bool HasSafeGpioKeys(const cJSON* object, std::initializer_list<const char*> keys) {
     if (!HasExactKeys(object, keys)) return false;
     for (const char* key : keys) {
-        if (!IsNull(object, key)) return false;
+        if (!IsSafeNullableGpio(object, key)) return false;
+    }
+    return true;
+}
+
+bool IsGpioKey(const char* key) {
+    static constexpr const char* kKeys[] = {
+        "gpio", "ws", "sck", "sd", "din", "bclk", "lrclk",
+        "sclk", "mosi", "miso", "cs", "dc", "reset", "backlight"
+    };
+    if (key == nullptr) return false;
+    for (const char* candidate : kKeys) {
+        if (std::strcmp(key, candidate) == 0) return true;
+    }
+    return false;
+}
+
+bool HasSafeUniqueGpioAssignments(const cJSON* node, bool (&used)[49]) {
+    if (!cJSON_IsObject(node) && !cJSON_IsArray(node)) return true;
+    for (const cJSON* item = node->child; item != nullptr; item = item->next) {
+        if (cJSON_IsObject(node) && IsGpioKey(item->string) &&
+            !cJSON_IsObject(item) && !cJSON_IsArray(item) && !cJSON_IsNull(item)) {
+            if (!cJSON_IsNumber(item) ||
+                item->valuedouble != static_cast<double>(item->valueint) ||
+                !otto_desk::IsSafeEsp32S3Gpio(item->valueint) ||
+                used[item->valueint]) return false;
+            used[item->valueint] = true;
+        }
+        if (!HasSafeUniqueGpioAssignments(item, used)) return false;
     }
     return true;
 }
@@ -136,7 +173,7 @@ OttoDeskServoConfig ReadServo(const cJSON* servo) {
 bool IsSafeServo(const cJSON* servo) {
     return HasExactKeys(servo, {"gpio", "min_deg", "center_deg", "max_deg",
                                 "speed_deg_per_sec", "enabled"}) &&
-           IsNull(servo, "gpio") && IsFalse(servo, "enabled") &&
+           IsSafeNullableGpio(servo, "gpio") && IsFalse(servo, "enabled") &&
            IsBoundedInteger(servo, "min_deg", 0, 180) &&
            IsBoundedInteger(servo, "center_deg", 0, 180) &&
            IsBoundedInteger(servo, "max_deg", 0, 180) &&
@@ -149,6 +186,9 @@ bool IsSafeConfig(const cJSON* root) {
     if (!HasExactKeys(root, {"schema_version", "project", "firmware_base", "board",
                              "display", "audio", "servos", "pir", "gpio_policy"}) ||
         !HasNoDuplicateKeys(root)) return false;
+
+    bool used_gpios[49] = {};
+    if (!HasSafeUniqueGpioAssignments(root, used_gpios)) return false;
 
     if (!IsNumber(root, "schema_version", 1) ||
         !IsString(root, "project", "Robot-cua-TRUONG")) return false;
@@ -185,7 +225,7 @@ bool IsSafeConfig(const cJSON* root) {
           IsNumber(display, "rotation", 90) || IsNumber(display, "rotation", 180) ||
           IsNumber(display, "rotation", 270)) ||
         !IsFalse(display, "enabled") ||
-        !HasNullKeys(Get(display, "gpio"),
+        !HasSafeGpioKeys(Get(display, "gpio"),
                      {"sclk", "mosi", "cs", "dc", "reset", "backlight"})) return false;
 
     const cJSON* audio = Get(root, "audio");
@@ -195,7 +235,7 @@ bool IsSafeConfig(const cJSON* root) {
     if (!HasExactKeys(microphone, {"type", "i2s", "enabled"}) ||
         !IsString(microphone, "type", "inmp441") ||
         !IsFalse(microphone, "enabled") ||
-        !HasNullKeys(mic_i2s, {"ws", "sck", "sd"})) return false;
+        !HasSafeGpioKeys(mic_i2s, {"ws", "sck", "sd"})) return false;
 
     const cJSON* amplifier = Get(audio, "amplifier");
     const cJSON* amp_i2s = Get(amplifier, "i2s");
@@ -203,7 +243,7 @@ bool IsSafeConfig(const cJSON* root) {
     if (!HasExactKeys(amplifier, {"type", "i2s", "enabled", "speaker_impedance_ohm"}) ||
         !IsString(amplifier, "type", "max98357a") ||
         !IsFalse(amplifier, "enabled") ||
-        !HasNullKeys(amp_i2s, {"din", "bclk", "lrclk"}) ||
+        !HasSafeGpioKeys(amp_i2s, {"din", "bclk", "lrclk"}) ||
         !(cJSON_IsNull(impedance) ||
           (cJSON_IsNumber(impedance) && impedance->valuedouble > 0))) return false;
 
@@ -216,7 +256,7 @@ bool IsSafeConfig(const cJSON* root) {
     const cJSON* pir = Get(root, "pir");
     if (!HasExactKeys(pir, {"type", "gpio", "enabled"}) ||
         !IsString(pir, "type", "hc-sr501") ||
-        !IsNull(pir, "gpio") || !IsFalse(pir, "enabled")) return false;
+        !IsSafeNullableGpio(pir, "gpio") || !IsFalse(pir, "enabled")) return false;
 
     const cJSON* policy = Get(root, "gpio_policy");
     if (!HasExactKeys(policy, {"allow_unassigned", "reject_duplicate_assignments",
