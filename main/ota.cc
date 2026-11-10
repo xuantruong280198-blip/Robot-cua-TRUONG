@@ -1,4 +1,5 @@
 #include "ota.h"
+#include "ota_version.h"
 #include "system_info.h"
 #include "settings.h"
 #include "assets/lang_config.h"
@@ -451,31 +452,9 @@ bool Ota::StartUpgrade(std::function<void(int progress, size_t speed)> callback)
 }
 
 
-std::vector<int> Ota::ParseVersion(const std::string& version) {
-    std::vector<int> versionNumbers;
-    std::stringstream ss(version);
-    std::string segment;
-    
-    while (std::getline(ss, segment, '.')) {
-        versionNumbers.push_back(std::stoi(segment));
-    }
-    
-    return versionNumbers;
-}
-
-bool Ota::IsNewVersionAvailable(const std::string& currentVersion, const std::string& newVersion) {
-    std::vector<int> current = ParseVersion(currentVersion);
-    std::vector<int> newer = ParseVersion(newVersion);
-    
-    for (size_t i = 0; i < std::min(current.size(), newer.size()); ++i) {
-        if (newer[i] > current[i]) {
-            return true;
-        } else if (newer[i] < current[i]) {
-            return false;
-        }
-    }
-    
-    return newer.size() > current.size();
+bool Ota::IsNewVersionAvailable(const std::string& currentVersion,
+                                const std::string& newVersion) {
+    return ota_version::IsNewer(currentVersion, newVersion);
 }
 
 std::string Ota::GetActivationPayload() {
