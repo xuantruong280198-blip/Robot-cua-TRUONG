@@ -124,14 +124,16 @@ void OttoDeskDisplay::SetPreviewImage(std::unique_ptr<LvglImage> image) {
         return;
     }
 
-    preview_image_cached_ = std::move(image);
-    const auto* image_desc = preview_image_cached_->image_dsc();
+    // Validate the incoming image before replacing the cached owner. If an
+    // invalid image is moved into preview_image_cached_ and then reset, the
+    // LVGL preview object may still reference the previous cached image data.
+    const auto* image_desc = image->image_dsc();
     if (image_desc == nullptr || image_desc->header.w == 0 || image_desc->header.h == 0) {
         ESP_LOGE(TAG, "Preview image has invalid dimensions");
-        preview_image_cached_.reset();
         return;
     }
 
+    preview_image_cached_ = std::move(image);
     lv_image_set_src(preview_image_, image_desc);
     lv_image_set_rotation(preview_image_, 0);
 
