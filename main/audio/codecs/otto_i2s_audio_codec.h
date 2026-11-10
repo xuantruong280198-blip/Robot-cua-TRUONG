@@ -17,6 +17,7 @@ public:
     void EnableInput(bool enable) override;
     void EnableOutput(bool enable) override;
     void SetOutputVolume(int volume) override;
+    bool IsReady() const { return rx_handle_ != nullptr && tx_handle_ != nullptr; }
 
 private:
     int Read(int16_t* dest, int samples) override;
