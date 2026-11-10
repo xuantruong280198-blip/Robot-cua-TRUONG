@@ -1,4 +1,5 @@
 #include "wifi_board.h"
+#include "application.h"
 #include "audio/audio_codec.h"
 #include "audio/codecs/dummy_audio_codec.h"
 #include "audio/codecs/otto_i2s_audio_codec.h"
@@ -44,6 +45,7 @@ private:
     std::unique_ptr<otto_desk::HeadMotionSequence> head_motion_;
     std::mutex head_motion_mutex_;
     TaskHandle_t head_motion_task_ = nullptr;
+    TaskHandle_t pir_task_ = nullptr;
     esp_lcd_panel_io_handle_t panel_io_ = nullptr;
     esp_lcd_panel_handle_t panel_ = nullptr;
 
@@ -223,6 +225,31 @@ private:
         }
     }
 
+    static void PirMonitorTask(void* context) {
+        auto* self = static_cast<OttoDeskBoard*>(context);
+        // HC-SR501 needs a stabilization interval after power-up.
+        vTaskDelay(pdMS_TO_TICKS(30000));
+        bool previous_motion = false;
+        TickType_t last_trigger = 0;
+        constexpr TickType_t kTriggerCooldown = pdMS_TO_TICKS(15000);
+        while (true) {
+            const bool motion = self->pir_sensor_ != nullptr &&
+                                self->pir_sensor_->IsMotionDetected();
+            if (motion && !previous_motion) {
+                const TickType_t now = xTaskGetTickCount();
+                const auto state = Application::GetInstance().GetDeviceState();
+                if (state == kDeviceStateIdle &&
+                    (last_trigger == 0 || now - last_trigger >= kTriggerCooldown)) {
+                    ESP_LOGI(kTag, "PIR motion detected; starting listening");
+                    Application::GetInstance().StartListening();
+                    last_trigger = now;
+                }
+            }
+            previous_motion = motion;
+            vTaskDelay(pdMS_TO_TICKS(100));
+        }
+    }
+
     void InitializeConfiguredPir(const OttoDeskRuntimeConfig& config) {
         if (!config.hardware_activation_permitted || !config.pir_enabled || !config.pir_gpio) {
             return;
@@ -236,6 +263,13 @@ private:
             return;
         }
         ESP_LOGI(kTag, "HC-SR501 motion input initialized");
+        const BaseType_t result = xTaskCreate(
+            PirMonitorTask, "otto_pir", 3072, this, 3, &pir_task_);
+        if (result != pdPASS) {
+            pir_task_ = nullptr;
+            pir_sensor_.reset();
+            ESP_LOGE(kTag, "Could not start PIR monitor task");
+        }
     }
 
     void InitializeConfiguredAudio(const OttoDeskRuntimeConfig& config) {
