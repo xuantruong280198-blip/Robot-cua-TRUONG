@@ -57,14 +57,15 @@ struct OttoDeskRuntimeConfig {
 
     OttoDeskGpioPolicy gpio_policy;
 
-    // These flags are descriptive only. The current board scaffold does not
-    // apply GPIO assignments or start peripheral drivers from this structure.
+    // Runtime activation is permitted only after the JSON explicitly confirms
+    // carrier-board signal routing; each peripheral still has its own enable
+    // and safety checks before its driver is initialized.
     bool hardware_activation_permitted = false;
 };
 
 // Bounded NVS storage for the Otto Desk JSON configuration.
-// This layer deliberately accepts only the conservative, hardware-disabled
-// configuration until peripheral signal assignments and runtime drivers are reviewed.
+// Validation enforces the fixed schema, safe/unique GPIO assignments, and
+// explicit routing acknowledgement before runtime drivers may be activated.
 class OttoDeskConfigStore {
 public:
     static constexpr size_t kMaxConfigBytes = 3072;
