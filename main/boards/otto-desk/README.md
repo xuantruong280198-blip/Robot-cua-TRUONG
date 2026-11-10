@@ -42,7 +42,7 @@ This scaffold's dedicated ESP32-S3 board-selection build passed in GitHub Action
 
 ## Safe configuration page
 
-When the firmware enters its Wi-Fi provisioning access-point mode, it starts a separate Otto JSON editor at `http://192.168.4.1:8080/` (the existing captive portal remains on port 80). The editor can load the saved JSON, import a local `.json` file (maximum 3,072 bytes), export the editor contents, and submit a replacement. The endpoint accepts only the conservative safe schema: every device stays disabled and every GPIO remains null; all GPIO safety-policy flags must remain enabled. It stops when station Wi-Fi connection begins. This endpoint is a first provisioning tool, not a runtime hardware configurator.
+When the firmware enters its Wi-Fi provisioning access-point mode, it starts a separate Otto JSON editor at `http://192.168.4.1:8080/` (the existing captive portal remains on port 80). The editor can load the saved JSON, import a local `.json` file (maximum 3,072 bytes), export the editor contents, and submit a replacement. GPIO assignments may be stored as inactive drafts after ESP32-S3 range, module denylist, and duplicate-assignment checks. Every peripheral must remain disabled, `header_pinout_verified` must remain false, and decoding always sets `hardware_activation_permitted=false`. Draft assignments are never applied to hardware. The endpoint stops when station Wi-Fi connection begins. This is a first provisioning/configuration tool, not a runtime hardware configurator.
 
 
 ## Two-axis head motion planner
