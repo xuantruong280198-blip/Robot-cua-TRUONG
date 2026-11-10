@@ -70,7 +70,7 @@ This scaffold's dedicated ESP32-S3 board-selection build passed in GitHub Action
 
 ## Safe configuration page
 
-When the firmware enters its Wi-Fi provisioning access-point mode, it starts a separate Otto JSON editor at `http://192.168.4.1:8080/` (the existing captive portal remains on port 80). The editor can load the saved JSON, import a local `.json` file (maximum 3,072 bytes), export the editor contents, and submit a replacement. GPIO assignments may be stored as inactive drafts after ESP32-S3 range, module denylist, and duplicate-assignment checks. Every peripheral must remain disabled, `header_labels_confirmed` remains true and `peripheral_routing_verified` remains false, and decoding always sets `hardware_activation_permitted=false`. Draft assignments are never applied to hardware. The endpoint stops when station Wi-Fi connection begins. This is a first provisioning/configuration tool, not a runtime hardware configurator.
+When the firmware enters its Wi-Fi provisioning access-point mode, it starts a separate Otto JSON editor at `http://192.168.4.1:8080/` (the existing captive portal remains on port 80). The editor can load the saved JSON, import a local `.json` file (maximum 3,072 bytes), export the editor contents, and submit a replacement. GPIO assignments are checked against the ESP32-S3 range, module denylist, and duplicate-assignment rules. The default keeps all devices disabled. After the operator has physically checked the signal routing, setting `board.peripheral_routing_verified=true` permits enabled devices to initialize on the next reboot; INMP441 and MAX98357A must be enabled together, and servos additionally require `servos.external_power_verified=true`. The endpoint stops when station Wi-Fi connection begins.
 
 
 ## Two-axis head motion planner
@@ -78,12 +78,13 @@ When the firmware enters its Wi-Fi provisioning access-point mode, it starts a s
 `otto_desk_head_motion.h` provides a hardware-independent planner for the
 pan/tilt head. It validates per-axis min/center/max limits and speed, clamps
 requested targets, computes a bounded move duration, and provides ease-out
-cubic interpolation for smooth arrivals. The module has no GPIO, LEDC, or
-servo-driver calls and is not yet connected to physical outputs.
+cubic interpolation for smooth arrivals. The board runs this planner in a
+20 ms FreeRTOS task and forwards each interpolated frame to the enabled PAN
+and TILT PWM drivers. Both axes are clamped to their configured limits.
 
-Servo activation remains deliberately disabled until the exact 40-pin header
-pinout is verified and the external servo supply is confirmed. Do not connect
-servo power to the ESP32 3V3 rail.
+Servo outputs remain off by default. Enable them only after the physical signal
+routing is checked and a regulated external servo supply with common ground is
+confirmed. Never power MG90S servos from the ESP32 3V3 rail.
 
 ## Emotion-driven head pose planning
 
@@ -93,10 +94,10 @@ small relative pan/tilt offsets. Unknown or null tokens resolve to neutral.
 Every target is clamped against the configured per-axis limits. The planner
 is covered by host-side C++ tests in CI.
 
-This is the behavior layer only: it does not move a servo, infer bracket
-orientation, or replace calibration. In particular, the sign of the tilt
-offset depends on how the pan/tilt bracket is mounted and must be checked
-before any PWM output is enabled.
+The Otto display forwards emotion changes to the head-motion sequence, which
+smoothly updates the enabled servo axes. The direction of the tilt offset still
+depends on bracket mounting; verify the physical direction at low travel limits
+during first calibration.
 
 ## ESP32-S3 N16R8 GPIO safety policy
 
@@ -114,9 +115,10 @@ conflict checks, and the existing explicit safety interlocks.
 `otto_desk_pir.h/.cc` now provides a small HC-SR501 input driver. It
 requires an explicitly validated board pinout, rejects reserved/strapping
 GPIOs, configures a plain digital input without an interrupt, and exposes
-`IsMotionDetected()` for a future board polling task. It is compiled by the
-Otto Desk board-source glob. It is not yet instantiated by the board because
-the saved runtime configuration keeps PIR disabled and its GPIO unassigned.
+`IsMotionDetected()` to the board's polling task. When enabled with a GPIO,
+the task waits 30 seconds for sensor warm-up, then starts XiaoZhi listening
+on a rising motion event only while the application is idle, with a 15-second
+cooldown.
 
 ## OTA safety checks
 
