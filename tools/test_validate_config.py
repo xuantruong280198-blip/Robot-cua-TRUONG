@@ -354,7 +354,10 @@ class OttoDeskDisplayContractTests(unittest.TestCase):
         invalid_return = preview.index('ESP_LOGE(TAG, "Preview image has invalid dimensions");')
         self.assertLess(validate, move_owner)
         self.assertLess(invalid_return, move_owner)
-        self.assertNotIn("preview_image_cached_.reset();", preview[:move_owner])
+        # Clearing an explicitly-null preview is a separate, intentional path.
+        # Only the non-null image path must preserve the previous cached owner
+        # until the replacement image has passed validation.
+        self.assertNotIn("preview_image_cached_.reset();", preview[validate:move_owner])
         self.assertIn("lv_image_set_src(preview_image_, image_desc);", preview)
 
     def test_xiaozhi_device_states_keep_emotion_names_asset_compatible(self):
