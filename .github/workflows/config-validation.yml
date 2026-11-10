@@ -6,6 +6,8 @@ on:
       - "config/**"
       - "tools/validate_config.py"
       - "tools/test_validate_config.py"
+      - "tools/test_config_page.py"
+      - "main/otto_desk_config_server.cc"
       - ".github/workflows/config-validation.yml"
   pull_request:
     paths:
@@ -34,4 +36,4 @@ jobs:
         run: |
           python tools/validate_schema.py
           python tools/validate_config.py
-          python -m unittest tools/test_validate_config.py -v
+          python -m unittest tools/test_validate_config.py tools/test_config_page.py -v
