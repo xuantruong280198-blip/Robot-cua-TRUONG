@@ -9,7 +9,7 @@ This is a dedicated XiaoZhi board profile for the stationary Otto Desk AI projec
 - Wi-Fi lifecycle inherited from `WifiBoard`
 - Dummy audio codec remains the fallback; the external INMP441 + MAX98357A codec initializes only when both audio devices are enabled and the explicit routing interlock is confirmed
 - ST7789 and Otto full-screen display initialize from the saved JSON only when the display is enabled and all required GPIOs are present
-- MG90S PAN/TILT PWM drivers initialize at their configured center positions only when enabled, routing is confirmed, and external servo power is explicitly confirmed
+- MG90S PAN/TILT PWM drivers initialize at their configured center positions only when enabled, routing is confirmed, and external servo power is explicitly confirmed; XiaoZhi emotion changes are eased through a 20 ms head-motion task into the two servo axes
 - HC-SR501 input initializes only when enabled with a valid GPIO; PIR event handling is not yet connected to XiaoZhi wake/sleep behavior
 - No camera, onboard codec, CH32V003 expander, battery logic, or walking/limb servos
 
@@ -62,7 +62,7 @@ The dedicated CI job combines the repository's shared ESP32-S3 defaults with `sd
 
 The most recent verified source build is tracked by the current GitHub Actions runs; this section is updated after the new opt-in runtime path finishes compilation.
 
-The config API reports whether the saved routing acknowledgement permits runtime activation and states that changes apply after reboot. The display/audio/servo/PIR initialization paths are compiled into the Otto board profile. The head emotion planner is not yet connected to the servo PWM outputs, and PIR detection is not yet connected to application behavior. CI compilation does not replace a real-device test of the ST7789, I2S audio, servo direction/limits, or PIR signal.
+The config API reports whether the saved routing acknowledgement permits runtime activation and states that changes apply after reboot. The display/audio/servo/PIR initialization paths are compiled into the Otto board profile. The head emotion planner is connected to servo PWM output when both the servo configuration and safety interlocks permit it. PIR detection is initialized but is not yet connected to application wake/sleep behavior. CI compilation does not replace a real-device test of the ST7789, I2S audio, servo direction/limits, or PIR signal.
 
 ## Not a flashable Otto release
 
