@@ -222,6 +222,13 @@ class HardwareConfigValidationTests(unittest.TestCase):
                 self.assertNotEqual(code, 0)
                 self.assertIn("must be a boolean", output)
 
+    def test_servo_external_power_flag_must_be_boolean(self):
+        config = copy.deepcopy(DEFAULT)
+        config["servos"]["external_power_verified"] = 1
+        code, output = self.run_config(config)
+        self.assertNotEqual(code, 0)
+        self.assertIn("external_power_verified must be a boolean", output)
+
     def test_microphone_and_amplifier_must_be_enabled_together(self):
         config = copy.deepcopy(DEFAULT)
         config["board"]["peripheral_routing_verified"] = True

@@ -175,7 +175,7 @@ def main(config_path: pathlib.Path | None = None) -> None:
     if (microphone.get("enabled") is True) != (amplifier.get("enabled") is True):
         fail("INMP441 and MAX98357A must be enabled together for duplex I2S audio")
 
-    if servos.get("external_power_verified") not in (True, False):
+    if not isinstance(servos.get("external_power_verified"), bool):
         fail("servo external_power_verified must be a boolean")
     if any((pan.get("enabled") is True, tilt.get("enabled") is True)) and (
         servos.get("external_power_verified") is not True
