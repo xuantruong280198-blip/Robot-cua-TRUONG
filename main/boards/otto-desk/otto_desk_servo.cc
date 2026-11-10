@@ -11,12 +11,16 @@ constexpr uint32_t kPwmFrequencyHz = 50;
 
 OttoDeskServoAxis::OttoDeskServoAxis(
     gpio_num_t gpio, ledc_channel_t channel,
-    bool board_pinout_validated, bool external_power_verified)
+    bool board_pinout_validated, bool external_power_verified,
+    int min_angle_deg, int max_angle_deg)
     : gpio_(gpio), channel_(channel),
       permitted_(board_pinout_validated && external_power_verified &&
                  otto_desk::IsSafeEsp32S3Gpio(static_cast<int>(gpio))),
-      timer_(static_cast<ledc_timer_t>(channel)) {
-    if (!permitted_ || channel < LEDC_CHANNEL_0 || channel > LEDC_CHANNEL_3) {
+      timer_(static_cast<ledc_timer_t>(channel)),
+      min_angle_deg_(min_angle_deg), max_angle_deg_(max_angle_deg) {
+    if (!permitted_ || channel < LEDC_CHANNEL_0 || channel > LEDC_CHANNEL_3 ||
+        min_angle_deg_ < 0 || min_angle_deg_ >= max_angle_deg_ ||
+        max_angle_deg_ > 180) {
         permitted_ = false;
     }
 }
@@ -59,7 +63,8 @@ esp_err_t OttoDeskServoAxis::Initialize() {
 
 esp_err_t OttoDeskServoAxis::SetAngle(int angle_deg) {
     if (!ready_) return ESP_ERR_INVALID_STATE;
-    const uint32_t duty = otto_desk::ServoDutyForAngle(angle_deg);
+    const uint32_t duty =
+        otto_desk::ServoDutyForAngle(angle_deg, min_angle_deg_, max_angle_deg_);
     esp_err_t err = ledc_set_duty(kSpeedMode, channel_, duty);
     if (err != ESP_OK) return err;
     return ledc_update_duty(kSpeedMode, channel_);
