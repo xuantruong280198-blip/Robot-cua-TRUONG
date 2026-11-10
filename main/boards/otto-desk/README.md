@@ -41,7 +41,7 @@ The user has confirmed the physical module from the supplied photo as an ESP32-S
 | 14 | 19 |
 | 5V | GND |
 
-The board identity and visible 40-pin header order are confirmed from the user's photo. The separate firmware interlock `header_pinout_verified=false` remains a deliberate hardware-activation safety lock until the exact PCB routing and each connected peripheral's actual wiring are audited; it must not be described as meaning that the photo or header order was never supplied.
+The board identity and visible 40-pin header order are confirmed from the user's photo. The firmware records `header_labels_confirmed=true` because the photo confirms the visible header order. A separate `peripheral_routing_verified=false` interlock remains until carrier-board trace routing and each connected peripheral's actual wiring are audited.
 
 The upstream Waveshare ESP32-S3-CAM-OVxxxx documentation and schematic are retained as comparison references only. They are **not** proof that this 40-pin module uses the same carrier layout, LCD connector, CH32V003 expander, camera routing, or onboard codec. In particular, do not apply the upstream 18-pin LCD or expander pin assignments to this board without matching the exact PCB and schematic.
 
@@ -69,7 +69,7 @@ This scaffold's dedicated ESP32-S3 board-selection build passed in GitHub Action
 
 ## Safe configuration page
 
-When the firmware enters its Wi-Fi provisioning access-point mode, it starts a separate Otto JSON editor at `http://192.168.4.1:8080/` (the existing captive portal remains on port 80). The editor can load the saved JSON, import a local `.json` file (maximum 3,072 bytes), export the editor contents, and submit a replacement. GPIO assignments may be stored as inactive drafts after ESP32-S3 range, module denylist, and duplicate-assignment checks. Every peripheral must remain disabled, `header_pinout_verified` must remain false, and decoding always sets `hardware_activation_permitted=false`. Draft assignments are never applied to hardware. The endpoint stops when station Wi-Fi connection begins. This is a first provisioning/configuration tool, not a runtime hardware configurator.
+When the firmware enters its Wi-Fi provisioning access-point mode, it starts a separate Otto JSON editor at `http://192.168.4.1:8080/` (the existing captive portal remains on port 80). The editor can load the saved JSON, import a local `.json` file (maximum 3,072 bytes), export the editor contents, and submit a replacement. GPIO assignments may be stored as inactive drafts after ESP32-S3 range, module denylist, and duplicate-assignment checks. Every peripheral must remain disabled, `header_labels_confirmed` remains true and `peripheral_routing_verified` remains false, and decoding always sets `hardware_activation_permitted=false`. Draft assignments are never applied to hardware. The endpoint stops when station Wi-Fi connection begins. This is a first provisioning/configuration tool, not a runtime hardware configurator.
 
 
 ## Two-axis head motion planner

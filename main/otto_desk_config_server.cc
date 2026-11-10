@@ -33,7 +33,8 @@ constexpr char kDefaultConfig[] = R"json({
     "onboard_codec_enabled": false,
     "onboard_io_expander_enabled": false,
     "header_pin_count": 40,
-    "header_pinout_verified": false
+    "header_labels_confirmed": true,
+    "peripheral_routing_verified": false
   },
   "display": {
     "type": "st7789",

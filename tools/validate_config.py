@@ -91,8 +91,10 @@ def main(config_path: pathlib.Path | None = None) -> None:
         fail("board.manufacturer must be Waveshare")
     if board.get("header_pin_count") != 40:
         fail("board.header_pin_count must be 40 for the user-confirmed target board")
-    if board.get("header_pinout_verified") is not False:
-        fail("board.header_pinout_verified must remain false until the exact 40-pin PCB map is verified")
+    if board.get("header_labels_confirmed") is not True:
+        fail("board.header_labels_confirmed must remain true because the supplied 40-pin header photo was confirmed")
+    if board.get("peripheral_routing_verified") is not False:
+        fail("board.peripheral_routing_verified must remain false until peripheral signal routing is audited")
     if board.get("camera_enabled") is not False:
         fail("camera_enabled must remain false for this project")
     if board.get("onboard_codec_enabled") is not False:
@@ -156,9 +158,9 @@ def main(config_path: pathlib.Path | None = None) -> None:
         if enabled is not False:
             fail(f"{label} must remain false until runtime drivers and the verified board pinout are ready")
 
-    # GPIO values may be saved as inactive draft assignments. The exact
-    # carrier header map is still unverified and these values are never
-    # applied to physical pins.
+    # GPIO values may be saved as inactive draft assignments. The visible
+    # header labels/order are confirmed; peripheral routing is not yet audited,
+    # so candidate values are never applied to physical pins.
 
     if servos.get("external_power_verified") is not False:
         fail("servo external_power_verified must remain false until verified")
