@@ -19,7 +19,12 @@ constexpr int kAmpI2sPort = 1;
 OttoI2sAudioCodec::OttoI2sAudioCodec(
     int input_sample_rate, int output_sample_rate,
     gpio_num_t mic_ws, gpio_num_t mic_sck, gpio_num_t mic_sd,
-    gpio_num_t amp_bclk, gpio_num_t amp_lrclk, gpio_num_t amp_din) {
+    gpio_num_t amp_bclk, gpio_num_t amp_lrclk, gpio_num_t amp_din,
+    bool board_pinout_validated) {
+    if (!board_pinout_validated) {
+        ESP_LOGE(kTag, "Refusing I2S init: carrier-board pinout is not verified");
+        return;
+    }
     // Fail closed before allocating I2S resources. This is an extra driver
     // guard; it does not replace verification of the carrier-board pin map.
     const gpio_num_t pins[] = {mic_ws, mic_sck, mic_sd, amp_bclk, amp_lrclk, amp_din};
