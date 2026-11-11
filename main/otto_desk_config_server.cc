@@ -177,6 +177,7 @@ function exportConfig(){try{JSON.parse(box.value);const blob=new Blob([box.value
 async function loadSystemInfo(){const out=document.getElementById('systemInfo');out.textContent='Đang đọc...';try{const r=await fetch('/api/config',{cache:'no-store'});if(!r.ok)throw Error(await r.text());const h=r.headers;out.textContent='Firmware: '+(h.get('X-Otto-Firmware')||'không rõ')+'\nChip: '+(h.get('X-Otto-Chip')||'không rõ')+'\nCPU cores: '+(h.get('X-Otto-Cores')||'không rõ')+'\nChip revision: '+(h.get('X-Otto-Revision')||'không rõ')+'\nFlash: '+(h.get('X-Otto-Flash-MB')||'0')+' MB\nHeap còn trống: '+(h.get('X-Otto-Free-Heap')||'0')+' bytes';}catch(e){out.textContent='Không đọc được thông tin: '+e.message;}}
 async function rebootDevice(){if(!confirm('Khởi động lại ESP32 ngay bây giờ?'))return;const out=document.getElementById('systemInfo');out.textContent='Đang gửi lệnh khởi động lại...';try{const r=await fetch('/api/config',{method:'POST',headers:{'X-Otto-Action':'reboot'}});if(!r.ok)throw Error(await r.text());out.textContent='Đã nhận lệnh. ESP32 sẽ khởi động lại; hãy kết nối lại Wi-Fi cấu hình sau vài giây.';}catch(e){out.textContent='Gửi lệnh thất bại: '+e.message;}}
 
+loadConfig();
 </script></html>)html";
     httpd_resp_set_type(request, "text/html; charset=utf-8");
     return httpd_resp_send(request, kPage, HTTPD_RESP_USE_STRLEN);
