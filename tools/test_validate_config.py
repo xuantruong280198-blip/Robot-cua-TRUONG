@@ -38,6 +38,11 @@ class HardwareConfigValidationTests(unittest.TestCase):
                         return exc.code, output.getvalue()
             return 0, output.getvalue()
 
+    def test_bootloader_keeps_image_validation_and_ota_rollback_enabled(self):
+        defaults = (ROOT / "sdkconfig.defaults").read_text(encoding="utf-8")
+        self.assertIn("CONFIG_BOOTLOADER_APP_ROLLBACK_ENABLE=y", defaults)
+        self.assertNotIn("CONFIG_BOOTLOADER_SKIP_VALIDATE_ALWAYS=y", defaults)
+
     def test_ota_image_confirmation_is_independent_of_network_availability(self):
         app = (ROOT / "main" / "application.cc").read_text(encoding="utf-8")
         ota = (ROOT / "main" / "ota.cc").read_text(encoding="utf-8")

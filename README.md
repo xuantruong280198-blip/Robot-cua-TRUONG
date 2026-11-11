@@ -52,3 +52,11 @@ See [architecture](docs/ARCHITECTURE.md) and [safe default configuration](config
 ## Upstream
 
 Base: [78/xiaozhi-esp32](https://github.com/78/xiaozhi-esp32), pinned to [v2.5.0](https://github.com/78/xiaozhi-esp32/tree/v2.5.0). Preserve upstream license and copyright notices.
+
+
+## OTA boot safety
+
+- Keep `CONFIG_BOOTLOADER_APP_ROLLBACK_ENABLE=y` enabled.
+- Do not enable `CONFIG_BOOTLOADER_SKIP_VALIDATE_ALWAYS`; the bootloader must retain application-image validation for recovery from flash corruption.
+- A pending OTA image is confirmed after local display and audio startup, before asynchronous network startup. A crash before this point leaves rollback available; an unavailable OTA server does not prevent a healthy local boot from being confirmed.
+- OTA recovery and hardware behavior still require on-device fault-injection tests before release.
