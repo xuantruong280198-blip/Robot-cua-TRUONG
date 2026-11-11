@@ -207,7 +207,7 @@ esp_err_t GetSystemInfoHandler(httpd_req_t* request) {
     char response[384] = {};
     const int length = snprintf(
         response, sizeof(response),
-        "{\\"firmware\\":\\"%s\\",\\"chip\\":\\"%s\\",\\"cores\\":%d,\\"revision\\":%d,\\"flash_mb\\":%u,\\"free_heap_bytes\\":%u}",
+        "{\"firmware\":\"%s\",\"chip\":\"%s\",\"cores\":%d,\"revision\":%d,\"flash_mb\":%u,\"free_heap_bytes\":%u}",
         app != nullptr ? app->version : "unknown",
         CONFIG_IDF_TARGET,
         chip_info.cores,
@@ -216,7 +216,7 @@ esp_err_t GetSystemInfoHandler(httpd_req_t* request) {
         static_cast<unsigned>(esp_get_free_heap_size()));
     if (length < 0 || static_cast<size_t>(length) >= sizeof(response)) {
         httpd_resp_set_status(request, "500 Internal Server Error");
-        return httpd_resp_sendstr(request, "{\\"error\\":\\"system_info_format_failed\\"}");
+        return httpd_resp_sendstr(request, "{\"error\":\"system_info_format_failed\"}");
     }
     httpd_resp_set_type(request, "application/json");
     httpd_resp_set_hdr(request, "Cache-Control", "no-store");
@@ -225,7 +225,7 @@ esp_err_t GetSystemInfoHandler(httpd_req_t* request) {
 
 esp_err_t RebootHandler(httpd_req_t* request) {
     httpd_resp_set_type(request, "application/json");
-    const esp_err_t send_err = httpd_resp_sendstr(request, "{\\"ok\\":true,\\"restarting\\":true}");
+    const esp_err_t send_err = httpd_resp_sendstr(request, "{\"ok\":true,\"restarting\":true}");
     if (send_err == ESP_OK) {
         vTaskDelay(pdMS_TO_TICKS(500));
         esp_restart();
