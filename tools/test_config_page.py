@@ -24,7 +24,12 @@ class GpioConfigPageTests(unittest.TestCase):
     def test_table_reads_nested_json_values(self):
         self.assertIn("function configValue(config,path)", SOURCE)
         self.assertIn("function renderGpioTable(config)", SOURCE)
-        self.assertIn("'GPIO '+value:'Chưa gán'", SOURCE)
+        self.assertIn('input.gpio-number', SOURCE)
+        self.assertIn('type="number" min="0" max="48" step="1"', SOURCE)
+        self.assertIn("function setConfigValue(config,path,value)", SOURCE)
+        self.assertIn("box.value=JSON.stringify(activeConfig,null,2)", SOURCE)
+        self.assertIn("setConfigValue(activeConfig,input.dataset.gpioPath,value)", SOURCE)
+        self.assertEqual(SOURCE.count('class="gpio-number"'), 15)
 
     def test_load_save_and_import_refresh_the_table(self):
         self.assertGreaterEqual(SOURCE.count("renderGpioTable(config)"), 3)
