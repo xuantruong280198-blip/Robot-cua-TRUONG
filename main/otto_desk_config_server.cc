@@ -233,7 +233,7 @@ esp_err_t SaveConfigHandler(httpd_req_t* request) {
         strcasecmp(action, "reboot") == 0) {
         httpd_resp_set_type(request, "application/json");
         const esp_err_t send_err =
-            httpd_resp_sendstr(request, "{\\"ok\\":true,\\"restarting\\":true}");
+            httpd_resp_sendstr(request, "{\"ok\":true,\"restarting\":true}");
         if (send_err == ESP_OK) {
             vTaskDelay(pdMS_TO_TICKS(500));
             esp_restart();
