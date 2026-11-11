@@ -53,9 +53,12 @@ class HardwareConfigValidationTests(unittest.TestCase):
         self.assertIn("Failed to confirm OTA image", ota)
 
     def test_ota_download_header_uses_only_newly_received_bytes(self):
+        # Short HTTP reads must append only the newest segment, not re-append
+        # the already buffered prefix and corrupt the ESP image descriptor.
         ota = (ROOT / "main" / "ota.cc").read_text(encoding="utf-8")
         self.assertIn("buffer + buffer_offset - static_cast<size_t>(n)", ota)
         self.assertIn("image_header.append", ota)
+        self.assertIn("static_cast<size_t>(n));", ota)
 
     def test_configuration_page_javascript_syntax(self):
         node = shutil.which("node")
