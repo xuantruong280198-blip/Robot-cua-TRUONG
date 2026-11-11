@@ -42,16 +42,21 @@ class GpioConfigPageTests(unittest.TestCase):
         self.assertIn("peripheral_routing_verified", SOURCE)
         self.assertIn("Thiết bị chỉ chạy khi đã xác nhận pinout", SOURCE)
 
-    def test_system_status_and_reboot_are_on_the_same_server(self):
-        self.assertIn('system_info.uri = "/api/system"', SOURCE)
-        self.assertIn('reboot.uri = "/api/system/reboot"', SOURCE)
-        self.assertIn('httpd_register_uri_handler(server, &system_info)', SOURCE)
-        self.assertIn('httpd_register_uri_handler(server, &reboot)', SOURCE)
+    def test_system_status_and_reboot_reuse_existing_config_routes(self):
+        self.assertIn('SetSystemInfoHeaders(request)', SOURCE)
+        self.assertIn('X-Otto-Firmware', SOURCE)
+        self.assertIn('X-Otto-Chip', SOURCE)
+        self.assertIn('X-Otto-Free-Heap', SOURCE)
+        self.assertIn('X-Otto-Action', SOURCE)
+        self.assertIn('strcasecmp(action, "reboot")', SOURCE)
         self.assertIn('esp_chip_info(&chip_info)', SOURCE)
         self.assertIn('esp_restart()', SOURCE)
-        self.assertIn('function loadSystemInfo()', SOURCE)
-        self.assertIn('function rebootDevice()', SOURCE)
+        self.assertIn("fetch('/api/config',{cache:'no-store'})", SOURCE)
+        self.assertIn("fetch('/api/config',{method:'POST',headers:{'X-Otto-Action':'reboot'}})", SOURCE)
         self.assertIn('System · Thông tin thiết bị', SOURCE)
+        # The Wi-Fi component already registers 21 handlers; Otto adds only 3.
+        self.assertEqual(SOURCE.count('httpd_register_uri_handler(server,'), 3)
+        self.assertNotIn('system_info.uri', SOURCE)
 
 
 if __name__ == "__main__":
