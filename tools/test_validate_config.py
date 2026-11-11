@@ -754,6 +754,32 @@ class OtaSafetyRegressionTests(unittest.TestCase):
             2,
         )
 
+    def test_ota_confirmation_follows_all_local_setup_and_precedes_network(self):
+        application = (ROOT / "main" / "application.cc").read_text(encoding="utf-8")
+        initialize = application[
+            application.index("void Application::Initialize()"):
+            application.index("void Application::Run()")
+        ]
+        confirmation = initialize.index("Ota::MarkCurrentVersionValid();")
+        for setup_step in (
+            "display->SetupUI();",
+            "audio_service_.Start();",
+            "audio_service_.SetCallbacks(callbacks);",
+            "esp_timer_start_periodic(clock_timer_handle_, 1000000);",
+            "mcp_server.AddUserOnlyTools();",
+            "board.SetNetworkEventCallback(",
+        ):
+            with self.subTest(setup_step=setup_step):
+                self.assertLess(initialize.index(setup_step), confirmation)
+        self.assertLess(confirmation, initialize.index("board.StartNetwork();"))
+
+    def test_readme_documents_the_real_ota_recovery_boundary(self):
+        readme = (ROOT / "README.md").read_text(encoding="utf-8")
+        self.assertIn("two OTA slots", readme)
+        self.assertIn("no factory recovery application", readme)
+        self.assertIn("ROM download mode", readme)
+        self.assertIn("on-device fault-injection tests", readme)
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
