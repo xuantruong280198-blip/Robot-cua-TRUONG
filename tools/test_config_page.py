@@ -32,6 +32,12 @@ class GpioConfigPageTests(unittest.TestCase):
         self.assertIn("const config=JSON.parse(box.value)", SOURCE)
         self.assertIn("const config=JSON.parse(text)", SOURCE)
 
+    def test_gpio_routes_share_existing_xiaozhi_server(self):
+        self.assertIn('root.uri = "/gpio"', SOURCE)
+        self.assertIn('httpd_register_uri_handler(server, &get_config)', SOURCE)
+        self.assertIn('OttoDeskConfigServer::RegisterRoutes(httpd_handle_t server)', SOURCE)
+        self.assertNotIn('server_port = 8080', SOURCE)
+        self.assertNotIn('httpd_start(', SOURCE)
     def test_assignments_explain_explicit_activation_interlock(self):
         self.assertIn("peripheral_routing_verified", SOURCE)
         self.assertIn("Thiết bị chỉ chạy khi đã xác nhận pinout", SOURCE)
