@@ -117,6 +117,7 @@ jobs:
             espressif/idf:v6.0.2 bash -lc '
               idf.py set-target esp32s3 &&
               idf.py -D SDKCONFIG_DEFAULTS="sdkconfig.defaults;sdkconfig.otto-desk.defaults" reconfigure &&
+              python tools/patch_wifi_config_routes.py &&
               grep -Fqx "CONFIG_BOARD_TYPE_OTTO_DESK=y" sdkconfig &&
               grep -Fqx "CONFIG_BOOTLOADER_APP_ROLLBACK_ENABLE=y" sdkconfig &&
               grep -Fqx "# CONFIG_BOOTLOADER_SKIP_VALIDATE_ALWAYS is not set" sdkconfig &&
