@@ -58,5 +58,6 @@ Base: [78/xiaozhi-esp32](https://github.com/78/xiaozhi-esp32), pinned to [v2.5.0
 
 - Keep `CONFIG_BOOTLOADER_APP_ROLLBACK_ENABLE=y` enabled.
 - Do not enable `CONFIG_BOOTLOADER_SKIP_VALIDATE_ALWAYS`; the bootloader must retain application-image validation for recovery from flash corruption.
-- A pending OTA image is confirmed after local display and audio startup, before asynchronous network startup. A crash before this point leaves rollback available; an unavailable OTA server does not prevent a healthy local boot from being confirmed.
-- OTA recovery and hardware behavior still require on-device fault-injection tests before release.
+- A pending OTA image is confirmed only after synchronous local application setup (display, audio service, callbacks, timer and MCP tools), and before asynchronous network startup. A crash before confirmation leaves bootloader rollback available; Wi-Fi or OTA-server availability is not part of this local confirmation gate.
+- The current partition table has two OTA slots and OTA metadata, but no factory recovery application. A failed pending update can roll back to the previously active slot while that image remains valid. If both OTA slots or OTA metadata are damaged, recovery requires ROM download mode and an external serial reflash; this is not an autonomous recovery path.
+- The downloader validates the image header before beginning flash writes, checks the declared body length, calls `esp_ota_end()` before selecting the new boot partition, and leaves the old boot selection unchanged on earlier download/write failures. Power-loss behavior still requires on-device fault-injection tests.
