@@ -1,12 +1,10 @@
 #pragma once
 
 #include "esp_err.h"
+#include "esp_http_server.h"
 
-// Temporary configuration API available only while the board is in its
-// Wi-Fi provisioning AP mode. It accepts schema-validated JSON; peripherals
-// remain disabled by default and require explicit routing acknowledgement.
+// Register Custom GPIO and JSON routes on XiaoZhi's existing port-80 server.
 class OttoDeskConfigServer {
 public:
-    static esp_err_t Start();
-    static void Stop();
+    static esp_err_t RegisterRoutes(httpd_handle_t server);
 };
