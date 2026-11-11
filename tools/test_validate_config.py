@@ -591,13 +591,16 @@ class RuntimeConfigDecodeContractTests(unittest.TestCase):
                     rf"bool {field} = true;",
                 )
 
-    def test_config_portal_is_scoped_to_wifi_provisioning_mode(self):
+    def test_config_portal_routes_share_xiaozhi_provisioning_server(self):
         board_source = (ROOT / "main" / "boards" / "otto-desk" / "otto_desk.cc").read_text(encoding="utf-8")
-        self.assertIn("event == NetworkEvent::WifiConfigModeEnter", board_source)
-        self.assertIn("OttoDeskConfigServer::Start()", board_source)
-        self.assertIn("event == NetworkEvent::Connected", board_source)
-        self.assertIn("event == NetworkEvent::WifiConfigModeExit", board_source)
-        self.assertIn("OttoDeskConfigServer::Stop()", board_source)
+        config_source = (ROOT / "main" / "otto_desk_config_server.cc").read_text(encoding="utf-8")
+        patch_source = (ROOT / "tools" / "patch_wifi_config_routes.py").read_text(encoding="utf-8")
+        self.assertIn("WifiBoard::OnNetworkEvent(event, data)", board_source)
+        self.assertIn("OttoDeskConfigServer::RegisterRoutes(httpd_handle_t server)", config_source)
+        self.assertIn("otto_desk_register_config_routes(server_)", patch_source)
+        self.assertIn('href=\"/gpio\"', patch_source)
+        self.assertNotIn("OttoDeskConfigServer::Start()", board_source)
+        self.assertNotIn("OttoDeskConfigServer::Stop()", board_source)
 
     def test_gpio_inventory_lists_each_signal_individually(self):
         source = (ROOT / "main" / "otto_desk_config_server.cc").read_text(encoding="utf-8")
