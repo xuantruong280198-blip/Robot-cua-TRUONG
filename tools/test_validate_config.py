@@ -65,6 +65,46 @@ class HardwareConfigValidationTests(unittest.TestCase):
         self.assertIn("image_header.append", ota)
         self.assertIn("static_cast<size_t>(n));", ota)
 
+    def test_ota_does_not_write_before_image_header_is_validated(self):
+        ota = (ROOT / "main" / "ota.cc").read_text(encoding="utf-8")
+        begin = ota.index("esp_ota_begin(")
+        write = ota.index("esp_ota_write(")
+        write_guard = ota.rfind("if (image_header_checked &&", 0, write)
+        self.assertGreater(begin, 0)
+        self.assertGreater(write, begin)
+        self.assertGreater(write_guard, begin)
+        self.assertIn("if (!image_header_checked)", ota)
+
+    def test_ota_validates_download_length_before_selecting_boot_partition(self):
+        ota = (ROOT / "main" / "ota.cc").read_text(encoding="utf-8")
+        self.assertLess(ota.index("total_read != content_length"),
+                        ota.index("esp_ota_end(update_handle)"))
+        self.assertLess(ota.index("esp_ota_end(update_handle)"),
+                        ota.index("esp_ota_set_boot_partition(update_partition)"))
+        self.assertIn("content_length > update_partition->size", ota)
+        self.assertIn("esp_ota_abort(update_handle)", ota)
+
+    def test_otto_partition_table_has_two_non_overlapping_ota_slots(self):
+        import csv
+        partition_file = ROOT / "partitions" / "v2" / "16m.csv"
+        rows = []
+        with partition_file.open(encoding="utf-8", newline="") as handle:
+            for row in csv.reader(line for line in handle if not line.lstrip().startswith("#")):
+                if row and row[0].strip():
+                    rows.append([value.strip() for value in row])
+        entries = {row[0]: row for row in rows}
+        self.assertEqual(entries["ota_0"][1:3], ["app", "ota_0"])
+        self.assertEqual(entries["ota_1"][1:3], ["app", "ota_1"])
+        start0 = int(entries["ota_0"][3], 0)
+        size0 = int(entries["ota_0"][4], 0)
+        start1 = int(entries["ota_1"][3], 0) if entries["ota_1"][3] else start0 + size0
+        size1 = int(entries["ota_1"][4], 0)
+        assets_start = int(entries["assets"][3], 0)
+        assets_size = int(entries["assets"][4].removesuffix("M")) * 1024 * 1024
+        self.assertGreaterEqual(start1, start0 + size0)
+        self.assertLessEqual(start1 + size1, assets_start)
+        self.assertEqual(assets_start + assets_size, 16 * 1024 * 1024)
+
     def test_configuration_page_javascript_syntax(self):
         node = shutil.which("node")
         if node is None:

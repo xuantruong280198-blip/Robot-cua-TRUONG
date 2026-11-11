@@ -403,7 +403,10 @@ bool Ota::Upgrade(const std::string& firmware_url, std::function<void(int progre
 
         // Write to flash when buffer is full (4KB) or it's the last chunk
         bool is_last_chunk = (n == 0);
-        if (buffer_offset == PAGE_SIZE || (is_last_chunk && buffer_offset > 0)) {
+        // Do not write partial bytes until the image descriptor has passed
+        // validation and esp_ota_begin() has produced a valid update handle.
+        if (image_header_checked &&
+            (buffer_offset == PAGE_SIZE || (is_last_chunk && buffer_offset > 0))) {
             auto err = esp_ota_write(update_handle, buffer, buffer_offset);
             if (err != ESP_OK) {
                 ESP_LOGE(TAG, "Failed to write OTA data: %s", esp_err_to_name(err));
