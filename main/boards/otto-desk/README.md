@@ -187,3 +187,16 @@ carrier-board signal-routing audit, confirmed GPIO assignments for every
 connected peripheral, verification of the 16 MB partition/flash-offset layout
 against the actual module, and device-level tests for display, microphone,
 speaker, servo direction/travel, PIR behavior, OTA, and rollback/recovery.
+
+
+## Manual Wi-Fi provisioning trigger
+
+The Otto Desk profile reserves **GPIO40** exclusively as a startup provisioning trigger. To force the Wi-Fi access point even when the saved home network is available:
+
+1. Power the ESP32-S3 off.
+2. Connect GPIO40 to GND with a Dupont jumper (do not connect it to 3V3).
+3. Power the board on and keep GPIO40 connected to GND for at least the first second.
+4. The firmware detects the stable low level, stops/overrides station connection, and enters Wi-Fi provisioning AP mode.
+5. Disconnect the jumper after the board has started; then connect the tablet to the `Xiaozhi-xxxx` AP and open `http://192.168.4.1:8080/`.
+
+GPIO40 is removed from the user Custom GPIO assignment pool so the trigger cannot conflict with a peripheral. GPIO0/BOOT is deliberately not used because it is an ESP32-S3 boot-strapping pin. This feature requires a firmware build containing this change; it has not been physically tested on the module.
