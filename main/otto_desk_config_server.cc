@@ -12,7 +12,6 @@
 
 namespace {
 constexpr char TAG[] = "OttoDeskConfig";
-constexpr uint16_t kPort = 8080;
 constexpr char kDefaultConfig[] = R"json({
   "schema_version": 1,
   "project": "Robot-cua-TRUONG",
@@ -105,7 +104,6 @@ constexpr char kDefaultConfig[] = R"json({
     "require_board_pinout_validation": true
   }
 })json";
-httpd_handle_t server = nullptr;
 
 bool IsJsonContentType(const char* value) {
     if (value == nullptr) return false;
@@ -249,22 +247,8 @@ esp_err_t SaveConfigHandler(httpd_req_t* request) {
 esp_err_t OttoDeskConfigServer::Start() {
     if (server != nullptr) return ESP_OK;
 
-    httpd_config_t config = HTTPD_DEFAULT_CONFIG();
-    config.server_port = kPort;
-    config.max_uri_handlers = 3;
-    config.max_open_sockets = 3;
-    config.stack_size = 8192;
-    config.lru_purge_enable = true;
-
-    esp_err_t err = httpd_start(&server, &config);
-    if (err != ESP_OK) {
-        ESP_LOGE(TAG, "HTTP server start failed: %s", esp_err_to_name(err));
-        server = nullptr;
-        return err;
-    }
-
     httpd_uri_t root = {};
-    root.uri = "/";
+    root.uri = "/gpio";
     root.method = HTTP_GET;
     root.handler = RootHandler;
 
@@ -278,23 +262,17 @@ esp_err_t OttoDeskConfigServer::Start() {
     save_config.method = HTTP_POST;
     save_config.handler = SaveConfigHandler;
 
-    if ((err = httpd_register_uri_handler(server, &root)) != ESP_OK ||
-        (err = httpd_register_uri_handler(server, &get_config)) != ESP_OK ||
-        (err = httpd_register_uri_handler(server, &save_config)) != ESP_OK) {
-        ESP_LOGE(TAG, "HTTP route registration failed: %s", esp_err_to_name(err));
-        httpd_stop(server);
-        server = nullptr;
+    esp_err_t err = httpd_register_uri_handler(server, &root);
+    if (err == ESP_OK) err = httpd_register_uri_handler(server, &get_config);
+    if (err == ESP_OK) err = httpd_register_uri_handler(server, &save_config);
+    if (err != ESP_OK) {
+        ESP_LOGE(TAG, "GPIO route registration failed: %s", esp_err_to_name(err));
         return err;
     }
-
-    ESP_LOGI(TAG, "Safe configuration page available at http://192.168.4.1:%u/", kPort);
+    ESP_LOGI(TAG, "Custom GPIO page registered at http://192.168.4.1/gpio");
     return ESP_OK;
 }
 
-void OttoDeskConfigServer::Stop() {
-    if (server != nullptr) {
-        httpd_stop(server);
-        server = nullptr;
-        ESP_LOGI(TAG, "Configuration server stopped");
-    }
+extern "C" esp_err_t otto_desk_register_config_routes(httpd_handle_t server) {
+    return OttoDeskConfigServer::RegisterRoutes(server);
 }
