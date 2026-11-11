@@ -10,7 +10,7 @@ text = source.read_text(encoding="utf-8")
 include_anchor = '#include "ssid_manager.h"'
 declaration = '''#include "ssid_manager.h"
 
-// Optional board extension: register board-specific routes on this HTTP server.
+// Required board extension: register board-specific routes on this HTTP server.
 extern "C" esp_err_t otto_desk_register_config_routes(httpd_handle_t);'''
 if "otto_desk_register_config_routes" not in text:
     if include_anchor not in text:
