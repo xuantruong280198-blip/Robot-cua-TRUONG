@@ -72,11 +72,6 @@ void Application::Initialize() {
     audio_service_.Initialize(codec);
     audio_service_.Start();
 
-    // Confirm a pending OTA image after local UI/audio startup. This must not
-    // depend on Wi-Fi or the version server being reachable: otherwise an
-    // otherwise healthy offline boot can be rolled back on the next reset.
-    Ota::MarkCurrentVersionValid();
-
     ESP_LOGI(TAG, "After board/audio init");
     SystemInfo::PrintHeapStats();
 
@@ -170,6 +165,12 @@ void Application::Initialize() {
                 break;
         }
     });
+
+    // Confirm a pending OTA image only after all synchronous local application
+    // setup (UI, audio, callbacks, timer and MCP tools) has completed. Keep this
+    // before network startup so an unavailable Wi-Fi/server cannot block a
+    // healthy offline boot from cancelling automatic rollback.
+    Ota::MarkCurrentVersionValid();
 
     // Start network asynchronously
     board.StartNetwork();

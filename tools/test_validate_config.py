@@ -49,10 +49,11 @@ class HardwareConfigValidationTests(unittest.TestCase):
         initialize = app[app.index("void Application::Initialize()"):
                         app.index("void Application::Run()")]
         self.assertIn("Ota::MarkCurrentVersionValid();", initialize)
-        self.assertLess(initialize.index("audio_service_.Start();"),
-                        initialize.index("Ota::MarkCurrentVersionValid();"))
-        self.assertLess(initialize.index("Ota::MarkCurrentVersionValid();"),
-                        initialize.index("board.StartNetwork();"))
+        confirmation = initialize.index("Ota::MarkCurrentVersionValid();")
+        self.assertLess(initialize.index("audio_service_.Start();"), confirmation)
+        self.assertLess(initialize.index("mcp_server.AddUserOnlyTools();"), confirmation)
+        self.assertLess(initialize.index("board.SetNetworkEventCallback("), confirmation)
+        self.assertLess(confirmation, initialize.index("board.StartNetwork();"))
         self.assertIn("ESP_OTA_IMG_PENDING_VERIFY", ota)
         self.assertIn("esp_ota_mark_app_valid_cancel_rollback()", ota)
         self.assertIn("Failed to confirm OTA image", ota)
