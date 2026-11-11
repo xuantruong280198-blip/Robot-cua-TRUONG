@@ -5,6 +5,12 @@
 #include <esp_err.h>
 #include <esp_http_server.h>
 #include <esp_log.h>
+#include <esp_system.h>
+#include <esp_chip_info.h>
+#include <esp_flash.h>
+#include <esp_app_desc.h>
+#include <freertos/FreeRTOS.h>
+#include <freertos/task.h>
 #include <nvs.h>
 
 #include <string>
@@ -148,6 +154,10 @@ small{color:#cbd5e1}#status{white-space:pre-wrap}
 <tr><td>PIR HC-SR501</td><td>OUT</td><td data-gpio-path="pir.gpio">Chưa gán</td><td data-gpio-state data-enabled-path="pir.enabled">Đang tắt · chưa xác nhận pinout</td></tr>
 </tbody></table></section>
 <p><strong>Trạng thái thiết bị</strong> được cập nhật theo JSON đang xem. Cấu hình đã lưu chỉ được áp dụng sau khi khởi động lại; servo chỉ được khởi tạo khi đã xác nhận nguồn ngoài riêng.</p>
+<section style="margin:22px 0;padding:16px;border:1px solid #475569;border-radius:10px;background:#1f2937">
+<h2>System · Thông tin thiết bị</h2><p><button onclick="loadSystemInfo()">Làm mới thông tin</button><button onclick="rebootDevice()" style="background:#991b1b;color:white">Khởi động lại ESP32</button></p>
+<pre id="systemInfo" style="white-space:pre-wrap;overflow-wrap:anywhere;color:#d1fae5">Nhấn “Làm mới thông tin” để đọc trạng thái thiết bị.</pre>
+</section>
 <textarea id="json" spellcheck="false" placeholder="Dán nội dung config/default.json tại đây..."></textarea><br>
 <button onclick="loadConfig()">Tải cấu hình đã lưu</button><button onclick="saveConfig()">Kiểm tra và lưu</button><button onclick="exportConfig()">Xuất JSON</button><label style="display:inline-block;padding:10px 16px;margin:8px;background:#334155;border-radius:7px;cursor:pointer">Nhập JSON<input id="file" type="file" accept=".json,application/json" hidden onchange="importConfig(event)"></label>
 <p id="status">Chưa tải cấu hình.</p>
@@ -159,6 +169,9 @@ async function loadConfig(){status.textContent='Đang tải...';try{const r=awai
 async function saveConfig(){status.textContent='Đang kiểm tra và lưu...';try{const config=JSON.parse(box.value);const r=await fetch('/api/config',{method:'POST',headers:{'Content-Type':'application/json'},body:box.value});const t=await r.text();if(!r.ok)throw Error(t);renderGpioTable(config);status.textContent='Đã lưu JSON. Khởi động lại thiết bị để áp dụng cấu hình phần cứng.';}catch(e){status.textContent='Không lưu được: '+e.message;}}
 async function importConfig(event){const file=event.target.files&&event.target.files[0];if(!file)return;if(file.size>3072){status.textContent='File vượt quá giới hạn 3072 byte.';event.target.value='';return;}try{const text=await file.text();const config=JSON.parse(text);box.value=text;renderGpioTable(config);status.textContent='Đã nhập '+file.name+'. Giá trị hiển thị chỉ là bản nháp; nhấn Kiểm tra và lưu để firmware xác thực.';}catch(e){status.textContent='File JSON không hợp lệ: '+e.message;}event.target.value='';}
 function exportConfig(){try{JSON.parse(box.value);const blob=new Blob([box.value],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='otto-desk-config.json';a.click();URL.revokeObjectURL(url);status.textContent='Đã xuất otto-desk-config.json.';}catch(e){status.textContent='Không thể xuất: JSON chưa hợp lệ.';}}
+async function loadSystemInfo(){const out=document.getElementById('systemInfo');out.textContent='Đang đọc...';try{const r=await fetch('/api/system',{cache:'no-store'});const t=await r.text();if(!r.ok)throw Error(t);const d=JSON.parse(t);out.textContent='Firmware: '+d.firmware+'\\nChip: '+d.chip+'\\nCPU cores: '+d.cores+'\\nChip revision: '+d.revision+'\\nFlash: '+d.flash_mb+' MB\\nHeap còn trống: '+d.free_heap_bytes+' bytes';}catch(e){out.textContent='Không đọc được thông tin: '+e.message;}}
+async function rebootDevice(){if(!confirm('Khởi động lại ESP32 ngay bây giờ?'))return;const out=document.getElementById('systemInfo');out.textContent='Đang gửi lệnh khởi động lại...';try{const r=await fetch('/api/system/reboot',{method:'POST'});const t=await r.text();if(!r.ok)throw Error(t);out.textContent='Đã nhận lệnh. ESP32 sẽ khởi động lại; hãy kết nối lại Wi-Fi cấu hình sau vài giây.';}catch(e){out.textContent='Gửi lệnh thất bại: '+e.message;}}
+
 </script></html>)html";
     httpd_resp_set_type(request, "text/html; charset=utf-8");
     return httpd_resp_send(request, kPage, HTTPD_RESP_USE_STRLEN);
@@ -183,6 +196,41 @@ esp_err_t GetConfigHandler(httpd_req_t* request) {
     httpd_resp_set_hdr(request, "Cache-Control", "no-store");
     httpd_resp_set_hdr(request, "X-Otto-Config-Source", "saved");
     return httpd_resp_send(request, json.c_str(), json.size());
+}
+
+esp_err_t GetSystemInfoHandler(httpd_req_t* request) {
+    esp_chip_info_t chip_info = {};
+    esp_chip_info(&chip_info);
+    uint32_t flash_size = 0;
+    const esp_err_t flash_err = esp_flash_get_size(nullptr, &flash_size);
+    const esp_app_desc_t* app = esp_app_get_description();
+    char response[384] = {};
+    const int length = snprintf(
+        response, sizeof(response),
+        "{\\"firmware\\":\\"%s\\",\\"chip\\":\\"%s\\",\\"cores\\":%d,\\"revision\\":%d,\\"flash_mb\\":%u,\\"free_heap_bytes\\":%u}",
+        app != nullptr ? app->version : "unknown",
+        CONFIG_IDF_TARGET,
+        chip_info.cores,
+        chip_info.revision,
+        flash_err == ESP_OK ? static_cast<unsigned>(flash_size / (1024U * 1024U)) : 0U,
+        static_cast<unsigned>(esp_get_free_heap_size()));
+    if (length < 0 || static_cast<size_t>(length) >= sizeof(response)) {
+        httpd_resp_set_status(request, "500 Internal Server Error");
+        return httpd_resp_sendstr(request, "{\\"error\\":\\"system_info_format_failed\\"}");
+    }
+    httpd_resp_set_type(request, "application/json");
+    httpd_resp_set_hdr(request, "Cache-Control", "no-store");
+    return httpd_resp_send(request, response, length);
+}
+
+esp_err_t RebootHandler(httpd_req_t* request) {
+    httpd_resp_set_type(request, "application/json");
+    const esp_err_t send_err = httpd_resp_sendstr(request, "{\\"ok\\":true,\\"restarting\\":true}");
+    if (send_err == ESP_OK) {
+        vTaskDelay(pdMS_TO_TICKS(500));
+        esp_restart();
+    }
+    return send_err;
 }
 
 esp_err_t SaveConfigHandler(httpd_req_t* request) {
@@ -261,9 +309,21 @@ esp_err_t OttoDeskConfigServer::RegisterRoutes(httpd_handle_t server) {
     save_config.method = HTTP_POST;
     save_config.handler = SaveConfigHandler;
 
+    httpd_uri_t system_info = {};
+    system_info.uri = "/api/system";
+    system_info.method = HTTP_GET;
+    system_info.handler = GetSystemInfoHandler;
+
+    httpd_uri_t reboot = {};
+    reboot.uri = "/api/system/reboot";
+    reboot.method = HTTP_POST;
+    reboot.handler = RebootHandler;
+
     esp_err_t err = httpd_register_uri_handler(server, &root);
     if (err == ESP_OK) err = httpd_register_uri_handler(server, &get_config);
     if (err == ESP_OK) err = httpd_register_uri_handler(server, &save_config);
+    if (err == ESP_OK) err = httpd_register_uri_handler(server, &system_info);
+    if (err == ESP_OK) err = httpd_register_uri_handler(server, &reboot);
     if (err != ESP_OK) {
         ESP_LOGE(TAG, "GPIO route registration failed: %s", esp_err_to_name(err));
         return err;
