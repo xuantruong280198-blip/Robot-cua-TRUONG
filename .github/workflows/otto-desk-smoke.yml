@@ -48,6 +48,11 @@ jobs:
         run: |
           python -m unittest tools/test_validate_config.py tools/test_config_page.py -v
 
+      - name: Test merged firmware package verifier
+        shell: bash
+        run: |
+          python -m unittest tools.test_otto_firmware_package -v
+
       - name: Compile and run JSON nesting guard tests
         shell: bash
         run: |
@@ -140,6 +145,11 @@ jobs:
             echo "gpio_assignments=unconfigured_by_default"
             echo "commit=${GITHUB_SHA}"
           } > build/BUILD-MANIFEST.txt
+
+      - name: Verify merged firmware flash layout and component bytes
+        shell: bash
+        run: |
+          python tools/verify_otto_firmware_package.py build
 
       - name: Upload Otto Desk firmware image
         uses: actions/upload-artifact@v4
