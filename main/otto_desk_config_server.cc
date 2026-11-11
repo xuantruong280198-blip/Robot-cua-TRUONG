@@ -128,7 +128,7 @@ textarea{box-sizing:border-box;width:100%;height:62vh;background:#0b1220;color:#
 button{padding:10px 16px;margin:8px 8px 8px 0;border:0;border-radius:7px;font-weight:600}
 small{color:#cbd5e1}#status{white-space:pre-wrap}
 </style>
-<h2>Otto Desk AI - Cấu hình an toàn</h2>
+<p><a href="/" style="color:#93c5fd">← Quay lại cấu hình Wi-Fi XiaoZhi</a></p><h2>Otto Desk AI - Custom GPIO / JSON</h2>
 <p>API này chỉ hoạt động trong chế độ Wi-Fi cấu hình. Nhập GPIO theo đúng dây đã đấu. Mặc định mọi thiết bị đều tắt. Chỉ đặt board.peripheral_routing_verified=true sau khi đã đối chiếu pinout thực tế; servo còn yêu cầu servos.external_power_verified=true. Thiết bị chỉ chạy khi đã xác nhận pinout và bật đúng mục trong JSON. Bảng dưới đây là danh sách tín hiệu, không phải sơ đồ chân đã xác minh.</p>
 <section style="overflow-x:auto;margin:16px 0"><table style="width:100%;border-collapse:collapse;background:#1f2937"><thead><tr><th style="text-align:left;padding:9px">Thiết bị</th><th style="text-align:left;padding:9px">Tín hiệu</th><th style="text-align:left;padding:9px">GPIO</th><th style="text-align:left;padding:9px">Trạng thái</th></tr></thead><tbody>
 <tr><td>ST7789</td><td>SCLK</td><td data-gpio-path="display.gpio.sclk">Chưa gán</td><td data-gpio-state data-enabled-path="display.enabled">Đang tắt</td></tr>
@@ -244,8 +244,7 @@ esp_err_t SaveConfigHandler(httpd_req_t* request) {
 }
 }  // namespace
 
-esp_err_t OttoDeskConfigServer::Start() {
-    if (server != nullptr) return ESP_OK;
+esp_err_t OttoDeskConfigServer::RegisterRoutes(httpd_handle_t server) {
 
     httpd_uri_t root = {};
     root.uri = "/gpio";
