@@ -185,20 +185,23 @@ void SetSystemInfoHeaders(httpd_req_t* request) {
     uint32_t flash_size = 0;
     const esp_err_t flash_err = esp_flash_get_size(nullptr, &flash_size);
     const esp_app_desc_t* app = esp_app_get_description();
-    char number[24] = {};
+    char cores[8] = {};
+    char revision[8] = {};
+    char flash_mb[8] = {};
+    char free_heap[16] = {};
 
     httpd_resp_set_hdr(request, "X-Otto-Firmware",
                        app != nullptr ? app->version : "unknown");
     httpd_resp_set_hdr(request, "X-Otto-Chip", CONFIG_IDF_TARGET);
-    snprintf(number, sizeof(number), "%d", chip_info.cores);
-    httpd_resp_set_hdr(request, "X-Otto-Cores", number);
-    snprintf(number, sizeof(number), "%d", chip_info.revision);
-    httpd_resp_set_hdr(request, "X-Otto-Revision", number);
-    snprintf(number, sizeof(number), "%u",
+    snprintf(cores, sizeof(cores), "%d", chip_info.cores);
+    httpd_resp_set_hdr(request, "X-Otto-Cores", cores);
+    snprintf(revision, sizeof(revision), "%d", chip_info.revision);
+    httpd_resp_set_hdr(request, "X-Otto-Revision", revision);
+    snprintf(flash_mb, sizeof(flash_mb), "%u",
              flash_err == ESP_OK ? static_cast<unsigned>(flash_size / (1024U * 1024U)) : 0U);
-    httpd_resp_set_hdr(request, "X-Otto-Flash-MB", number);
-    snprintf(number, sizeof(number), "%u", static_cast<unsigned>(esp_get_free_heap_size()));
-    httpd_resp_set_hdr(request, "X-Otto-Free-Heap", number);
+    httpd_resp_set_hdr(request, "X-Otto-Flash-MB", flash_mb);
+    snprintf(free_heap, sizeof(free_heap), "%u", static_cast<unsigned>(esp_get_free_heap_size()));
+    httpd_resp_set_hdr(request, "X-Otto-Free-Heap", free_heap);
 }
 
 esp_err_t GetConfigHandler(httpd_req_t* request) {
