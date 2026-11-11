@@ -317,36 +317,6 @@ private:
     }
 
 public:
-    // GPIO40 is reserved as a temporary, active-low Wi-Fi provisioning trigger.
-    // Hold GPIO40 to GND while powering on; GPIO40 is not an ESP32-S3 strapping pin.
-    void StartNetwork() override {
-        constexpr gpio_num_t kProvisioningTriggerGpio = GPIO_NUM_40;
-        gpio_config_t trigger_config = {};
-        trigger_config.pin_bit_mask = 1ULL << kProvisioningTriggerGpio;
-        trigger_config.mode = GPIO_MODE_INPUT;
-        trigger_config.pull_up_en = GPIO_PULLUP_ENABLE;
-        trigger_config.pull_down_en = GPIO_PULLDOWN_DISABLE;
-        trigger_config.intr_type = GPIO_INTR_DISABLE;
-
-        bool force_config_mode = false;
-        if (gpio_config(&trigger_config) == ESP_OK) {
-            // Require a stable low level for 300 ms to reject noise.
-            force_config_mode = true;
-            for (int sample = 0; sample < 30; ++sample) {
-                if (gpio_get_level(kProvisioningTriggerGpio) != 0) {
-                    force_config_mode = false;
-                    break;
-                }
-                vTaskDelay(pdMS_TO_TICKS(10));
-            }
-        }
-
-        WifiBoard::StartNetwork();
-        if (force_config_mode) {
-            ESP_LOGW(kTag, "GPIO40 held low at startup; forcing Wi-Fi provisioning AP");
-            EnterWifiConfigMode();
-        }
-    }
 
     OttoDeskBoard() {
         OttoDeskRuntimeConfig config;
