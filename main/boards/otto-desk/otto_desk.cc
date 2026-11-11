@@ -351,15 +351,6 @@ public:
 protected:
     void OnNetworkEvent(NetworkEvent event, const std::string& data = "") override {
         WifiBoard::OnNetworkEvent(event, data);
-        if (event == NetworkEvent::WifiConfigModeEnter) {
-            const esp_err_t err = OttoDeskConfigServer::Start();
-            if (err != ESP_OK) {
-                ESP_LOGE(kTag, "Config API unavailable: %s", esp_err_to_name(err));
-            }
-        } else if (event == NetworkEvent::Connected ||
-                   event == NetworkEvent::WifiConfigModeExit) {
-            OttoDeskConfigServer::Stop();
-        }
     }
 };
 
