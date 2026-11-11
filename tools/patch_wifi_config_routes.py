@@ -11,18 +11,16 @@ include_anchor = '#include "ssid_manager.h"'
 declaration = '''#include "ssid_manager.h"
 
 // Optional board extension: register board-specific routes on this HTTP server.
-extern "C" esp_err_t otto_desk_register_config_routes(httpd_handle_t) __attribute__((weak));'''
+extern "C" esp_err_t otto_desk_register_config_routes(httpd_handle_t);'''
 if "otto_desk_register_config_routes" not in text:
     if include_anchor not in text:
         raise SystemExit("esp-wifi-connect include anchor changed; refusing unsafe patch")
     text = text.replace(include_anchor, declaration, 1)
 server_anchor = '    ESP_LOGI(TAG, "Web server started");'
 registration = '''    // Otto Desk Custom GPIO and JSON share XiaoZhi's existing port-80 server.
-    if (otto_desk_register_config_routes != nullptr) {
-        const esp_err_t board_routes_err = otto_desk_register_config_routes(server_);
-        if (board_routes_err != ESP_OK) {
-            ESP_LOGE(TAG, "Board configuration routes failed: %s", esp_err_to_name(board_routes_err));
-        }
+    const esp_err_t board_routes_err = otto_desk_register_config_routes(server_);
+    if (board_routes_err != ESP_OK) {
+        ESP_LOGE(TAG, "Board configuration routes failed: %s", esp_err_to_name(board_routes_err));
     }
 
 ''' + server_anchor
