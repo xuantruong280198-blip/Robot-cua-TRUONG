@@ -11,7 +11,7 @@ constexpr bool IsSafeEsp32S3Gpio(int gpio) {
     if (gpio < 0 || gpio > 48) return false;
     // ESP32-S3 has no GPIO22-25; reject holes in the GPIO number space.
     if (gpio >= 22 && gpio <= 25) return false;
-    if (gpio == 0 || gpio == 3 || gpio == 19 || gpio == 20) return false;
+    if (gpio == 0 || gpio == 3 || gpio == 19 || gpio == 20 || gpio == 40) return false; // GPIO40 reserved for Wi-Fi provisioning trigger.
     if (gpio >= 26 && gpio <= 37) return false;
     if (gpio == 43 || gpio == 44 || gpio == 45 || gpio == 46) return false;
     return true;
