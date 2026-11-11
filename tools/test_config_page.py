@@ -42,6 +42,17 @@ class GpioConfigPageTests(unittest.TestCase):
         self.assertIn("peripheral_routing_verified", SOURCE)
         self.assertIn("Thiết bị chỉ chạy khi đã xác nhận pinout", SOURCE)
 
+    def test_system_status_and_reboot_are_on_the_same_server(self):
+        self.assertIn('system_info.uri = "/api/system"', SOURCE)
+        self.assertIn('reboot.uri = "/api/system/reboot"', SOURCE)
+        self.assertIn('httpd_register_uri_handler(server, &system_info)', SOURCE)
+        self.assertIn('httpd_register_uri_handler(server, &reboot)', SOURCE)
+        self.assertIn('esp_chip_info(&chip_info)', SOURCE)
+        self.assertIn('esp_restart()', SOURCE)
+        self.assertIn('function loadSystemInfo()', SOURCE)
+        self.assertIn('function rebootDevice()', SOURCE)
+        self.assertIn('System · Thông tin thiết bị', SOURCE)
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
