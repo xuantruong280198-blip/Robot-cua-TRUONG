@@ -38,6 +38,25 @@ class HardwareConfigValidationTests(unittest.TestCase):
                         return exc.code, output.getvalue()
             return 0, output.getvalue()
 
+    def test_ota_image_confirmation_is_independent_of_network_availability(self):
+        app = (ROOT / "main" / "application.cc").read_text(encoding="utf-8")
+        ota = (ROOT / "main" / "ota.cc").read_text(encoding="utf-8")
+        initialize = app[app.index("void Application::Initialize()"):
+                        app.index("void Application::Run()")]
+        self.assertIn("Ota::MarkCurrentVersionValid();", initialize)
+        self.assertLess(initialize.index("audio_service_.Start();"),
+                        initialize.index("Ota::MarkCurrentVersionValid();"))
+        self.assertLess(initialize.index("Ota::MarkCurrentVersionValid();"),
+                        initialize.index("board.StartNetwork();"))
+        self.assertIn("ESP_OTA_IMG_PENDING_VERIFY", ota)
+        self.assertIn("esp_ota_mark_app_valid_cancel_rollback()", ota)
+        self.assertIn("Failed to confirm OTA image", ota)
+
+    def test_ota_download_header_uses_only_newly_received_bytes(self):
+        ota = (ROOT / "main" / "ota.cc").read_text(encoding="utf-8")
+        self.assertIn("buffer + buffer_offset - static_cast<size_t>(n)", ota)
+        self.assertIn("image_header.append", ota)
+
     def test_configuration_page_javascript_syntax(self):
         node = shutil.which("node")
         if node is None:

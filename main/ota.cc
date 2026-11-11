@@ -247,7 +247,11 @@ NetworkResult<> Ota::CheckVersion() {
 }
 
 void Ota::MarkCurrentVersionValid() {
-    auto partition = esp_ota_get_running_partition();
+    const esp_partition_t* partition = esp_ota_get_running_partition();
+    if (partition == nullptr) {
+        ESP_LOGE(TAG, "Cannot identify running OTA partition; image remains pending verification");
+        return;
+    }
     if (strcmp(partition->label, "factory") == 0) {
         ESP_LOGI(TAG, "Running from factory partition, skipping");
         return;
@@ -255,14 +259,20 @@ void Ota::MarkCurrentVersionValid() {
 
     ESP_LOGI(TAG, "Running partition: %s", partition->label);
     esp_ota_img_states_t state;
-    if (esp_ota_get_state_partition(partition, &state) != ESP_OK) {
-        ESP_LOGE(TAG, "Failed to get state of partition");
+    const esp_err_t state_err = esp_ota_get_state_partition(partition, &state);
+    if (state_err != ESP_OK) {
+        ESP_LOGE(TAG, "Failed to get state of partition: %s", esp_err_to_name(state_err));
         return;
     }
 
     if (state == ESP_OTA_IMG_PENDING_VERIFY) {
-        ESP_LOGI(TAG, "Marking firmware as valid");
-        esp_ota_mark_app_valid_cancel_rollback();
+        ESP_LOGI(TAG, "Local startup checks passed; marking firmware as valid");
+        const esp_err_t mark_err = esp_ota_mark_app_valid_cancel_rollback();
+        if (mark_err != ESP_OK) {
+            ESP_LOGE(TAG, "Failed to confirm OTA image: %s", esp_err_to_name(mark_err));
+        } else {
+            ESP_LOGI(TAG, "OTA image confirmed; automatic rollback is cancelled");
+        }
     }
 }
 

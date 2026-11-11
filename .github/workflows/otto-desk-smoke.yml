@@ -60,6 +60,11 @@ jobs:
           c++ -std=c++17 -Wall -Wextra -Werror -Imain tools/test_ota_version.cc -o /tmp/otto-ota-version-tests
           /tmp/otto-ota-version-tests
 
+      - name: Verify OTA boot-confirmation and fragmented-header safeguards
+        shell: bash
+        run: |
+          python -m unittest tools.test_validate_config.HardwareConfigValidationTests.test_ota_image_confirmation_is_independent_of_network_availability tools.test_validate_config.HardwareConfigValidationTests.test_ota_download_header_uses_only_newly_received_bytes -v
+
       - name: Compile and run ST7789 display rotation tests
         shell: bash
         run: |

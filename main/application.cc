@@ -71,6 +71,12 @@ void Application::Initialize() {
     auto codec = board.GetAudioCodec();
     audio_service_.Initialize(codec);
     audio_service_.Start();
+
+    // Confirm a pending OTA image after local UI/audio startup. This must not
+    // depend on Wi-Fi or the version server being reachable: otherwise an
+    // otherwise healthy offline boot can be rolled back on the next reset.
+    Ota::MarkCurrentVersionValid();
+
     ESP_LOGI(TAG, "After board/audio init");
     SystemInfo::PrintHeapStats();
 
@@ -496,8 +502,6 @@ void Application::CheckNewVersion() {
             // If upgrade failed, continue to normal operation
         }
 
-        // No new version, mark the current version as valid
-        ota_->MarkCurrentVersionValid();
         if (!ota_->HasActivationCode() && !ota_->HasActivationChallenge()) {
             // Exit the loop if done checking new version
             break;
